@@ -4,7 +4,28 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
+
+// waitWatched waits until the server watches the folder of its open document. The watch starts in
+// the background after didOpen, so a file written before then is not seen.
+func (e *env) waitWatched(t *testing.T, k instKey) {
+	t.Helper()
+	for end := time.Now().Add(10 * time.Second); time.Now().Before(end); time.Sleep(10 * time.Millisecond) {
+		e.svc.mu.Lock()
+		i := e.svc.insts[k]
+		e.svc.mu.Unlock()
+		if i != nil {
+			i.mu.Lock()
+			n := len(i.watched)
+			i.mu.Unlock()
+			if n > 0 {
+				return
+			}
+		}
+	}
+	t.Fatal("the folder of the open document is not watched")
+}
 
 func TestFilesChangedOnDiskReachTheServer(t *testing.T) {
 	e := newEnv(t, []string{"gopls"})
@@ -17,6 +38,7 @@ func TestFilesChangedOnDiskReachTheServer(t *testing.T) {
 	uri := uriOf(a)
 	c.open(uri, "package a\n")
 	c.diagnostics(uri, func(d []any) bool { return len(d) == 0 })
+	e.waitWatched(t, instKey{"p1", "", "go"})
 
 	// A file an agent edits in the same folder gives errors in the open document.
 	if err := os.WriteFile(b, []byte("BREAKS_OTHERS\n"), 0o644); err != nil {

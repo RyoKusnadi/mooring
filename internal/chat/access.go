@@ -66,7 +66,7 @@ func (m *Manager) OpenPermissions(id string) ([]OpenPermission, error) {
 	return out, nil
 }
 
-// WaitJobs waits until the title jobs started so far have ended, or ctx is done.
+// WaitJobs waits until the turns and title jobs started so far have ended, or ctx is done.
 func (m *Manager) WaitJobs(ctx context.Context) error {
 	done := make(chan struct{})
 	go func() { m.jobsWG.Wait(); close(done) }()

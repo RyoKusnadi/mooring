@@ -100,7 +100,7 @@ type Manager struct {
 
 	jobMu   sync.Mutex
 	jobBusy map[string]bool // projects with a small job running
-	jobsWG  sync.WaitGroup  // title jobs in the background
+	jobsWG  sync.WaitGroup  // turns and title jobs in the background
 }
 
 // New loads the saved chats. They are all stopped until the browser resumes them.

@@ -70,6 +70,9 @@ func (c *Chat) beginTurn(q turnReq) (done <-chan struct{}, idx int, err error) {
 	sentCh := make(chan struct{})
 	c.promptSent = sentCh
 	finished := make(chan struct{})
+	// The turn counts as a job until it ends, so the title job it may start is added
+	// while the count is above zero; WaitJobs never sees it go 0 -> 1 mid-wait.
+	c.m.jobsWG.Add(1)
 	c.mu.Unlock()
 	c.publishInfo("chat.changed")
 	go c.runTurn(ctx, r, turn, sid, blocks, sentCh, finished)

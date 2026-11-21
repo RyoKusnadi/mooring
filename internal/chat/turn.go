@@ -19,6 +19,7 @@ func firstLine(s string) string {
 }
 
 func (c *Chat) runTurn(ctx context.Context, r *run, turn int, sid string, blocks []any, sent, finished chan struct{}) {
+	defer c.m.jobsWG.Done()
 	defer close(finished)
 	var res struct {
 		StopReason string          `json:"stopReason"`

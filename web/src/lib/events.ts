@@ -10,6 +10,26 @@ export interface SocketLike {
   onmessage: ((e: { data: unknown }) => void) | null
   onclose: (() => void) | null
   onerror: (() => void) | null
+  /** 0 while connecting, as on a browser WebSocket. */
+  readonly readyState?: number
+}
+
+/**
+ * Drops a socket's handlers and closes it. A socket still connecting is closed once it opens:
+ * closing it earlier makes Chrome log "closed before the connection is established".
+ */
+export function closeSocket(s: SocketLike) {
+  s.onmessage = s.onclose = s.onerror = null
+  if (s.readyState === 0) {
+    s.onopen = () => s.close()
+    return
+  }
+  s.onopen = null
+  try {
+    s.close()
+  } catch {
+    // Already closed.
+  }
 }
 
 export interface Clock {
@@ -170,14 +190,7 @@ export class EventsClient {
     this.clock.clearTimeout(this.silence)
     const s = this.socket
     this.socket = null
-    if (s) {
-      s.onopen = s.onmessage = s.onclose = s.onerror = null
-      try {
-        s.close()
-      } catch {
-        // Already closed.
-      }
-    }
+    if (s) closeSocket(s)
   }
 
   private lost() {

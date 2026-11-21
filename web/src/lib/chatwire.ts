@@ -1,7 +1,7 @@
 // The chat socket. Plain TypeScript: the socket and the
 // clock are injected so tests can drive it without a browser.
 import type { Chip, OutputRef } from './tokenfmt'
-import { BACKOFF_MAX_MS, BACKOFF_START_MS, PING_MS, SILENCE_MS, type Clock, type SocketLike } from './events'
+import { BACKOFF_MAX_MS, BACKOFF_START_MS, PING_MS, SILENCE_MS, closeSocket, type Clock, type SocketLike } from './events'
 
 export type WireState = 'connecting' | 'live' | 'reconnecting'
 
@@ -136,14 +136,7 @@ export class ChatConnection {
     this.clock.clearTimeout(this.silence)
     const s = this.socket
     this.socket = null
-    if (s) {
-      s.onopen = s.onmessage = s.onclose = s.onerror = null
-      try {
-        s.close()
-      } catch {
-        // Already closed.
-      }
-    }
+    if (s) closeSocket(s)
   }
 
   private lost() {

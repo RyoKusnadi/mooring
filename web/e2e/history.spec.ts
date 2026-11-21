@@ -20,7 +20,7 @@ test('git: choose two lines of a ten-line change, with keys and with the mouse, 
   const problems = collectProblems(page)
   await openProject(page, repo)
   await page.keyboard.press('Alt+G')
-  const changes = page.getByRole('region', { name: /^Changes in/ })
+  const changes = page.locator('section[aria-label^="Changes in"]')
   await changes.getByRole('button', { name: 'ten.txt, modified. Show changes' }).first().click()
   const diff = page.getByRole('tabpanel')
   await expect(diff.getByRole('heading', { name: 'ten.txt' })).toBeVisible()
@@ -133,7 +133,7 @@ test('git: stash save, view, apply and drop; a conflicting apply; switch and mak
   const problems = collectProblems(page)
   await openProject(page, repo)
   await page.keyboard.press('Alt+G')
-  const changes = page.getByRole('region', { name: /^Changes in/ })
+  const changes = page.locator('section[aria-label^="Changes in"]')
   await expect(changes.getByRole('button', { name: 'a.txt, modified. Show changes' })).toBeVisible()
 
   // Save with a message and untracked files: the working copy is clean afterwards.

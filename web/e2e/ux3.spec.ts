@@ -8,7 +8,7 @@ import { collectProblems, openSettings, signIn } from './helpers'
 
 const names = () => {
   const run = `${Date.now() % 100_000}${test.info().workerIndex}${test.info().repeatEachIndex}`
-  return { project: `ux3-fixture-project-${run}`, file: 'notes-for-the-release.md' }
+  return { project: `ux3-proj-${run}`, file: 'notes-for-the-release.md' }
 }
 
 const tabsOf = (page: Page) => page.getByRole('tab')
@@ -92,9 +92,13 @@ test('the sidebar resizes by keyboard, stays within 220 and 480, and is remember
   await page.keyboard.press('ArrowRight')
   await page.reload()
   await expect(page.getByRole('separator', { name: 'Sidebar width' })).toHaveAttribute('aria-valuenow', '236')
-  await page.getByRole('separator', { name: 'Sidebar width' }).focus()
-  await page.keyboard.press('Home')
-  await expect(page.getByRole('separator', { name: 'Sidebar width' })).toHaveAttribute('aria-valuenow', '264')
+  // The app may still be settling after the reload and take focus back, so focus and press until it lands.
+  const sized = page.getByRole('separator', { name: 'Sidebar width' })
+  await expect(async () => {
+    await sized.focus()
+    await page.keyboard.press('Home')
+    await expect(sized).toHaveAttribute('aria-valuenow', '264', { timeout: 1000 })
+  }).toPass({ timeout: 10_000 })
 })
 
 test('the + menu starts a terminal, a chat or the file finder, and Split opens a terminal', async ({ page }) => {

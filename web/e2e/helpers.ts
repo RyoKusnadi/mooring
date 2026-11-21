@@ -16,6 +16,8 @@ export function collectProblems(page: Page): string[] {
   page.on('console', (m) => {
     // xterm warns when its idle-time work runs late, which happens on a busy machine (the whole suite at once).
     if (m.type() === 'warning' && /^task queue exceeded allotted deadline/.test(m.text())) return
+    // Chrome without a GPU (CI runners) reports slow WebGL reads from the terminal; not an app problem.
+    if (/GL Driver Message|GPU stall due to ReadPixels/.test(m.text())) return
     if (m.type() === 'error' || m.type() === 'warning') problems.push(m.text())
   })
   page.on('pageerror', (e) => problems.push(e.message))

@@ -129,6 +129,8 @@ func TrashPath(home, override string) string {
 		return override
 	case runtime.GOOS == "darwin" && home != "":
 		return filepath.Join(home, ".Trash")
+	case runtime.GOOS == "linux":
+		return xdgTrash(home)
 	}
 	return ""
 }
@@ -150,11 +152,23 @@ func moveToTrashAs(trash string, log *slog.Logger, full, name string) error {
 		return unavailable
 	}
 	dst := filepath.Join(trash, name)
-	if _, err := os.Lstat(dst); err == nil {
+	fd := freedesktop(trash)
+	if _, err := os.Lstat(dst); err == nil || fd && exists(filepath.Join(filepath.Dir(trash), "info", name+".trashinfo")) {
 		dst += " " + strconv.FormatInt(time.Now().UnixNano(), 36)
+	}
+	info := ""
+	if fd {
+		var err error
+		if info, err = writeTrashInfo(dst, full, time.Now()); err != nil {
+			log.Warn("files: trash info", "err", err)
+			return unavailable
+		}
 	}
 	if err := os.Rename(full, dst); err != nil {
 		log.Warn("files: move to trash", "err", err, "cross_device", errors.Is(err, syscall.EXDEV))
+		if info != "" {
+			_ = os.Remove(info)
+		}
 		return unavailable
 	}
 	return nil

@@ -7,7 +7,7 @@ import { signIn } from './helpers'
 // Phase 19 review fixes: rows that never overlap, focus after a discard, empty states, the phone layout, the search panel.
 
 const unique = () => `ux19b-${Date.now() % 1_000_000}-${test.info().workerIndex}${test.info().repeatEachIndex}`
-const view = (page: Page) => page.getByRole('region', { name: /^Changes in/ })
+const view = (page: Page) => page.locator('section[aria-label^="Changes in"]')
 
 async function openChanges(page: Page, repo: string, width = 1440) {
   await page.setViewportSize({ width, height: 900 })

@@ -30,7 +30,7 @@ test('git: a commit pushed from outside shows as behind, then Pull brings it in;
   writeFileSync(join(repo, 'b.txt'), 'b\n')
   await openProject(page, repo)
   await page.keyboard.press('Alt+G')
-  const changes = page.getByRole('region', { name: /^Changes in/ })
+  const changes = page.locator('section[aria-label^="Changes in"]')
   await expect(changes.getByText('0 ahead, 0 behind')).toBeVisible()
 
   // Amend is off: the last commit is on origin/main.

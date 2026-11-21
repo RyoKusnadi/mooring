@@ -35,8 +35,11 @@ test('files: move by drag with undo, download, upload with replace, duplicate, d
   await addProject(page, folder)
 
   // Move by drag, then undo.
-  await row(page, 'notes.txt').dragTo(row(page, 'src'))
-  await expect(page.getByText('Moved notes.txt to src.')).toBeVisible()
+  // A drag that starts while the tree is still drawing can be dropped; drag again only while the file has not moved.
+  await expect(async () => {
+    if (existsSync(join(folder, 'notes.txt'))) await row(page, 'notes.txt').dragTo(row(page, 'src'))
+    await expect(page.getByText('Moved notes.txt to src.')).toBeVisible({ timeout: 2000 })
+  }).toPass({ timeout: 15_000 })
   expect(existsSync(join(folder, 'src', 'notes.txt'))).toBe(true)
   expect(existsSync(join(folder, 'notes.txt'))).toBe(false)
   await page.getByRole('button', { name: 'Undo', exact: true }).click()

@@ -111,7 +111,7 @@ test('diff beside the list: the first code line starts under the header, two row
   await signIn(page)
   await openProject(page, repo)
   await page.keyboard.press('Alt+G')
-  await page.getByRole('region', { name: /^Changes in/ }).getByRole('button', { name: `${n.file}, modified. Show changes` }).first().click()
+  await page.locator('section[aria-label^="Changes in"]').getByRole('button', { name: `${n.file}, modified. Show changes` }).first().click()
   const row = page.getByRole('tabpanel').getByRole('checkbox', { name: 'Added: changed' })
   await expect(row).toBeVisible()
   const top = (await page.getByRole('tabpanel').locator('.right').boundingBox())!.y

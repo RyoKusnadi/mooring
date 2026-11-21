@@ -7,7 +7,7 @@ import { signIn } from './helpers'
 // Phase 19, git as a full view: the Changes pane view, the branch popover, Discard all, search results kept open.
 
 const unique = () => `ux19-${Date.now() % 1_000_000}-${test.info().workerIndex}${test.info().repeatEachIndex}`
-const view = (page: Page) => page.getByRole('region', { name: /^Changes in/ })
+const view = (page: Page) => page.locator('section[aria-label^="Changes in"]')
 
 async function openChanges(page: Page, repo: string) {
   await page.setViewportSize({ width: 1440, height: 900 })

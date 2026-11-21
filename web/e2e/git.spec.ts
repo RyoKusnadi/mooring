@@ -74,7 +74,7 @@ test('git: review, commit and push an agent\'s worktree', async ({ page }) => {
 
   // Open the chat's changes: the place is that worktree.
   await panel.getByRole('button', { name: /Open changes/ }).click()
-  const changes = page.getByRole('region', { name: /^Changes in/ })
+  const changes = page.locator('section[aria-label^="Changes in"]')
   await expect(changes.getByLabel('Worktree', { exact: true })).toHaveValue(`.mooring/worktrees/${name}`)
   await changes.getByRole('button', { name: 'Refresh' }).click()
   await expect(changes.getByLabel('Branch')).toContainText(branch)

@@ -248,6 +248,7 @@ func TestStartFromChatWithContext(t *testing.T) {
 		if got := r.ask(c, "BLOCKS"); has(got, "summary") {
 			t.Fatalf("the summary was sent twice: %q", got)
 		}
+		r.m.Shutdown() // writes the last messages, as a real restart does; without it the save timer may not have fired
 		r.boot()
 		if again := r.m.get("new"); again.Info().FromChat != "old" || again.count() != 5 {
 			t.Fatalf("after restart: %+v, %d messages", again.Info().FromChat, again.count())

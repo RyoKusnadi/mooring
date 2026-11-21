@@ -54,7 +54,8 @@ func TestMemoryRestart(t *testing.T) {
 	b.handshake(1, map[string]any{})
 	pid := e.pidOf("go")
 	uri := uriOf(e.write("a.go", ""))
-	a.open(uri, "BLOAT")
+	a.open(uri, "")
+	a.change(uri, "BLOAT")
 	for _, c := range []*client{a, b} {
 		if ce := c.waitClose(); ce.Code != 4001 || ce.Reason != "restarted" {
 			t.Fatalf("close: %+v", ce)

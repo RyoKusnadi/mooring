@@ -58,3 +58,13 @@ jobs:
           fi
 
       - run: make check
+
+      # On a failure, keep what Playwright saw (error context, traces) for a week.
+      - name: Keep browser test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results-${{ matrix.os }}
+          path: web/test-results
+          retention-days: 7
+          if-no-files-found: ignore

@@ -29,6 +29,7 @@ func dial(t *testing.T, srv *httptest.Server, id string, hello string) *sock {
 		t.Fatalf("dial: %v", err)
 	}
 	t.Cleanup(func() { _ = ws.CloseNow() })
+	ws.SetReadLimit(maxFrame + 8) // the browser has no limit; the library's default of 32 KB is below one frame
 	s := &sock{t: t, ws: ws, ctx: ctx}
 	if err := ws.Write(ctx, websocket.MessageText, []byte(hello)); err != nil {
 		t.Fatal(err)

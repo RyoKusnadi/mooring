@@ -11,7 +11,8 @@
 // spaces and tabs, one edit per line. Document symbols and the slow initialize switch are in
 // symbols.go.
 //
-// Triggers in document text: BLOAT keeps about 300 MiB resident, CRASH writes
+// Triggers in document text: BLOAT typed into a document (not one opened with it, so a
+// server restarted for memory does not grow again on reopen) keeps about 300 MiB resident, CRASH writes
 // a line to stderr and exits with status 3, ORPHAN exits with status 3 and leaves
 // a sleeping child that holds stdout, SERVERREQ sends the client a
 // workspace/configuration and a client/registerCapability request and logs
@@ -148,7 +149,7 @@ func (s *server) handle(m msg) {
 		var p struct{ TextDocument textDoc }
 		_ = json.Unmarshal(m.Params, &p)
 		s.docs[p.TextDocument.URI] = p.TextDocument.Text
-		s.changed(p.TextDocument.URI, p.TextDocument.Text)
+		s.changed(p.TextDocument.URI, p.TextDocument.Text, false)
 	case "textDocument/didChange":
 		s.didChange(m.Params)
 	case "textDocument/didClose":
@@ -212,9 +213,9 @@ func (s *server) ask(method string, params any) {
 	s.send(map[string]any{"jsonrpc": "2.0", "id": id, "method": method, "params": params})
 }
 
-// changed reacts to new text of a document.
-func (s *server) changed(uri, text string) {
-	if strings.Contains(text, "BLOAT") && len(s.bloat) == 0 {
+// changed reacts to new text of a document; edited is false for the text it was opened with.
+func (s *server) changed(uri, text string, edited bool) {
+	if edited && strings.Contains(text, "BLOAT") && len(s.bloat) == 0 {
 		// Random bytes: macOS compresses pages of zeros, which would keep the
 		// resident size under the test's limit.
 		b := make([]byte, 300<<20)

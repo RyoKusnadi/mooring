@@ -125,9 +125,8 @@ func TestShutdownKillsShellThatIgnoresHangup(t *testing.T) {
 	pg := open(t, m, "a").b.(*localBackend).pid()
 	time.Sleep(200 * time.Millisecond)
 	m.Shutdown()
-	if !groupGone(pg) {
-		t.Error("a shell that ignores SIGHUP must still be killed")
-	}
+	// On Linux a killed child stays in the group until it is reaped, so wait instead of checking once.
+	waitFor(t, "a shell that ignores SIGHUP to be killed", func() bool { return groupGone(pg) })
 }
 
 func TestLimits(t *testing.T) {

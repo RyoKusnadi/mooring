@@ -31,7 +31,7 @@ func (s *server) didChange(params json.RawMessage) {
 		text = text[:start] + c.Text + text[end:]
 	}
 	s.docs[p.TextDocument.URI] = text
-	s.changed(p.TextDocument.URI, text)
+	s.changed(p.TextDocument.URI, text, true)
 }
 
 // offset turns a line and character (counted in bytes; the tests use ASCII) into an index.

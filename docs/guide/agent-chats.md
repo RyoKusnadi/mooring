@@ -13,6 +13,7 @@ agent, and Mooring starts it.
 | Codex | `npx -y @agentclientprotocol/codex-acp` | `npx` and `codex` | |
 | Grok | `grok agent stdio` | `grok` | `grok login`, or set `XAI_API_KEY` |
 | Cursor | `agent acp` | `agent` | |
+| Antigravity | `agy acp` | `agy` (Google Antigravity CLI 1.5 or later) | Run `agy` once, or `agy acp --login` with no browser |
 
 Mooring finds each program on the PATH of the Mooring process. If you start Mooring from a
 terminal, that is your terminal's PATH. With autostart, `mooring autostart on` keeps the PATH from
@@ -26,7 +27,7 @@ the moment you ran it, so run it again after you install a new tool. See
    first where the agent supports it.
 3. Click "Start chat".
 
-![The Start a chat picker: Claude and Gemini can start, Codex, Grok and Cursor say Not installed with an Install button.](images/agent-chats-picker.png)
+![The Start a chat picker: Claude and Gemini can start, Codex, Grok, Cursor and Antigravity say Not installed with Install buttons.](images/agent-chats-picker.png)
 
 If the agent is missing, the picker says "Not installed. Mooring looks for the `X` command and did
 not find it. Install NAME, then check again." Click "Install NAME" to open a terminal, install it,
@@ -58,7 +59,8 @@ asking.
 
 The "Chat options" menu has "Shorten long output", "New chat from summary", a context meter
 ("Context N of M") and "Cost so far". "New chat from summary" opens a draft of the summary, up to
-16 KB, that you can edit before starting a new chat with it.
+16 KB, that you can edit before starting a new chat with it. The new chat can use another agent: the
+picker offers "Start with" the same agent and says "Pick another below to switch".
 
 ## Permission prompts and Attention
 

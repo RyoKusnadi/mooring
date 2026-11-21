@@ -39,7 +39,7 @@ func TestSnapshotListsChatsAndAgents(t *testing.T) {
 	if err := json.Unmarshal(data, &w); err != nil {
 		t.Fatal(err)
 	}
-	if w.Snapshot.Chats == nil || len(w.Snapshot.Agents) != 5 || w.Snapshot.Agents[0].ID != "claude" || !w.Snapshot.Agents[0].Tested {
+	if w.Snapshot.Chats == nil || len(w.Snapshot.Agents) != 6 || w.Snapshot.Agents[0].ID != "claude" || !w.Snapshot.Agents[0].Tested {
 		t.Fatalf("snapshot: %s", data)
 	}
 }

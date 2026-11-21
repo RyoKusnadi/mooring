@@ -48,7 +48,7 @@ servers. You start everything from the browser. It is for one user on one machin
 | --- | --- | --- |
 | Projects and files | Add a folder, clone a repository or make one. Browse, edit, rename, move, upload, download, find by name or text. | [Projects and files](docs/guide/projects-and-files.md) |
 | Terminals | Shells in tabs and split panes. A bell in a terminal marks its tab. A terminal keeps running when you close the page. | [Terminals](docs/guide/terminals.md) |
-| Agent chats | Talk to Claude, Gemini, Codex, Grok or Cursor. Allow or reject each command. Use several accounts and add tool servers. | [Agent chats](docs/guide/agent-chats.md) |
+| Agent chats | Talk to Claude, Gemini, Codex, Grok, Cursor or Antigravity. Allow or reject each command. Use several accounts and add tool servers. | [Agent chats](docs/guide/agent-chats.md) |
 | Git | Stage whole files or single lines, commit, switch branches, push, fetch, pull, stash and use worktrees. | [Git](docs/guide/git.md) |
 | SSH | Open a terminal and browse files on a saved host. Remember its password in a secret store. | [SSH](docs/guide/ssh.md) |
 | Language servers | Errors, hover text, completions and go to definition in the editor. Install a server from a bar above the file. | [Language servers](docs/guide/language-servers.md) |
@@ -56,11 +56,12 @@ servers. You start everything from the browser. It is for one user on one machin
 
 ## Why Mooring
 
-Mooring does not replace your agent. It runs the same agent (Claude, Gemini, Codex, Grok, Cursor)
-through ACP and adds a workspace around it. What you get over a terminal window:
+Mooring is not tied to one agent. It runs the same agent you use in a terminal (Claude, Gemini,
+Codex, Grok, Cursor or Antigravity) through ACP and adds a workspace around it. What you get over
+a terminal window:
 
-- **Several agents in one window.** Chats sit in tabs. You can use several accounts of one
-  provider, each with its own limits.
+- **Six agents in one window.** Chats with different agents run side by side in tabs. You can use
+  several accounts of one provider, each with its own limits.
 - **You see which chat needs you.** A tab that waits for a permission answer, a question, a stopped
   chat or a terminal bell gets a mark.
 - **Nothing stops when you close the page.** Chats and terminals live in the program. Reload and
@@ -74,6 +75,19 @@ through ACP and adds a workspace around it. What you get over a terminal window:
 When the plain CLI is enough: if you run one agent at a time and review in your own editor, the
 agent's CLI alone is simpler. New CLI features also reach the CLI first. Mooring only gets what the
 ACP adapter exposes.
+
+### Working with more than one agent
+
+Agents do not message each other. There are two ways to make them work together.
+
+- **Hand over.** In the "Chat options" menu (the … in the chat header), "New chat from summary" writes a summary
+  of the chat. The agent writes it, or Mooring cuts it from the messages if the agent cannot. It
+  opens in a new chat tab where you can edit it (16 KB at most). The picker offers "Start with" the
+  same agent and says "Pick another below to switch", so you can pass the work from Claude to
+  Gemini. The new agent reads the summary before your first message.
+- **Share the project.** Parallel chats work in the same project folder, or each in its own git
+  worktree ("Work in its own worktree" in the picker) so they do not touch each other's files. Tool
+  servers you enable are offered to every chat. You review all their changes in one Changes view.
 
 ## How it works
 
@@ -129,7 +143,7 @@ the details, including how to sign out other browsers.
 3. **Start a chat.** Press Alt+A, or click + in a pane and choose "Chat". Pick an agent. One that is not installed
    shows an Install button, and Claude asks you to run `claude auth login` first.
 
-   <img src="docs/guide/images/agent-chats-picker.png" width="700" alt="The Start a chat tab listing Claude with a sign-in command, Gemini, and Codex, Grok and Cursor marked Not installed with an Install button.">
+   <img src="docs/guide/images/agent-chats-picker.png" width="700" alt="The Start a chat tab listing Claude with a sign-in command and Gemini as ready, and Codex, Grok, Cursor and Antigravity marked Not installed with Install buttons.">
 
 4. **Answer the agent.** When it wants to run a command, the chat shows "Needs permission" with the
    command, and the tab, the project and the status bar get a mark. Click Allow or Reject.

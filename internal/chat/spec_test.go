@@ -13,7 +13,7 @@ func TestDefaultCatalogEntries(t *testing.T) {
 			t.Fatalf("claude entry: %+v", d)
 		}
 	}
-	if strings.Join(ids, ",") != "claude,gemini,codex,grok,cursor" {
+	if strings.Join(ids, ",") != "claude,gemini,codex,grok,cursor,antigravity" {
 		t.Fatalf("catalog: %v", ids)
 	}
 	missing := AgentDef{ID: "x", Name: "X", Needs: []string{"definitely-not-installed-xyz"}}.Info()

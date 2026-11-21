@@ -13,7 +13,7 @@ First public version. What exists:
 - Projects: add a folder, clone a repository or make one. A file tree with edit, rename, move, upload,
   download, trash and search by name or text.
 - Terminals in tabs and split panes that keep running when the page closes. A bell marks the tab that needs you.
-- Agent chats over ACP for Claude, Gemini, Codex, Grok and Cursor. Each command asks for permission.
+- Agent chats over ACP for Claude, Gemini, Codex, Grok, Cursor and Antigravity. Each command asks for permission.
   Several accounts per agent with their limits, tool servers (MCP), queued messages, and token saving
   (output compaction and a ledger).
 - Git: status, diff, stage whole files or single lines, commit, branches, push, fetch and pull (fast-forward

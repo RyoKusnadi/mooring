@@ -1,7 +1,7 @@
 # Mooring
 
 One Go binary that serves a Svelte 5 web app: a browser workspace for terminals, AI coding
-agents (any ACP agent: Claude, Grok, Cursor, Gemini, Codex, and others), files, git, SSH and
+agents (any ACP agent: Claude, Grok, Cursor, Gemini, Codex, Antigravity, and others), files, git, SSH and
 language servers. Single user, one machine. Everything is started from the browser.
 
 This file is for coding agents and for people who want the short version. Human contributors:

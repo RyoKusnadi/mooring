@@ -66,6 +66,10 @@ func DefaultCatalog() []AgentDef {
 			ID: "cursor", Name: "Cursor", Command: "agent", Args: []string{"acp"},
 			Needs: []string{"agent"}, Note: "Cursor's coding agent.",
 		},
+		{
+			ID: "antigravity", Name: "Antigravity", Command: "agy", Args: []string{"acp"},
+			Needs: []string{"agy"}, Note: "Google Antigravity's agent (agy 1.5 or later). Sign in once by running `agy`.",
+		},
 	}
 }
 

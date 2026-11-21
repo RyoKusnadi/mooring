@@ -1,0 +1,12 @@
+[Unit]
+Description=Mooring
+
+[Service]
+ExecStart="/opt/My Apps/mooring" "-addr" "127.0.0.1:7340" "-data" "/home/test/My Data & Stuff" "-shell" "/bin/zsh" "-secrets-passphrase-file" "/keys/pass<1>.txt" "-quiet"
+Environment="PATH=/usr/bin:/opt/a b:/x/50%%$HOME\"q\""
+Environment="SHELL=/bin/zsh"
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

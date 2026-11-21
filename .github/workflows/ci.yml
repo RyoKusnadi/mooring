@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: make check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    # Linux has had little hands-on use, so a failure there is reported but does not block a merge yet.
+    continue-on-error: ${{ matrix.os == 'ubuntu-latest' }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.6.0
+
+      # Installs golangci-lint v2 only; `make check` runs it.
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+          install-only: true
+
+      - name: Point make at golangci-lint
+        run: echo "GOLANGCI=$(command -v golangci-lint)" >> "$GITHUB_ENV"
+
+      # The browser tests use the Google Chrome that the runner image already has.
+      - name: Check that Chrome is installed
+        run: |
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            test -d "/Applications/Google Chrome.app"
+          else
+            google-chrome --version
+          fi
+
+      - run: make check

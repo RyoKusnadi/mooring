@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in Mooring does not work as described.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a security problem, do not open an issue. Use the private report described in SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Mooring version
+      description: Output of `mooring version`.
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: For example macOS 15.2 on Apple silicon, or Ubuntu 24.04 on x86-64.
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Numbered steps from a fresh start, if you can.
+      placeholder: |
+        1. Add a project
+        2. Open a terminal
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log lines or a screenshot
+      description: Remove tokens, passwords and private paths first.

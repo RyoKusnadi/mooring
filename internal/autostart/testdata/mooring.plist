@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>local.mooring</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>/opt/My Apps/mooring</string>
+		<string>-addr</string>
+		<string>127.0.0.1:7340</string>
+		<string>-data</string>
+		<string>/home/test/My Data &amp; Stuff</string>
+		<string>-shell</string>
+		<string>/bin/zsh</string>
+		<string>-secrets-passphrase-file</string>
+		<string>/keys/pass&lt;1&gt;.txt</string>
+		<string>-quiet</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>PATH</key>
+		<string>/usr/bin:/opt/a b:/x/50%$HOME&#34;q&#34;</string>
+		<key>SHELL</key>
+		<string>/bin/zsh</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>ProcessType</key>
+	<string>Interactive</string>
+	<key>StandardOutPath</key>
+	<string>/home/test/My Data &amp; Stuff/logs/autostart.log</string>
+	<key>StandardErrorPath</key>
+	<string>/home/test/My Data &amp; Stuff/logs/autostart.log</string>
+</dict>
+</plist>

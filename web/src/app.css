@@ -1,0 +1,271 @@
+/* Tokens follow DESIGN.md. Light on bare :root, dark in the media query. */
+:root {
+  /* surfaces: --bg is also the terminal background */
+  --bg: #f9fbf9;
+  --surface: #ecf0ee;
+  --raised: #ffffff;
+  --hover: #e2e8e5;
+  --selected: #cbe7e2;
+  /* text */
+  --fg: #1d2321;
+  --muted: #56605c;
+  --faint: #626c68;
+  /* lines: --border is decorative, --border-strong is the edge of a control (3:1) */
+  --border: #d5dbd8;
+  --border-strong: #7d8884;
+  /* the edge of a button only (DESIGN.md: button edge exception) */
+  --border-btn: #b9c1bd;
+  /* meaning */
+  --accent: #1d6b66;
+  --accent-hover: #165a55;
+  --on-accent: #ffffff;
+  --attention: #8a5a00;
+  --attention-bg: #fbf0d5;
+  --danger: #b3261e;
+  --success: #2b6a3a;
+  --diff-add: #dcf0df;
+  --diff-del: #fbe3e0;
+  --scrim: rgb(0 0 0 / 0.45);
+  --shadow-dialog: 0 8px 32px rgb(0 0 0 / 0.28);
+  --shadow-menu: 0 4px 16px rgb(0 0 0 / 0.18);
+  /* terminal ANSI 0-15 */
+  --ansi-0: #1d2321;
+  --ansi-1: #b3261e;
+  --ansi-2: #2b6a3a;
+  --ansi-3: #8a5a00;
+  --ansi-4: #2a5fb0;
+  --ansi-5: #8b3f9c;
+  --ansi-6: #14707a;
+  --ansi-7: #5a6460;
+  --ansi-8: #66716d;
+  --ansi-9: #c8372d;
+  --ansi-10: #357a46;
+  --ansi-11: #976400;
+  --ansi-12: #386cbf;
+  --ansi-13: #9f4eb2;
+  --ansi-14: #167a85;
+  --ansi-15: #3b4541;
+  /* type */
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --fs-xs: 11px;
+  --fs-s: 12px;
+  --fs-m: 13px;
+  --fs-read: 15px; /* chat text, 24px lines */
+  --lh-read: 24px;
+  --fs-l: 16px;
+  --fs-xl: 20px;
+  --fs-code: 13px; /* code in chat, 19.5px lines */
+  --lh-code: 19.5px;
+  --chat-col: 760px;
+  /* space (4px base), radius, control height */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --r-s: 3px;
+  --r-m: 6px;
+  --control-h: 30px;
+  --bar-h: 36px;
+  --ease: 120ms ease-out;
+  color-scheme: light;
+}
+
+/* data-theme is set before first paint by public/theme.js, and by lib/appearance.ts when the choice changes. */
+:root[data-theme='dark'] {
+  --bg: #0f1413;
+  --surface: #1a201e;
+  --raised: #222928;
+  --hover: #29312f;
+  --selected: #1a3c39;
+  --fg: #e4e9e6;
+  --muted: #9ba5a0;
+  --faint: #8f9a95;
+  --border: #323a38;
+  --border-strong: #707b76;
+  --border-btn: #46514d;
+  --accent: #6cc4bc;
+  --accent-hover: #8dd3cc;
+  --on-accent: #0c1b19;
+  --attention: #e8b04a;
+  --attention-bg: #2c2412;
+  --danger: #ff8a80;
+  --success: #7fcf92;
+  --diff-add: #17301f;
+  --diff-del: #3c1f1d;
+  --ansi-0: #6a7772;
+  --ansi-1: #e5716a;
+  --ansi-2: #6fc283;
+  --ansi-3: #e8b04a;
+  --ansi-4: #7aa7f0;
+  --ansi-5: #c792e0;
+  --ansi-6: #5ec8d4;
+  --ansi-7: #c4cdc9;
+  --ansi-8: #7d8984;
+  --ansi-9: #ff8a80;
+  --ansi-10: #9be0ab;
+  --ansi-11: #f2c86e;
+  --ansi-12: #9bbff7;
+  --ansi-13: #d9aef0;
+  --ansi-14: #86dce6;
+  --ansi-15: #eef2f0;
+  color-scheme: dark;
+}
+
+/* Text size choice (Settings, Appearance). */
+@media (pointer: fine) {
+  :root[data-size='small'] {
+    --fs-s: 11px;
+    --fs-m: 12px;
+    --fs-l: 15px;
+    --fs-read: 14px;
+    --lh-read: 22px;
+    --fs-code: 12px;
+    --lh-code: 18px;
+  }
+  :root[data-size='large'] {
+    --fs-s: 13px;
+    --fs-m: 15px;
+    --fs-l: 18px;
+    --fs-read: 17px;
+    --lh-read: 26px;
+    --fs-code: 15px;
+    --lh-code: 22px;
+  }
+}
+
+/* Touch screens: 44px targets and 16px inputs (no iOS zoom on focus). */
+@media (pointer: coarse) {
+  :root {
+    --control-h: 44px;
+    --bar-h: 48px;
+    --fs-s: 13px;
+    --fs-m: 16px;
+    --fs-read: 16px;
+    --lh-read: 25px;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: var(--fs-m) / 1.5 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+button,
+label[for],
+select,
+summary,
+a[href] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.field {
+  display: grid;
+  gap: var(--s-1);
+  min-width: 0;
+}
+.field > label,
+.field > .label {
+  font-size: var(--fs-s);
+  font-weight: 600;
+}
+.input {
+  width: 100%;
+  min-height: var(--control-h);
+  padding: 0 var(--s-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-m);
+  background: var(--raised);
+  color: var(--fg);
+  font: inherit;
+  transition: border-color var(--ease);
+}
+.input:hover {
+  border-color: var(--fg);
+}
+/* Custom chevron: a rotated corner of a box, so it follows the token and needs no image. */
+.select {
+  position: relative;
+  display: block;
+}
+.select::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 5px);
+  right: 12px;
+  width: 6px;
+  height: 6px;
+  border: solid var(--muted);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+select.input {
+  padding-right: var(--s-5);
+  appearance: none;
+}
+.input:disabled {
+  border-color: var(--border);
+  background-color: var(--surface);
+  color: var(--faint);
+}
+.input.mono {
+  font-family: var(--font-mono);
+}
+.input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+.help {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-s);
+}
+.error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--fs-s);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Text for screen readers only. */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

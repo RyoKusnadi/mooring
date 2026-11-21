@@ -1,0 +1,5 @@
+commit: e26cf3407d71b9ebd63c3be72ebc6e8be98e7ff6
+migrations applied: 6
+made by: scripts/upgrade-fixture.sh schema-6 e26cf3407d71b9ebd63c3be72ebc6e8be98e7ff6
+rows: seed.sql (made-up; nothing personal). {{ROOT}} in mooring.sql is replaced by the test's data folder.
+token: a fixed string, not a secret.

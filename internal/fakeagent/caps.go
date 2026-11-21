@@ -1,0 +1,39 @@
+package fakeagent
+
+import (
+	"os"
+	"strings"
+)
+
+// initializeResult is the fake's `initialize` reply. FAKE_LOAD and FAKE_RESUME
+// advertise those, FAKE_CLOSE keeps naming one session method, and FAKE_CAPS is a
+// comma list of: list, close, delete, fork, systemPrompt, additionalDirectories
+// (session methods), mcpAcp and audio. Other names are ignored.
+func initializeResult() map[string]any {
+	sc := map[string]any{}
+	if os.Getenv("FAKE_RESUME") == "1" {
+		sc["resume"] = map[string]any{}
+	}
+	if v := os.Getenv("FAKE_CLOSE"); v != "" {
+		sc[v] = map[string]any{} // "close" or "delete"
+	}
+	mcp := map[string]bool{"http": true}
+	prompt := map[string]bool{"image": true, "embeddedContext": os.Getenv("FAKE_EMBED") == "1"}
+	for _, k := range strings.Split(os.Getenv("FAKE_CAPS"), ",") {
+		switch k = strings.TrimSpace(k); k {
+		case "list", "close", "delete", "fork", "systemPrompt", "additionalDirectories":
+			sc[k] = map[string]any{}
+		case "mcpAcp":
+			mcp["acp"] = true
+		case "audio":
+			prompt["audio"] = true
+		}
+	}
+	return map[string]any{
+		"protocolVersion": 1, "authMethods": []any{},
+		"agentCapabilities": map[string]any{
+			"loadSession": os.Getenv("FAKE_LOAD") == "1", "sessionCapabilities": sc,
+			"promptCapabilities": prompt, "mcpCapabilities": mcp,
+		},
+	}
+}

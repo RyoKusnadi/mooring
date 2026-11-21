@@ -1,0 +1,30 @@
+/* The one frame of every dialog: two widths (480, or 640 with .wide), the top edge at 10dvh, a footer with the main action on the right. */
+dialog.dlg {
+  width: min(480px, calc(100vw - var(--s-4) * 2));
+  max-height: 80dvh;
+  margin: 10dvh auto auto;
+  padding: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--r-m);
+  background: var(--raised);
+  color: var(--fg);
+  box-shadow: var(--shadow-dialog);
+}
+dialog.dlg.wide {
+  width: min(640px, calc(100vw - var(--s-4) * 2));
+}
+dialog.dlg::backdrop {
+  background: var(--scrim);
+}
+dialog.dlg footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--s-2);
+  padding: var(--s-3) var(--s-4);
+  border-top: 1px solid var(--border);
+  position: sticky;
+  bottom: 0;
+  background: var(--raised);
+}

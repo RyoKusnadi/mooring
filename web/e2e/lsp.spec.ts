@@ -186,6 +186,8 @@ test('language servers: consent, completion, errors, disk changes, idle stop, re
   await expect(unsaved).toBeVisible()
   await page.keyboard.press('ControlOrMeta+s')
   await expect.poll(onDisk, { timeout: 10_000 }).toBe(clean)
+  // The file is on disk before the editor hears the save went through; closing earlier asks to discard.
+  await expect(unsaved).toBeHidden()
   await page.getByRole('button', { name: 'Close format.go' }).click({ force: true })
   await expect(page.getByRole('tab', { name: /format\.go/ })).toHaveCount(0)
 

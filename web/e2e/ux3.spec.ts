@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { makeRepo, openProject } from './githelpers'
 import { collectProblems, openSettings, signIn } from './helpers'
 
@@ -12,6 +12,16 @@ const names = () => {
 }
 
 const tabsOf = (page: Page) => page.getByRole('tab')
+
+// Right after sign-in or a reload the app may take focus back, so focus and press again until the
+// value moves. A press that landed is never repeated: the check passes as soon as it has.
+async function pressOn(page: Page, handle: Locator, key: string, want: string) {
+  await expect(async () => {
+    await handle.focus()
+    await page.keyboard.press(key)
+    await expect(handle).toHaveAttribute('aria-valuenow', want, { timeout: 1000 })
+  }).toPass({ timeout: 10_000 })
+}
 
 /** Every name in the sidebar that is cut with an ellipsis. */
 const cutNames = (page: Page) =>
@@ -80,9 +90,7 @@ test('the sidebar resizes by keyboard, stays within 220 and 480, and is remember
   await signIn(page)
   const handle = page.getByRole('separator', { name: 'Sidebar width' })
   await expect(handle).toHaveAttribute('aria-valuenow', '264')
-  await handle.focus()
-  await page.keyboard.press('ArrowRight')
-  await expect(handle).toHaveAttribute('aria-valuenow', '280')
+  await pressOn(page, handle, 'ArrowRight', '280')
   const box = await page.locator('aside#sidebar').boundingBox()
   expect(Math.round(box?.width ?? 0)).toBe(280)
   for (let i = 0; i < 20; i++) await page.keyboard.press('Shift+ArrowRight')
@@ -92,13 +100,7 @@ test('the sidebar resizes by keyboard, stays within 220 and 480, and is remember
   await page.keyboard.press('ArrowRight')
   await page.reload()
   await expect(page.getByRole('separator', { name: 'Sidebar width' })).toHaveAttribute('aria-valuenow', '236')
-  // The app may still be settling after the reload and take focus back, so focus and press until it lands.
-  const sized = page.getByRole('separator', { name: 'Sidebar width' })
-  await expect(async () => {
-    await sized.focus()
-    await page.keyboard.press('Home')
-    await expect(sized).toHaveAttribute('aria-valuenow', '264', { timeout: 1000 })
-  }).toPass({ timeout: 10_000 })
+  await pressOn(page, page.getByRole('separator', { name: 'Sidebar width' }), 'Home', '264')
 })
 
 test('the + menu starts a terminal, a chat or the file finder, and Split opens a terminal', async ({ page }) => {

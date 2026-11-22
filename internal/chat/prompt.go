@@ -8,10 +8,11 @@ import (
 // turnReq is one prompt to send. job is "" for the user's own words, or the kind
 // of a prompt Mooring sends for the user ("summary").
 type turnReq struct {
-	text string
-	job  string
-	atts []sent
-	refs []AttachRef
+	text  string
+	job   string
+	atts  []sent
+	refs  []AttachRef
+	relay *RelayRef // the reply of another chat this prompt carries, if any
 }
 
 // Prompt sends the user's text to the agent and returns once the turn has
@@ -54,16 +55,16 @@ func (c *Chat) beginTurn(q turnReq) (done <-chan struct{}, idx int, err error) {
 		c.mu.Unlock()
 		return nil, 0, apiErr("NOT_RUNNING", "The agent is not running. Resume the chat first.")
 	}
-	summary, fromChat := c.pendingContextLocked()
-	blocks := promptBlocks(q.text, c.caps.EmbeddedContext, summary, fromChat, q.atts)
+	blocks := promptBlocks(q.text, c.caps.EmbeddedContext, c.pendingContextLocked(), q.atts)
 	c.openIdx, c.planIdx = -1, -1
-	idx = c.addLocked(Message{Kind: KindUser, Text: q.text, Job: q.job, Attachments: q.refs})
+	idx = c.addLocked(Message{Kind: KindUser, Text: q.text, Job: q.job, Attachments: q.refs, Relay: q.relay})
 	if c.title == "" && q.job == "" {
 		c.title, c.autoTitle = firstLine(q.text), true
 	}
 	c.state, c.errInfo, c.cancelling = StateRunning, nil, false
 	c.limited, c.turnRejected, c.turnResetsAt = false, false, 0
 	c.turn++
+	c.turnJob = q.job
 	turn, sid := c.turn, c.sessionID
 	ctx, cancel := context.WithCancel(c.baseContext())
 	c.turnCancel = cancel
@@ -79,15 +80,16 @@ func (c *Chat) beginTurn(q turnReq) (done <-chan struct{}, idx int, err error) {
 	return finished, idx, nil
 }
 
-// pendingContextLocked is the summary a fresh chat starts from, until the first user message goes out.
-func (c *Chat) pendingContextLocked() (text, fromChat string) {
+// pendingContextLocked is the context message a fresh chat starts from, until the
+// first user message goes out; after that it is empty.
+func (c *Chat) pendingContextLocked() (start Message) {
 	for _, m := range c.msgs {
 		switch m.Kind {
 		case KindUser:
-			return "", ""
+			return Message{}
 		case KindContext:
-			text, fromChat = m.Text, m.FromChat
+			start = m
 		}
 	}
-	return text, fromChat
+	return start
 }

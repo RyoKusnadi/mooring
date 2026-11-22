@@ -1,4 +1,5 @@
 // Chats the server knows (saved and running) and the open message feed of each.
+import { REVIEW_REQUEST } from './secondopinion'
 import { ChatFeed } from './chatfeed.svelte'
 import type { Attachment } from './attachstore.svelte'
 import type { SocketLike } from './events'
@@ -29,12 +30,18 @@ export interface ChatInfo {
   models: { id: string; name: string }[] | null
   usage: { used: number; size: number; cost?: number; currency?: string } | null
   caps: Record<string, boolean | string[]> | null
-  spec?: { folder?: { path?: string }; account?: { id?: string }; filters?: string[] } | null
+  spec?: { folder?: { path?: string; worktree?: boolean }; account?: { id?: string }; filters?: string[]; agentMade?: boolean } | null
   /** The chat this one started from a summary of. */
   fromChat?: string
   /** After a limit: the account to move to, or null when no other account has room. */
   switchTo?: string | null
   messages: number
+  /** An agent reply finished after the user last looked (chat.seen clears it). */
+  unseen?: boolean
+  /** When the last reply finished, unix ms; 0 for never. */
+  finishedAt?: number
+  /** When the user last looked, unix ms; 0 for never. */
+  seenAt?: number
   /** The end of the newest message of the user or the agent, for lists. */
   lastLine?: string
   updatedAt: number
@@ -56,7 +63,7 @@ class Chats {
   known = $state(false)
   private feeds = new Map<string, ChatFeed>()
   /** A summary waiting on a new chat's start screen, by tab id: the chat it came from and the editable text. */
-  seeds = $state<Record<string, { fromChat: string; text: string; source: string }>>({})
+  seeds = $state<Record<string, { fromChat: string; text: string; source: string; review?: boolean }>>({})
   /** Unsent text by chat, so a draft survives a tab or project switch. */
   readonly drafts = new Map<string, string>()
   /** Messages written while the agent was replying; each goes out when the reply ends. */
@@ -112,16 +119,18 @@ class Chats {
 
   private forget(id: string) {
     delete this.list[id]
-    this.feeds.get(id)?.close()
+    this.feeds.get(id)?.shut()
     this.feeds.delete(id)
     this.drafts.delete(id)
     this.queued.delete(id)
     saveQueue(id, [])
   }
 
-  async start(run: Run, projectId: string, id: string, agent: string, worktree?: { branch: string }, toolServers: string[] = [], from?: { fromChat: string; context: string }) {
+  async start(run: Run, projectId: string, id: string, agent: string, worktree?: { branch: string }, toolServers: string[] = [], from?: { fromChat: string; context: string; withChanges?: boolean }) {
     this.starting[id] = true
     delete this.startError[id]
+    // Set first: the message box can open before this command answers.
+    if (from?.withChanges && !this.drafts.get(id)) this.drafts.set(id, REVIEW_REQUEST)
     try {
       const folder = worktree ? { folder: { worktree: true, ...(worktree.branch ? { branch: worktree.branch } : {}) } } : {}
       const tools = toolServers.length > 0 ? { toolServers: toolServers.map((id) => ({ id })) } : {}
@@ -129,6 +138,7 @@ class Chats {
       this.list[id] = await run<ChatInfo>('chat.start', { id, projectId, agent, ...(spec ? { spec } : {}), ...(from ? from : {}) })
       delete this.seeds[id]
     } catch (e) {
+      if (from?.withChanges && this.drafts.get(id) === REVIEW_REQUEST) this.drafts.delete(id)
       this.startError[id] = e instanceof Error && e.message ? e.message : 'Could not start the chat.'
       throw e
     } finally {
@@ -142,7 +152,7 @@ class Chats {
 
   /** Stops the agent and keeps the saved chat. */
   async close(run: Run, id: string) {
-    this.feeds.get(id)?.close()
+    this.feeds.get(id)?.shut()
     await run('chat.close', { id })
   }
 

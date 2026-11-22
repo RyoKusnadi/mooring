@@ -4,7 +4,8 @@
   import { inputSummary } from './lib/chatfmt'
   import type { ChatFeed } from './lib/chatfeed.svelte'
 
-  let { id, feed, folder = '' }: { id: string; feed: ChatFeed; folder?: string } = $props()
+  /** `stacked`: one column with no side gutter, for the narrow rows of the status board. */
+  let { id, feed, folder = '', stacked = false }: { id: string; feed: ChatFeed; folder?: string; stacked?: boolean } = $props()
 
   // The oldest request first; the first answer from any device wins.
   const msg = $derived(feed.pending.length ? feed.msgs.get(feed.pending[0]) : undefined)
@@ -32,7 +33,7 @@
 </script>
 
 {#if msg}
-  <section class="ask" role="alert" aria-label="Permission request">
+  <section class="ask" class:stacked role={stacked ? 'group' : 'alert'} aria-label="Permission request">
     <div class="req">
       <p class="head"><span class="dot" aria-hidden="true"></span><strong>Needs permission</strong>{#if more > 0}<span class="more">{more} more waiting</span>{/if}</p>
       {#if !command || command !== msg.title}<p class="what">{msg.title}</p>{/if}
@@ -107,6 +108,12 @@
     .ask {
       grid-template-columns: 1fr;
     }
+  }
+  .ask.stacked {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--s-2);
+    border-top: 0;
+    border-radius: var(--r-s);
   }
   .where {
     margin: 0;

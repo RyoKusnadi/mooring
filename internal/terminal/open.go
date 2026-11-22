@@ -15,33 +15,50 @@ type openReq struct {
 	cols, rows                 int
 }
 
+// open starts a terminal and announces it. Events are published after m.mu is
+// released: a page that connects meanwhile builds its snapshot under the hub's
+// lock and then takes m.mu, so publishing under m.mu would deadlock the two.
 func (m *Manager) open(r openReq) (Info, error) {
+	t, err := m.start(r)
+	if err != nil {
+		return Info{}, err
+	}
+	if r.banner != "" {
+		t.publish([]byte(r.banner))
+	}
+	info := t.info()
+	m.pub.Publish("terminal.opened", info)
+	return info, nil
+}
+
+// start makes the shell and adds the terminal, under m.mu.
+func (m *Manager) start(r openReq) (*Terminal, error) {
 	id, projectID, cols, rows := r.id, r.projectID, r.cols, r.rows
 	if !idPattern.MatchString(id) {
-		return Info{}, apiErr("BAD_REQUEST", "A terminal id needs 1 to 64 letters, digits, - or _.")
+		return nil, apiErr("BAD_REQUEST", "A terminal id needs 1 to 64 letters, digits, - or _.")
 	}
 	if r.ssh != "" && (len(r.env) > 0 || r.banner != "") {
-		return Info{}, apiErr("BAD_REQUEST", "A remote shell cannot take extra environment or a banner.")
+		return nil, apiErr("BAD_REQUEST", "A remote shell cannot take extra environment or a banner.")
 	}
 	if cols == 0 && rows == 0 {
 		cols, rows = defaultCols, defaultRows
 	}
 	if cols < minCols || cols > maxCols || rows < 1 || rows > maxRows {
-		return Info{}, apiErr("BAD_REQUEST", "The terminal size is not valid.")
+		return nil, apiErr("BAD_REQUEST", "The terminal size is not valid.")
 	}
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	dir, err := m.Dir(projectID) // under the lock, so CloseProject cannot miss this shell
 	if err != nil {
-		return Info{}, err
+		return nil, err
 	}
 	if r.ssh == "" && r.folder != "" {
 		if dir, err = projectFolder(dir, r.folder); err != nil {
-			return Info{}, err
+			return nil, err
 		}
 	}
 	if err := m.admitLocked(id, projectID); err != nil {
-		return Info{}, err
+		return nil, err
 	}
 	var b Backend
 	if r.ssh != "" {
@@ -50,32 +67,27 @@ func (m *Manager) open(r openReq) (Info, error) {
 		b, err = m.Remote(r.ssh, uint16(cols), uint16(rows))
 		m.mu.Lock()
 		if err != nil {
-			return Info{}, err
+			return nil, err
 		}
 		if err := m.admitLocked(id, projectID); err != nil {
 			_ = b.Close()
-			return Info{}, err
+			return nil, err
 		}
 	} else if b, err = m.startShell(dir, r.env, uint16(cols), uint16(rows)); err != nil {
 		m.log.Error("terminal: start failed", "project", projectID, "err", err)
-		return Info{}, apiErr("INTERNAL", "The shell could not be started.")
+		return nil, apiErr("INTERNAL", "The shell could not be started.")
 	}
 	t, err := newTerminal(m, id, projectID, r.ssh, b, uint16(cols), uint16(rows))
 	if err != nil {
 		m.log.Error("terminal: start failed", "project", projectID, "err", err)
-		return Info{}, apiErr("INTERNAL", "The shell could not be started.")
+		return nil, apiErr("INTERNAL", "The shell could not be started.")
 	}
 	if r.ssh == "" {
 		t.startDir = dir
 	}
-	if r.banner != "" {
-		t.publish([]byte(r.banner))
-	}
 	m.log.Info("terminal: started", "id", id, "project", projectID, "ssh", r.ssh)
 	m.terms[id] = t
-	info := t.info()
-	m.pub.Publish("terminal.opened", info)
-	return info, nil
+	return t, nil
 }
 
 func projectFolder(dir, folder string) (string, error) {

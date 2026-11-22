@@ -11,7 +11,7 @@ import { collectProblems, fixtures, openSettings, signIn } from './helpers'
 
 async function say(page: Page, text: string) {
   await page.getByLabel('Message to Gemini').fill(text)
-  await page.getByRole('button', { name: 'Send' }).click()
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
 }
 
 async function startChat(page: Page) {

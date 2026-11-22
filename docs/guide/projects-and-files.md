@@ -99,6 +99,38 @@ Some files do not open as text. A binary file says "This is a binary file, so it
 here. Open it with another program." A file over 10 MB says "This file is over 10 MB, which is
 more than the editor opens." Images show as pictures.
 
+### Who changed each line
+
+The Blame button in the bar above a file (also "Show who changed each line" in the command
+palette) adds a column before the text. At the start of each run of lines it shows the short commit
+id, the author and how long ago. Lines not committed yet say "Not committed yet". Hover a row to read the
+commit's full summary; click it to open that commit. The bar also says it in words for the line
+the cursor is on and has an "Open commit" button for it (also in the palette), which is how a
+screen reader or the keyboard reaches it. The column is not in the tab order. Blame is off by default and
+off again when you reopen the file.
+
+While the file has unsaved edits the column is hidden, because the lines no longer match what Git
+knows. It comes back after you save. A commit made elsewhere shows only after you turn Blame off and on again. A file that is not in Git yet says so and shows nothing.
+Files on an SSH host have no Blame button. On a phone the author is left out to save width.
+
+### Preview
+
+Markdown (`.md`), CSV and TSV, and HTML files have a Source and Preview switch in the bar above
+the file. Source is the editor and is where a file opens. A tab remembers its choice while it is
+open. The editor tools (Format, Ask the agent) are hidden in Preview, and the file cannot be
+edited there. Preview shows what is in the editor, unsaved edits included, and follows the file
+when it changes on disk. Files on an SSH host have no Preview.
+
+- Markdown is drawn like an agent reply. Raw HTML in it is shown as text, and links to files open
+  in Mooring. Pictures are not loaded.
+- CSV and TSV show a table with the first row as the header. Quoted fields, commas and line breaks
+  inside quotes work. Only the header and the first 1000 rows are drawn; a note says so, and
+  Source shows the whole file.
+- HTML shows in a sandboxed frame. Scripts do not run, and the page cannot reach Mooring. Its
+  links and style files do not load, and pictures load only when they are inline (`data:`), so a page that depends on them looks plainer.
+
+PDF files do not have a preview yet.
+
 ### Unsaved changes
 
 - Closing a tab with edits asks "Close X without saving?" with "Save and close", "Discard changes"
@@ -121,7 +153,8 @@ you select something, and it works on local files only.
 
 Press Alt+O or Cmd+P (Ctrl+P elsewhere; in a focused terminal on Linux, use Alt+O) to open "Find in project". The dialog has two toggles,
 "Open file" and "Search text". Alt+F or Cmd+Shift+F (Ctrl+Shift+F elsewhere) opens it on "Search
-text".
+text". In a focused terminal off a Mac, Ctrl+Shift+F searches the terminal's output instead, so
+use Alt+F there.
 
 To open a file by name:
 
@@ -141,5 +174,20 @@ To search text:
 It shows "Searching…", then "N lines". If there are too many matches it says "Showing the first N
 lines. Narrow the search to see the rest." With none, "Nothing found for “q”." If files changed
 since you searched, it says "Files changed since this search."
+
+### Replace in files
+
+With "Search text" open, click "Replace…" or press Alt+R in the panel (on a Mac, not while the cursor is in the search box). Type the "Replace with" text
+and click "Preview replace" (or press Enter). The preview reads, for example, "Replace in 2 files, 3
+places", and lists each file with its changed lines, before and after. It says which files are open in
+an editor (changed there and left unsaved, so Cmd+Z or Ctrl+Z undoes it) and which are saved to disk
+at once. Files it could not read are listed as not changed. Click "Replace" to make the change, or
+"Back" (or Esc) to go back. The result lists the files changed and any that failed, each with the
+reason.
+
+With "Regex" on, `$1` and `$<name>` in the replacement take the groups of the match. Otherwise the
+text goes in as typed, and an empty field deletes the matches. The search must have finished and
+listed every match; if it stopped early, narrow it with "Files". A file with unsaved changes in a tab
+that is not showing stops the whole replace before anything changes.
 
 Next: [Terminals](terminals.md).

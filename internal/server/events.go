@@ -32,7 +32,9 @@ type Server struct {
 	chatSocket http.Handler
 	// chatOutputs serves the raw command output saved by a chat.
 	chatOutputs http.Handler
-	chats       *chat.Manager
+	// chatSearch finds chats in every project by their words.
+	chatSearch http.Handler
+	chats      *chat.Manager
 	// lspSocket serves the language server relay sockets.
 	lspSocket http.Handler
 	lsp       *lsp.Service
@@ -137,7 +139,7 @@ func (s *Server) mountEvents(srv *server, cfg Config) error {
 	s.settings = settings.New(settings.Config{DB: cfg.Store.DB, Pub: hub, KnownAgent: func(id string) bool { return known[id] }, Log: cfg.Logger})
 	s.chats, err = chat.New(chat.Config{
 		DB: cfg.Store.DB, Pub: hub, Dir: svc.Dir, Catalog: defs, Worktrees: s.git, Tools: s.tools, Accounts: s.accounts,
-		DataDir: cfg.DataDir, Settings: s.settings, Staged: s.git.Staged,
+		DataDir: cfg.DataDir, Settings: s.settings, Staged: s.git.Staged, Uncommitted: s.git.Uncommitted,
 		Log: cfg.Logger, Context: ctx, Now: cfg.Now,
 	})
 	if err != nil {
@@ -150,6 +152,7 @@ func (s *Server) mountEvents(srv *server, cfg Config) error {
 	s.git.SetTerminals(s.terms)
 	s.chatSocket = s.chats.Handler()
 	s.chatOutputs = s.chats.OutputHandler()
+	s.chatSearch = s.chats.SearchHandler()
 	s.files = files.New(files.Config{
 		Pub: hub, Dir: svc.Dir, Ledger: led, Log: cfg.Logger, Context: ctx, Home: home,
 	})

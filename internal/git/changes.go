@@ -84,7 +84,13 @@ func (s *Service) stageOp(ctx context.Context, projectID, folder string, rels []
 		return err
 	}
 	return s.change(pl, func() error {
-		if _, err := s.run(ctx, pl.top, true, nil, append(base, pl.spec(list, all)...)...); err != nil {
+		spec, stdin := pl.spec(list, all), []byte(nil)
+		if base[0] == "add" {
+			if spec, stdin, err = s.stageSpec(ctx, pl, list, all, spec); err != nil {
+				return err
+			}
+		}
+		if _, err := s.run(ctx, pl.top, true, stdin, append(base, spec...)...); err != nil {
 			return s.failure(err)
 		}
 		return nil

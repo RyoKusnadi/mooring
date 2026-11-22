@@ -132,14 +132,8 @@ func (s *server) handle(m msg) {
 		s.initArgs = m.Params
 		time.Sleep(initDelay(m.Params))
 		s.reply(m.ID, map[string]any{
-			"capabilities": map[string]any{
-				"textDocumentSync":           map[string]any{"openClose": true, "change": 2},
-				"completionProvider":         map[string]any{},
-				"hoverProvider":              true,
-				"documentFormattingProvider": true,
-				"documentSymbolProvider":     true,
-			},
-			"serverInfo": map[string]string{"name": "fakelsp"},
+			"capabilities": capabilities(),
+			"serverInfo":   map[string]string{"name": "fakelsp"},
 		})
 	case "shutdown":
 		s.reply(m.ID, nil)
@@ -165,6 +159,8 @@ func (s *server) handle(m msg) {
 		s.reply(m.ID, map[string]any{"contents": map[string]string{"kind": "plaintext", "value": "fake hover"}})
 	case "textDocument/formatting":
 		s.reply(m.ID, s.formatting(m.Params))
+	case "textDocument/references", "textDocument/rename":
+		s.reply(m.ID, s.refactor(m.Method, m.Params))
 	case "textDocument/documentSymbol":
 		var p struct{ TextDocument textDoc }
 		_ = json.Unmarshal(m.Params, &p)

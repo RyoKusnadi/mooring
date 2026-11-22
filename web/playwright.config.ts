@@ -26,7 +26,9 @@ export default defineConfig({
   // focus from the other tests' pages, so the SSH tests run last, on their own.
   projects: [
     { name: 'main', testIgnore: /(chat|tokens|ssh)\.spec|e2e\/docs\// },
-    { name: 'chat', testMatch: /(chat|tokens)\.spec/, dependencies: ['main'] },
+    // The server runs at most 20 chats at once; this stops the ones the main tests left running.
+    { name: 'stop chats', testMatch: /stopall\.setup\.ts/, dependencies: ['main'] },
+    { name: 'chat', testMatch: /(chat|tokens)\.spec/, dependencies: ['stop chats'] },
     { name: 'ssh', testMatch: /ssh\.spec/, dependencies: ['chat'] },
   ],
   webServer: {

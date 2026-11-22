@@ -1,6 +1,22 @@
 package chat
 
-import "github.com/ryokusnadi/mooring/internal/paths"
+import (
+	"path/filepath"
+
+	"github.com/ryokusnadi/mooring/internal/paths"
+)
+
+// extraDirs is what a chat may read besides its own folder: a worktree chat also
+// reads the project folder, when the agent takes extra folders. Sent on every start.
+func (c *Chat) extraDirs(cp caps) []string {
+	c.mu.Lock()
+	wt, dir, project := c.spec.Folder.Worktree, c.dir, c.projectDir
+	c.mu.Unlock()
+	if !cp.AdditionalDirectories || !wt || !filepath.IsAbs(project) || sameDir(project)(dir) {
+		return nil
+	}
+	return []string{project}
+}
 
 // makeWorktree creates the worktree of a chat and stores its folder in the spec.
 // The returned drop removes it again.

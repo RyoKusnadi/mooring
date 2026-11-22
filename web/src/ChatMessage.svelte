@@ -5,6 +5,7 @@
   import Markdown from './Markdown.svelte'
   import { answerText, PLAN_STATUS } from './lib/chatfmt'
   import { changedFiles } from './lib/chattool'
+  import { lastReplyId } from './lib/chatrelay'
   import { chatPlace, chatRoot } from './lib/chatplace'
   import { actions } from './lib/actions'
   import { chats } from './lib/chatstore.svelte'
@@ -28,11 +29,21 @@
   const hidden = $derived(banner || (quietErrors && msg?.kind === 'error'))
 
   const info = $derived(chats.list[chatId])
+  const relayFrom = $derived(msg?.relay ? chats.list[msg.relay.chat] : undefined)
+  const relayAgent = $derived(msg?.relay ? (chats.agents.find((a) => a.id === msg.relay?.agent)?.name ?? msg.relay.agent) : '')
+  // A reply can be sent on once its turn has ended. The button sits on the turn-end row and sends the turn's last reply.
+  let relaying = $state(false)
+  let relayButton: HTMLButtonElement | undefined = $state()
+  function closeRelay(refocus = true) {
+    relaying = false
+    if (refocus) relayButton?.focus()
+  }
   const projectPath = $derived(app.projects.find((p) => p.id === info?.projectId)?.path ?? '')
   const root = $derived(chatRoot(info, projectPath))
   // The last row of a turn says how many files the turn changed and opens them. A turn runs from one
   // message of yours to the next; the one still replying has no end yet.
   const turnEnd = $derived(!!msg && msg.kind !== 'user' && (feed.msgs.get(index + 1)?.kind === 'user' || (index === feed.count - 1 && info?.state !== 'running')))
+  const replyId = $derived(turnEnd ? lastReplyId((i) => feed.msgs.get(i), index) : null)
   const changed = $derived.by(() => {
     if (!turnEnd) return []
     const turn = []
@@ -50,9 +61,15 @@
     {#if msg.kind === 'user' && msg.job === 'summary'}
       <ChatContext kind="summary" text={msg.text ?? ''} />
     {:else if msg.kind === 'context'}
-      <ChatContext kind="context" text={msg.text ?? ''} fromChat={msg.fromChat} />
+      <ChatContext kind="context" text={msg.text ?? ''} fromChat={msg.fromChat} changes={msg.changes} />
     {:else if msg.kind === 'user'}
       <p class="who">You</p>
+      {#if msg.relay}
+        <p class="from">
+          From {relayAgent} <span aria-hidden="true">·</span>
+          {#if relayFrom}<button type="button" class="link" aria-label="Open the chat {relayFrom.title || 'New chat'}, where this reply came from" onclick={() => actions.openChat(msg.relay!.chat)}>{relayFrom.title || 'New chat'}</button>{:else}<span>a deleted chat</span>{/if}
+        </p>
+      {/if}
       {#if msg.attachments?.length}<ChatChips chips={msg.attachments} />{/if}
       <p class="text">{msg.text}</p>
     {:else if msg.kind === 'agent'}
@@ -84,11 +101,29 @@
     {/if}
   </div>
 {/if}
-{#if changed.length}
+{#if changed.length || replyId !== null}
   <div class="msg turnend">
-    <button type="button" class="btn small" title={changed.join('\n')} onclick={() => actions.showChanges(info ? chatPlace(chatId, info, projectPath) : undefined)}>
-      Changed {changed.length} {changed.length === 1 ? 'file' : 'files'}<span class="sr">. Open the changes</span>
-    </button>
+    <div class="acts">
+      {#if changed.length}
+        <button type="button" class="btn small" title={changed.join('\n')} onclick={() => actions.showChanges(info ? chatPlace(chatId, info, projectPath) : undefined)}>
+          Changed {changed.length} {changed.length === 1 ? 'file' : 'files'}<span class="sr">. Open the changes</span>
+        </button>
+      {/if}
+      {#if replyId !== null}
+        <button type="button" class="btn small" bind:this={relayButton} aria-expanded={relaying} onclick={() => (relaying ? closeRelay() : (relaying = true))}>
+          Send to another chat<span class="sr">. Reply from {agent}</span>
+        </button>
+      {/if}
+    </div>
+    {#if relaying && replyId !== null}
+      {#await import('./ChatRelay.svelte')}
+        <p class="from" role="status">Loading…</p>
+      {:then r}
+        <r.default {chatId} msgId={replyId} onclose={closeRelay} />
+      {:catch}
+        <p class="error" role="alert">Could not open the panel. Try again.</p>
+      {/await}
+    {/if}
   </div>
 {/if}
 
@@ -104,6 +139,34 @@
     color: var(--muted);
     font-size: var(--fs-s);
     font-weight: 600;
+  }
+  .acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s-2);
+  }
+  .from {
+    overflow-wrap: anywhere;
+    margin: 0 0 var(--s-1);
+    color: var(--muted);
+    font-size: var(--fs-s);
+  }
+  .link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    text-align: left;
+    text-decoration: underline;
+  }
+  .link:hover {
+    color: var(--fg);
+  }
+  @media (pointer: coarse) {
+    .link {
+      min-height: 44px;
+    }
   }
   .text {
     margin: 0;

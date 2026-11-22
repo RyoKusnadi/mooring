@@ -27,8 +27,12 @@ type args struct {
 	Filters     []string     `json:"filters"`
 	Attachments []Attachment `json:"attachments"`
 	FromChat    string       `json:"fromChat"`
+	From        string       `json:"from"`   // chat.relay: the chat with the reply
+	MsgIdx      int          `json:"msgIdx"` // chat.relay: the reply's message id
 	Context     string       `json:"context"`
+	WithChanges bool         `json:"withChanges"`
 	Folder      string       `json:"folder"`
+	SessionID   string       `json:"sessionId"` // chat.import: the agent's own session
 }
 
 // Run runs a chat command. Errors are *ledger.Error.
@@ -48,8 +52,8 @@ func (m *Manager) Run(cmd events.Command) (any, error) {
 			return nil, err
 		}
 		return map[string]any{"message": msg, "tokens": tokens}, nil
-	case "chat.start":
-		return m.start(a)
+	case "chat.start", "chat.import", "chat.agentSessions":
+		return m.runStart(cmd.Name, a)
 	case "chat.remove":
 		return m.remove(a.ID)
 	}
@@ -61,6 +65,7 @@ func (m *Manager) Run(cmd events.Command) (any, error) {
 	case "chat.resume":
 		return m.resume(c)
 	case "chat.close":
+		c.closeSession()
 		c.stopAgent(nil, StateStopped, nil)
 		return map[string]any{}, nil
 	case "chat.prompt":
@@ -75,6 +80,11 @@ func (m *Manager) Run(cmd events.Command) (any, error) {
 		return map[string]string{"text": text, "source": source}, nil
 	case "chat.rename":
 		return map[string]any{}, c.Rename(a.Title)
+	case "chat.relay":
+		return map[string]any{}, c.Relay(a.From, a.MsgIdx, a.Text)
+	case "chat.seen":
+		c.Seen()
+		return map[string]any{}, nil
 	case "chat.cancel":
 		c.Cancel()
 		return map[string]any{}, nil
@@ -103,7 +113,8 @@ func (m *Manager) start(a args) (any, error) {
 	if a.Agent != "" {
 		spec.Agent.ID = a.Agent
 	}
-	if err := m.checkContext(a); err != nil {
+	changes, err := m.checkContext(a)
+	if err != nil {
 		return nil, err
 	}
 	if spec.Filters == nil && m.compactDefault() {
@@ -160,7 +171,7 @@ func (m *Manager) start(a args) (any, error) {
 		return nil, err
 	}
 	if a.Context != "" {
-		m.get(a.ID).addContext(a.Context, a.FromChat)
+		m.get(a.ID).addContext(a.Context, a.FromChat, changes)
 		info = m.get(a.ID).Info()
 	}
 	go m.get(a.ID).boot()
@@ -174,6 +185,7 @@ func (m *Manager) create(a args, projectDir, dir string, spec Spec) (Info, error
 		return Info{}, apiErr("INTERNAL", "The chat could not be created.")
 	}
 	c.title, c.fromChat = shorten(a.Title, 120), a.FromChat
+	c.sessionID, c.spec.Imported = a.SessionID, a.SessionID != "" // only chat.import sets both
 	m.mu.Lock()
 	if m.closed {
 		m.mu.Unlock()
@@ -241,11 +253,14 @@ func (m *Manager) claimAs(c *Chat, mover bool) error {
 	if err != nil {
 		return fail(err)
 	}
+	// Under c.mu: a turn that is still ending reads the spec for its last publish.
+	c.mu.Lock()
 	dir, err := c.spec.normalize(m.catalog, m.DefaultAgent, projectDir)
+	def := m.catalog[c.spec.Agent.ID]
+	c.mu.Unlock()
 	if err != nil {
 		return fail(err)
 	}
-	def := m.catalog[c.spec.Agent.ID]
 	if in := def.Info(); !in.Installed {
 		return fail(apiErr("AGENT_NOT_INSTALLED", "%s needs %q, which was not found on this machine.", def.Name, in.Missing))
 	}
@@ -278,6 +293,7 @@ func (m *Manager) remove(id string) (any, error) {
 		m.log.Error("chat: delete failed", "chat", id, "err", err)
 		return nil, apiErr("INTERNAL", "The chat could not be deleted.")
 	}
+	m.forgetSession(c)
 	m.pub.Publish("chat.removed", map[string]string{"id": id, "projectId": c.projectID})
 	return map[string]any{}, nil
 }

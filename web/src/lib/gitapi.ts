@@ -3,6 +3,7 @@
 import type { Fetcher } from './api'
 import { FileError, getJSON, qs } from './filesapi'
 import { CommandError } from './events'
+import type { Operation } from './gitoperation'
 
 export type Side = '' | 'added' | 'modified' | 'deleted' | 'renamed' | 'typechange'
 
@@ -25,6 +26,8 @@ export interface Status {
   stagedOutside: number
   truncated: boolean
   conflicted: boolean
+  /** A merge, rebase, cherry-pick, revert or am is stopped and waits for the user. */
+  operation?: Operation
   /** The last commit is on some remote branch. */
   pushed: boolean
 }
@@ -104,6 +107,9 @@ const MESSAGES: Record<string, string> = {
   PUSH_REJECTED: 'The remote has commits you do not have. Pull first.',
   AUTH_FAILED: 'The remote wants a login that Mooring cannot ask for. Set up an SSH key or a credential helper on the computer running Mooring.',
   CONFLICTED: 'Some files have merge conflicts. Resolve and stage them first.',
+  HAS_MARKERS: 'This file still has conflict markers (<<<<<<< or >>>>>>>). Edit them out and save, then mark it resolved.',
+  NOT_CONFLICTED: 'That file is not in conflict any more. Refresh to see the list.',
+  NO_OPERATION: 'Nothing is in progress any more. Refresh to see where the repository stands.',
   DIRTY: 'This worktree has uncommitted changes or new files. Commit or discard them first. If it holds ignored files and there is no trash, they would be lost, so it is kept. Removing it keeps the branch and its commits.',
   OUTSIDE_PROJECT: 'That path is outside the project.',
   NOT_FOUND: 'Git could not find that. Refresh and try again.',

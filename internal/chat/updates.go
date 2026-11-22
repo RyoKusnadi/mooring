@@ -67,6 +67,10 @@ func (c *Chat) onUpdate(r *run, u update) {
 	infoChanged := false
 	var rate json.RawMessage
 	switch u.Kind {
+	case "user_message_chunk":
+		if c.importing && !c.replaying {
+			c.chunkLocked(KindUser, textOf(u.Content))
+		}
 	case "agent_message_chunk":
 		if !c.replaying {
 			c.chunkLocked(KindAgent, textOf(u.Content))

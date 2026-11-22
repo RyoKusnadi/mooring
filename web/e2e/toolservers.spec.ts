@@ -35,7 +35,7 @@ async function chatWith(page: Page, name: string) {
   await panel.getByLabel(name).check()
   await panel.getByRole('button', { name: 'Start chat with Gemini' }).click()
   await page.getByLabel('Message to Gemini').fill('TOOLS')
-  await page.getByRole('button', { name: 'Send' }).click()
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
   return panel
 }
 

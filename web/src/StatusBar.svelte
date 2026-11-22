@@ -5,14 +5,25 @@
   import { terms } from './lib/termstore.svelte'
   import { needText } from './lib/attention'
   import { waitingText } from './lib/chatfmt'
+  import { git } from './lib/gitstore.svelte'
   import { lsp } from './lib/lspstore.svelte'
   import { lspStatus } from './lib/lspstatus'
+  import { countText } from './lib/problems'
+  import { problems } from './lib/problems.svelte'
 
   const chatsWaiting = $derived(chats.attentionCount())
   const termsWaiting = $derived(terms.attentionCount())
   const progress = $derived(lspStatus(lsp.servers, lsp.progress, lsp.conn))
+  const problemText = $derived(countText(problems.counts(app.currentId)))
   const first = $derived(Object.keys(chats.list).find((id) => chats.list[id].attention))
   const firstTerm = $derived(Object.keys(terms.list).find((id) => terms.needs(id)))
+
+  // A waiting chat opens the board (the drawer on a phone), where the prompt can be answered in
+  // place. A terminal that needs you has no row on the board, so with no chat waiting it opens its tab.
+  function needs() {
+    if (first) git.showBoard()
+    else if (firstTerm) actions.openTerminalTab(firstTerm)
+  }
 </script>
 
 <footer>
@@ -26,8 +37,9 @@
   {#if progress}<span class="info" role="status" title={progress}>{progress}</span>{/if}
   {#if app.info}<span class="info" role="status" title={app.info}>{app.info}</span>{/if}
   {#if app.notice}<span class="error" role="alert">{app.notice}</span>{/if}
+  {#if problemText}<button type="button" class="problems" title="Show problems" aria-label="Show problems: {problemText}" onclick={actions.openProblems}>{problemText}</button>{/if}
   {#if chatsWaiting + termsWaiting > 0}
-    <button type="button" class="attn" onclick={() => (first ? actions.openChat(first) : firstTerm && actions.openTerminalTab(firstTerm))}><span class="dot" aria-hidden="true"></span>{needText(chatsWaiting, termsWaiting, waitingText(Object.values(chats.list)))}</button>
+    <button type="button" class="attn" title={first ? 'Open the status board' : 'Open the terminal that needs you'} onclick={needs}><span class="dot" aria-hidden="true"></span>{needText(chatsWaiting, termsWaiting, waitingText(Object.values(chats.list)))}</button>
   {/if}
 </footer>
 
@@ -60,6 +72,17 @@
     color: var(--attention);
     font-weight: 600;
   }
+  .problems {
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    text-decoration: underline;
+    color: var(--fg);
+  }
+  .problems:focus-visible {
+    outline-offset: -2px;
+  }
   .dot {
     width: 8px;
     height: 8px;
@@ -71,6 +94,7 @@
     outline-offset: -2px;
   }
   @media (pointer: coarse) {
+    .problems,
     .attn {
       min-height: 44px;
       padding: 0 var(--s-2);

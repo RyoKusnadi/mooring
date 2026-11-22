@@ -65,6 +65,10 @@ func (c *Chat) runTurn(ctx context.Context, r *run, turn int, sid string, blocks
 		e := &ErrInfo{Code: "AGENT_FAILED", Message: "The agent could not finish: " + shorten(err.Error(), 200)}
 		c.addLocked(Message{Kind: KindError, Code: e.Code, Text: e.Message})
 	}
+	stopped := ctx.Err() != nil || (err == nil && res.StopReason == "cancelled")
+	if c.turnJob == "" && !stopped {
+		c.finished = c.m.now().UnixMilli()
+	}
 	// Idle comes last: a reader that sees idle also sees the limit or the failure of this turn.
 	if c.state == StateRunning {
 		c.state = StateIdle

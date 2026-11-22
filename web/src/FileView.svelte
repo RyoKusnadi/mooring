@@ -9,8 +9,12 @@
   import type { SymbolStep } from './lib/lspsymbols'
   import Crumbs from './Crumbs.svelte'
   import LspBar from './LspBar.svelte'
+  import FileRefactor from './FileRefactor.svelte'
+  import FileBars from './FileBars.svelte'
+  import FileBlame from './FileBlame.svelte'
   import { baseName, formatBytes } from './lib/paths'
   import { isImagePath } from './lib/imagetype'
+  import { previewKind, rememberPreview, wasPreview } from './lib/previewtype'
   import { ssh } from './lib/sshstore.svelte'
   import { tabHint } from './lib/tabhint.svelte'
   import { app } from './lib/state.svelte'
@@ -21,7 +25,6 @@
   // The view is keyed by tab and path, so these never change for one instance.
   const doc = untrack(() => new FileDoc(app.currentId, id, path, remote))
   let host: HTMLElement | undefined = $state()
-  const closing = $derived(files.closing === id)
 
   onMount(() => {
     if (!remote) void lsp.load().catch(() => {})
@@ -92,37 +95,23 @@
     }
   })
 
-  let keepButton: HTMLButtonElement | undefined = $state()
-  let reloadButton: HTMLButtonElement | undefined = $state()
-
-  // A bar that appears moves focus to its safe button; dismissing it returns focus to the text.
+  // Preview draws markdown, CSV and HTML files. Source, the editor, is the default; a tab keeps its choice.
+  const kind = untrack(() => (!remote ? previewKind(path) : null))
+  let preview = $state(untrack(() => wasPreview(id)))
+  let previewText = $state('')
+  const previewing = $derived(!!kind && preview && doc.status === 'ready' && !doc.progress)
   $effect(() => {
-    if (closing) void tick().then(() => keepButton?.focus())
+    rememberPreview(id, preview)
   })
+  // The text is read when Preview opens and again when the disk changes it; edits cannot happen meanwhile.
   $effect(() => {
-    if (doc.conflict && doc.conflict !== 'deleted' && doc.status === 'ready') void tick().then(() => reloadButton?.focus())
+    void doc.reloads
+    if (previewing) previewText = doc.view?.state.doc.toString() ?? ''
   })
-  // Focus goes back to the editor at once and again when the action ends: a reload makes the
-  // editor read-only while it loads, which drops focus to the page.
-  async function dismiss(run: () => unknown) {
-    const done = run()
-    await tick()
-    doc.view?.focus()
-    await done
-    await tick()
-    doc.view?.focus()
+  function pick(on: boolean) {
+    preview = on
+    if (!on) void tick().then(() => doc.view?.focus())
   }
-
-  async function saveAndClose() {
-    await doc.save()
-    if (!doc.dirty) actions.closeTab(id, true)
-  }
-
-  const CONFLICT = {
-    changed: 'This file changed on disk, and you have unsaved edits here.',
-    save: 'Not saved. The file on disk is newer than the version you opened.',
-    deleted: 'This file was deleted from disk. Save to create it again.',
-  } as const
 
   let askNote = $state('')
   function ask() {
@@ -140,28 +129,20 @@
       {#if doc.progress}Loading {formatBytes(doc.progress.loaded)} of {formatBytes(doc.progress.total)}…{:else if doc.saving}Saving…{:else if doc.dirty}Unsaved changes{:else if doc.updated}Updated from disk{/if}
     </span>
     {#if askNote}<span class="state" role="alert">{askNote}</span>{/if}
-    {#if canFormat}<button type="button" class="btn" disabled={!doc.writable || !!doc.progress || starting} title={starting ? 'The language server is still starting.' : undefined} onclick={() => files.formatters[id]?.()}>Format</button>{#if starting}<span class="state">The language server is starting…</span>{/if}{/if}
-    {#if doc.status === 'ready' && !remote}<button type="button" class="btn" disabled={!doc.selected} onclick={ask}>{doc.selected ? 'Ask the agent about these lines' : 'Select lines to ask the agent'}</button>{/if}
+    {#if kind && doc.status === 'ready' && !doc.progress}
+      <div class="switch" role="group" aria-label="View">
+        <button type="button" aria-pressed={!preview} onclick={() => pick(false)}>Source</button>
+        <button type="button" aria-pressed={preview} onclick={() => pick(true)}>Preview</button>
+      </div>
+    {/if}
+    {#if doc.status === 'ready' && !remote && !previewing && !doc.progress}<FileBlame {doc} {id} {path} />{/if}
+    {#if canFormat && !previewing}<button type="button" class="btn" disabled={!doc.writable || !!doc.progress || starting} title={starting ? 'The language server is still starting.' : undefined} onclick={() => files.formatters[id]?.()}>Format</button>{#if starting}<span class="state">The language server is starting…</span>{/if}{/if}
+    {#if serverId && doc.view && !previewing}<FileRefactor {id} view={doc.view} writable={doc.writable} />{/if}
+    {#if doc.status === 'ready' && !remote && !previewing}<button type="button" class="btn" disabled={!doc.selected} onclick={ask}>{doc.selected ? 'Ask the agent about these lines' : 'Select lines to ask the agent'}</button>{/if}
     {#if doc.status === 'ready' && (doc.dirty || doc.saving)}<button type="button" class="btn primary" disabled={doc.saving || !doc.writable || !!doc.progress} onclick={() => doc.save()}>Save</button>{/if}
   </div>
 
-  {#if closing}
-    <div class="bar" role="alert">
-      <span>Close {baseName(path)} without saving?</span>
-      <button type="button" class="btn primary" onclick={saveAndClose}>Save and close</button>
-      <button type="button" class="btn danger" onclick={() => actions.closeTab(id, true)}>Discard changes</button>
-      <button type="button" class="btn" bind:this={keepButton} onclick={() => dismiss(() => (files.closing = ''))}>Keep editing</button>
-    </div>
-  {/if}
-  {#if doc.conflict && doc.status === 'ready'}
-    <div class="bar" role="alert">
-      <span>{CONFLICT[doc.conflict]}</span>
-      {#if doc.conflict !== 'deleted'}
-        <button type="button" class="btn" bind:this={reloadButton} onclick={() => dismiss(() => doc.reloadTheirs())}>Load the file from disk</button>
-        <button type="button" class="btn" onclick={() => dismiss(() => doc.keepMine())}>Overwrite the file on disk with my version</button>
-      {/if}
-    </div>
-  {/if}
+  <FileBars {doc} {id} {path} />
   {#if doc.notice}<p class="error" role="alert">{doc.notice}</p>{/if}
 
   {#if doc.status === 'loading'}
@@ -178,14 +159,21 @@
     <p class="note error" role="alert">{doc.error}</p>
     {#if doc.retry}<div class="retry"><button type="button" class="btn" onclick={() => ((doc.status = 'loading'), doc.load())}>Try again</button></div>{/if}
   {/if}
-  <div class="stage" class:hidden={doc.status !== 'ready'}>
+  {#if previewing && kind}
+    <div class="preview">
+      {#await import('./Preview.svelte') then m}
+        <m.default {kind} text={previewText} projectId={app.currentId} {path} />
+      {/await}
+    </div>
+  {/if}
+  <div class="stage" class:hidden={doc.status !== 'ready' || previewing}>
     <!-- The language server bar is a row above the code and pushes it down. -->
     {#if doc.status === 'ready' && server}<LspBar {server} {path} />{/if}
     <div class="host" class:hidden={doc.status !== 'ready'} bind:this={host} onfocusin={() => tabHint.on()} onfocusout={() => tabHint.off()}></div>
   </div>
   <!-- Below the code: it shows and hides as the editor gains and loses focus, and above the code that
        would move the bar's buttons between a mouse press and its release. -->
-  {#if doc.status === 'ready'}
+  {#if doc.status === 'ready' && !previewing}
     {#if tabHint.shown || !doc.colours}
       <p class="help" class:solo={doc.colours}>{#if tabHint.shown}<span class="keys">Tab indents. To leave the editor with the keyboard, press Esc, then Tab.</span>{/if}{#if !doc.colours} Colours are off for files over 2 MB.{/if}</p>
     {/if}
@@ -225,33 +213,6 @@
     color: var(--muted);
     font-size: var(--fs-s);
   }
-  .bar {
-    display: flex;
-    flex: none;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--s-2);
-    padding: var(--s-2) var(--s-3);
-    border-bottom: 1px solid var(--border);
-    background: var(--attention-bg);
-    color: var(--attention);
-    font-weight: 600;
-  }
-  .bar span {
-    flex: 1 1 24ch;
-    min-width: 0;
-  }
-  .bar .btn {
-    color: var(--fg);
-    background: var(--raised);
-  }
-  .bar .btn.primary {
-    color: var(--on-accent);
-    background: var(--accent);
-  }
-  .bar .btn.danger {
-    color: var(--danger);
-  }
   .note,
   .help,
   .error {
@@ -289,6 +250,40 @@
     flex: 1;
     min-height: 0;
     overflow: hidden;
+  }
+  .preview {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .switch {
+    display: flex;
+    flex: none;
+    gap: var(--s-1);
+  }
+  .switch button {
+    min-height: var(--control-h);
+    padding: 0 var(--s-2);
+    border: 1px solid transparent;
+    border-radius: var(--r-s);
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: var(--fs-s);
+  }
+  .switch button:hover {
+    background: var(--hover);
+  }
+  .switch button[aria-pressed='true'] {
+    background: var(--selected);
+    color: var(--fg);
+  }
+  @media (max-width: 900px), (pointer: coarse) {
+    .switch button {
+      min-width: 44px;
+      min-height: 44px;
+    }
   }
   .hidden {
     display: none;

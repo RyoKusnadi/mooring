@@ -6,8 +6,11 @@ import { WebglAddon } from '@xterm/addon-webgl'
 import { Terminal, type ITheme } from '@xterm/xterm'
 import '@xterm/xterm/css/xterm.css'
 import { isShortcut } from './actions'
+import { addLinks } from './termlinkprovider'
+import { TermFind, type FindState } from './termsearch'
 import { terms } from './termstore.svelte'
 import { TerminalConnection, type StartInfo, type TermSocket } from './termwire'
+import { onWake } from './wake'
 
 const FIT_DELAY_MS = 80
 const views = new Map<string, TermView>()
@@ -35,6 +38,7 @@ const media = matchMedia('(prefers-color-scheme: dark)')
 const retheme = () => views.forEach((v) => v.restyle())
 media.addEventListener('change', retheme)
 window.addEventListener('mooring-theme', retheme)
+onWake(() => views.forEach((v) => v.wake()))
 
 class TermView {
   readonly term: Terminal
@@ -50,6 +54,7 @@ class TermView {
   private cols = 80
   private rows = 24
   private visible = true
+  private finder: TermFind
 
   constructor(readonly id: string) {
     const info = terms.list[id]
@@ -67,6 +72,8 @@ class TermView {
       theme: theme(),
     })
     this.term.loadAddon(this.fit)
+    addLinks(this.term, id)
+    this.finder = new TermFind(this.term)
     const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/terminals/${encodeURIComponent(id)}`
     this.conn = new TerminalConnection({
       createSocket: () => new WebSocket(url) as unknown as TermSocket,
@@ -139,6 +146,19 @@ class TermView {
 
   focus() {
     this.term.focus()
+  }
+
+  wake() {
+    this.conn.wake()
+  }
+
+  /** Search the scrollback; see TermFind. */
+  find(query: string, dir: 'up' | 'down' | 'same'): FindState {
+    return this.finder.find(query, dir)
+  }
+
+  clearFind() {
+    this.finder.clear()
   }
 
   selection(): string {

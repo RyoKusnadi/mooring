@@ -77,3 +77,22 @@ func TestSettingsRouteNeedsSessionAndGivesDefaults(t *testing.T) {
 		t.Fatalf("foreign origin: %d", w.Code)
 	}
 }
+
+func TestChatSearchRouteNeedsSessionHostAndOrigin(t *testing.T) {
+	h, _ := newTestServer(t)
+	path := "/api/chats/search?q=hello"
+	if w := do(h, req{method: "GET", path: path}); w.Code != 401 {
+		t.Fatalf("no session: %d", w.Code)
+	}
+	cookie := sessionCookieOf(t, login(h, testToken))
+	w := do(h, req{method: "GET", path: path, cookie: cookie})
+	if w.Code != 200 || !strings.Contains(w.Body.String(), `"hits":[]`) {
+		t.Fatalf("search: %d %s", w.Code, w.Body.String())
+	}
+	if w := do(h, req{method: "GET", path: "/api/chats/search?q=" + strings.Repeat("a", 201), cookie: cookie}); w.Code != 400 {
+		t.Fatalf("long query: %d", w.Code)
+	}
+	if w := do(h, req{method: "GET", path: path, cookie: cookie, origin: "http://evil.example"}); w.Code != 403 {
+		t.Fatalf("foreign origin: %d", w.Code)
+	}
+}

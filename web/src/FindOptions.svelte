@@ -1,11 +1,11 @@
 <script lang="ts">
-  let { matchCase = $bindable(), regex = $bindable(), glob = $bindable(), onChange }: { matchCase: boolean; regex: boolean; glob: string; onChange: () => void } = $props()
+  let { matchCase = $bindable(), regex = $bindable(), glob = $bindable(), disabled = false, onChange }: { matchCase: boolean; regex: boolean; glob: string; disabled?: boolean; onChange: () => void } = $props()
 </script>
 
 <div class="opts">
-  <label><input type="checkbox" bind:checked={matchCase} onchange={onChange} /> Match case</label>
-  <label><input type="checkbox" bind:checked={regex} onchange={onChange} /> Regex</label>
-  <label class="glob">Files <input class="input mono" type="text" placeholder="*.go or !*.test.ts" aria-label="Only files matching" spellcheck="false" bind:value={glob} oninput={onChange} /></label>
+  <label><input type="checkbox" {disabled} bind:checked={matchCase} onchange={onChange} /> Match case</label>
+  <label><input type="checkbox" {disabled} bind:checked={regex} onchange={onChange} /> Regex</label>
+  <label class="glob">Files <input class="input mono" type="text" {disabled} placeholder="*.go or !*.test.ts" aria-label="Only files matching" spellcheck="false" bind:value={glob} oninput={onChange} /></label>
 </div>
 
 <style>

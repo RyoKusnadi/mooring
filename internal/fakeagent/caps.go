@@ -1,9 +1,28 @@
 package fakeagent
 
 import (
+	"encoding/json"
 	"os"
 	"strings"
 )
+
+// endSession logs a close or delete to FAKE_CALLS; a delete also removes the saved session.
+func (a *agent) endSession(method, sid string) {
+	a.logCall(method)
+	if method == "session/delete" && sid != "" {
+		_ = os.Remove(a.file(sid))
+	}
+}
+
+// logDirs writes the extra folders a request names to FAKE_CALLS.
+func (a *agent) logDirs(method string, raw json.RawMessage) {
+	var p struct {
+		Dirs []string `json:"additionalDirectories"`
+	}
+	if json.Unmarshal(raw, &p) == nil && len(p.Dirs) > 0 {
+		a.logCall(method + " dirs " + strings.Join(p.Dirs, ","))
+	}
+}
 
 // initializeResult is the fake's `initialize` reply. FAKE_LOAD and FAKE_RESUME
 // advertise those, FAKE_CLOSE keeps naming one session method, and FAKE_CAPS is a

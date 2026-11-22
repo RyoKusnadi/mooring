@@ -13,9 +13,18 @@ export const POLL_MS = 3000
 
 class GitStore {
   /** Which view the sidebar's lower section shows. */
-  view = $state<'files' | 'changes'>('files')
+  view = $state<'files' | 'changes' | 'board'>('files')
   /** Counts requests to show Changes (shortcut, palette, chat header), so the drawer on a phone opens. */
   reveal = $state(0)
+  /** Counts requests to show the board (the status bar), so the drawer on a phone opens. */
+  boardTick = $state(0)
+  /** The board takes focus once, when it next shows after such a request. */
+  focusBoard = false
+  showBoard() {
+    this.view = 'board'
+    this.focusBoard = true
+    this.boardTick++
+  }
   /** Counts requests to open the branch menu (palette: Switch branch). */
   branchRequest = $state(0)
   /** The last branch request a Changes view acted on. */
@@ -237,6 +246,18 @@ class GitStore {
     if (key === this.key() && this.message === sent) this.message = ''
     if (this.drafts.get(key) === sent) this.drafts.delete(key)
     this.notice = `Committed ${r.commit} on ${r.branch || 'a detached head'}.`
+    return true
+  }
+
+  /** Settles one conflicted file: keep a side, or mark the edited file as done. */
+  async resolve(path: string, side: 'ours' | 'theirs' | 'mark') {
+    return (await this.act('git.resolve', { paths: [path], side })) !== undefined
+  }
+
+  async finish(how: 'abort' | 'continue') {
+    const r = await this.act<{ operation?: string }>('git.finish', { how })
+    if (!r) return false
+    this.notice = how === 'abort' ? 'Stopped, and put everything back.' : r.operation ? 'Continued. The next step has conflicts to resolve.' : 'Finished.'
     return true
   }
 

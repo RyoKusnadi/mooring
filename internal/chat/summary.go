@@ -169,9 +169,9 @@ func planSteps(raw json.RawMessage) string {
 }
 
 // addContext puts the summary a fresh chat starts from at the top of its messages.
-func (c *Chat) addContext(text, fromChat string) {
+func (c *Chat) addContext(text, fromChat, changes string) {
 	c.mu.Lock()
-	c.addLocked(Message{Kind: KindContext, Text: text, FromChat: fromChat})
+	c.addLocked(Message{Kind: KindContext, Text: text, FromChat: fromChat, Changes: changes})
 	c.mu.Unlock()
 	c.flush()
 }

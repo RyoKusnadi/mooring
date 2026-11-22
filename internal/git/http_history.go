@@ -53,3 +53,13 @@ func (s *Service) httpStashes(w http.ResponseWriter, r *http.Request) {
 	}
 	reply(w, 200, map[string]any{"stashes": list})
 }
+
+func (s *Service) httpBlame(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	res, err := s.Blame(r.Context(), q.Get("project"), q.Get("folder"), q.Get("path"))
+	if err != nil {
+		s.fail(w, err)
+		return
+	}
+	reply(w, 200, res)
+}

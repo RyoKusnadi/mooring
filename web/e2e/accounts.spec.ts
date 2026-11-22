@@ -20,7 +20,7 @@ async function addProject(page: Page, name: string) {
 
 async function say(page: Page, text: string) {
   await page.getByLabel('Message to Gemini').fill(text)
-  await page.getByRole('button', { name: 'Send' }).click()
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
 }
 
 async function openAccounts(page: Page) {
@@ -70,6 +70,7 @@ test('accounts: add, pick for a project, usage, limit and switch', async ({ page
   // Usage shows after the agent reports a window. The own login has reported nothing.
   await expect(page.getByLabel('Message to Gemini')).toBeEnabled()
   await say(page, 'RATE')
+  await expect(panel.locator('header.head .usage')).toContainText('5 hours: 42% used, resets')
   dialog = await openAccounts(page)
   const usage = dialog.getByRole('list', { name: `Usage of ${name}` })
   await expect(usage).toContainText('5 hours')
@@ -117,4 +118,24 @@ test('accounts: sign-in opens a terminal tab, and a phone width does not scroll 
   expect(await wide('dialog[open]')).toBeLessThanOrEqual(0)
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(0)
   expect(problems).toEqual([])
+})
+
+test('accounts: on a phone the usage line is in the chat menu and the header stays 40px', async ({ page }) => {
+  test.setTimeout(90_000)
+  await signIn(page)
+  await addProject(page, `accounts-usage-${Date.now()}-${test.info().repeatEachIndex}`)
+  await page.setViewportSize({ width: 390, height: 844 })
+  const panel = page.getByRole('tabpanel')
+  await page.getByRole('button', { name: 'New tab' }).click()
+  await page.getByRole('menuitem', { name: 'Chat' }).click()
+  await page.getByRole('button', { name: 'Start chat with Gemini' }).click()
+  await expect(page.getByLabel('Message to Gemini')).toBeEnabled()
+  await say(page, 'RATE')
+  await expect(page.getByLabel('Message to Gemini')).toBeEnabled()
+  const header = panel.locator('header.head')
+  await expect(header.locator('.usage')).toBeHidden()
+  expect((await header.boundingBox())!.height).toBeLessThanOrEqual(41)
+  await panel.getByRole('button', { name: /^Chat options/ }).click()
+  await expect(page.getByRole('group', { name: 'Chat options' })).toContainText('5 hours: 42% used')
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(true)
 })

@@ -41,6 +41,27 @@ export function limited(u: Usage, now = Date.now()): boolean {
 
 export const usageKnown = (u: Usage) => u.source === 'agent' && (u.windows?.length ?? 0) > 0
 
+/**
+ * One line for a chat header: the window with the highest known percentage ("5 hours: 62% used,
+ * resets at 14:00"), and every window for a tooltip. A window whose reset time has passed has an
+ * old percentage, so it is not picked and is listed as not reported since. Null when nothing is left.
+ */
+export function usageLine(u: Usage, now = Date.now()): { text: string; all: string } | null {
+  if (!usageKnown(u)) return null
+  const windows = u.windows ?? []
+  const stale = (w: UsageWindow) => w.resetsAt > 0 && w.resetsAt <= now
+  const has = (w: UsageWindow) => w.usedPercent !== null && w.usedPercent !== undefined
+  const live = windows.filter((w) => has(w) && !stale(w))
+  if (live.length === 0) return null
+  // The fullest window; on a tie, the one that resets later holds the user back longer.
+  const top = live.reduce((a, b) => (b.usedPercent! > a.usedPercent! || (b.usedPercent === a.usedPercent && b.resetsAt > a.resetsAt) ? b : a))
+  const one = (w: UsageWindow) => {
+    if (stale(w)) return `${windowName(w.name)}: not reported since the ${resetText(w.resetsAt, now)}`
+    return `${windowName(w.name)}: ${has(w) ? `${percentText(w)} used` : 'unknown'}, ${resetText(w.resetsAt, now)}`
+  }
+  return { text: one(top), all: windows.map(one).join('\n') }
+}
+
 /** The account names the user told apart, with the built-in one first. */
 export const sortAccounts = (list: Account[]): Account[] =>
   [...list].sort((a, b) => Number(b.id.startsWith('default:')) - Number(a.id.startsWith('default:')) || a.name.localeCompare(b.name))

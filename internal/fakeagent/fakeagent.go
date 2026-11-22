@@ -9,6 +9,7 @@
 // as "not signed in", and FAKE_AUTH=missing also announces it when a session opens.
 // FAKE_CAPS=list,close,delete,fork,systemPrompt,additionalDirectories,mcpAcp,audio advertises those
 // (caps.go); FAKE_STREAM_TOOL=1 makes "STREAM" run a command that streams five outputs (stream.go).
+// FAKE_LOAD_FAILONCE names a file: while it exists, a load replays, then fails and removes it.
 // FAKE_CLOSE=close or delete advertises that session method and FAKE_CALLS names a file
 // that gets one line per such call. A session whose folder is named "jobs" answers
 // "Fake title", or "fake: commit subject" for a commit message prompt. "BENCH task [on|off]"
@@ -124,6 +125,7 @@ func (a *agent) dispatch(m msg) {
 		Cwd       string   `json:"cwd"`
 	}
 	_ = json.Unmarshal(m.Params, &p)
+	a.logDirs(m.Method, m.Params)
 	switch m.Method {
 	case "initialize":
 		a.reply(m.ID, initializeResult())
@@ -137,9 +139,12 @@ func (a *agent) dispatch(m msg) {
 		a.mu.Lock()
 		a.cwds[sid] = p.Cwd
 		a.mu.Unlock()
+		a.saveCwd(sid, p.Cwd)
 		a.reply(m.ID, a.sessionBody(sid))
+	case "session/list":
+		a.reply(m.ID, a.list(p.Cwd))
 	case "session/close", "session/delete":
-		a.logCall(m.Method)
+		a.endSession(m.Method, p.SessionID)
 		a.reply(m.ID, map[string]any{})
 	case "session/load", "session/resume":
 		if _, err := os.Stat(a.file(p.SessionID)); err != nil {
@@ -150,6 +155,10 @@ func (a *agent) dispatch(m msg) {
 		a.setServers(p.SessionID, p.Servers)
 		if m.Method == "session/load" {
 			a.replay(p.SessionID)
+			if f := os.Getenv("FAKE_LOAD_FAILONCE"); f != "" && os.Remove(f) == nil {
+				a.fail(m.ID, -32603, "load stopped partway")
+				return
+			}
 		}
 		a.reply(m.ID, a.sessionBody(p.SessionID))
 	case "session/set_mode":

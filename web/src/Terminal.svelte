@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onDestroy, untrack } from 'svelte'
   import { actions, paletteKey } from './lib/actions'
-  import { showKey } from './lib/keys'
+  import { isMac, showKey } from './lib/keys'
   import { emptyUi, terms } from './lib/termstore.svelte'
   import type { TermView } from './lib/termview'
   import TermKeys from './TermKeys.svelte'
+  import TermFind from './TermFind.svelte'
   import { attach } from './lib/attachstore.svelte'
   import { app } from './lib/state.svelte'
 
@@ -87,6 +88,7 @@
     <div class="stage" class:boxed={!!ui.letterbox} bind:this={stage} data-terminal={id}></div>
     {#if !info}<p class="status">Starting the shell…</p>{/if}
     {#if ui.wire === 'reconnecting'}<p class="status">Reconnecting to the terminal…</p>{/if}
+    {#if ui.find}<TermFind {id} />{/if}
     {#if !ended}
       <div class="strip">
         {#if ui.letterbox}
@@ -95,6 +97,7 @@
           <p class="hint">{showKey('Alt+Esc')} leaves the terminal. {paletteKey} opens commands.</p>
         {/if}
         {#if sendNote}<span class="send-note" role="alert">{sendNote}</span>{/if}
+        <button type="button" class="btn ghost small" aria-keyshortcuts={isMac ? 'Meta+F' : 'Control+Shift+F'} onclick={() => actions.findInTerminal(id)}>Find in output</button>
         <button type="button" class="btn ghost small" onpointerdown={(e) => e.preventDefault()} onclick={sendSelection}>Send selection to chat</button>
       </div>
     {/if}

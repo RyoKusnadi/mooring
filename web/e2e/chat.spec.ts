@@ -20,7 +20,7 @@ async function addProject(page: Page, name: string) {
 
 async function say(page: Page, text: string) {
   await page.getByLabel('Message to Gemini').fill(text)
-  await page.getByRole('button', { name: 'Send' }).click()
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
 }
 
 test('chat: start, stream, permission, cancel, reload and resume, long history', async ({ page }) => {
@@ -69,7 +69,7 @@ test('chat: start, stream, permission, cancel, reload and resume, long history',
   // Cancel a running reply.
   await say(page, 'long')
   await page.getByRole('button', { name: 'Stop reply' }).click()
-  await expect(page.getByRole('button', { name: 'Send' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Send', exact: true })).toBeVisible()
   await expect(page.getByLabel('Message to Gemini')).toBeEnabled()
 
   // Reload: the chat is saved, opens from the sidebar and keeps its messages.

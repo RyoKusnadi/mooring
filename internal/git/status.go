@@ -32,6 +32,8 @@ type Status struct {
 	StagedOut  int      `json:"stagedOutside"`
 	Truncated  bool     `json:"truncated"`
 	Conflicted bool     `json:"conflicted"`
+	// Operation is a merge, rebase, cherry-pick, revert or am that stopped partway, or "".
+	Operation string `json:"operation,omitempty"`
 	// Pushed is true when the last commit is on some remote branch.
 	Pushed bool `json:"pushed"`
 }
@@ -59,6 +61,7 @@ func (s *Service) statusOf(ctx context.Context, pl *place) (*Status, error) {
 	}
 	st := parseStatus(out, pl)
 	st.Truncated = st.Truncated || cut
+	st.Operation = s.operation(ctx, pl)
 	if st.Head != "" {
 		n, ok := s.commitsOffRemotes(ctx, pl.top)
 		st.Pushed = ok && n == 0

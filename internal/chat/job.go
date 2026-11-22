@@ -71,6 +71,7 @@ type jobAgent struct {
 	session sessionResult
 	name    string // the agent's name in messages
 	closeBy string // "session/delete", "session/close" or "" when the agent offers neither
+	caps    caps
 }
 
 // jobsDir is the empty folder jobs run in.
@@ -100,12 +101,25 @@ func jobError(ctx context.Context, err error) error {
 // openJobAgent starts the agent for a project (on accountID, or the project's account
 // when empty) and opens a session in the jobs folder. The caller closes it.
 func (m *Manager) openJobAgent(ctx context.Context, agent, projectID, accountID string) (*jobAgent, error) {
+	a, dir, err := m.startJobAgent(ctx, agent, projectID, accountID)
+	if err != nil {
+		return nil, err
+	}
+	if err := a.newSession(ctx, dir); err != nil {
+		a.close()
+		return nil, jobError(ctx, err)
+	}
+	return a, nil
+}
+
+// startJobAgent starts the agent in the jobs folder and runs initialize, without a session.
+func (m *Manager) startJobAgent(ctx context.Context, agent, projectID, accountID string) (*jobAgent, string, error) {
 	def, ok := m.catalog[agent]
 	if !ok {
-		return nil, apiErr("NOT_FOUND", "There is no agent called %q.", agent)
+		return nil, "", apiErr("NOT_FOUND", "There is no agent called %q.", agent)
 	}
 	if in := def.Info(); !in.Installed {
-		return nil, apiErr("AGENT_NOT_INSTALLED", "%s needs %q, which was not found on this machine.", def.Name, in.Missing)
+		return nil, "", apiErr("AGENT_NOT_INSTALLED", "%s needs %q, which was not found on this machine.", def.Name, in.Missing)
 	}
 	var accEnv []string
 	if m.Accounts != nil {
@@ -114,28 +128,28 @@ func (m *Manager) openJobAgent(ctx context.Context, agent, projectID, accountID 
 			accEnv, err = m.Accounts.Env(agent, id)
 		}
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 	}
 	dir, err := m.jobsDir()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	p, err := startProc(launch{command: def.Command, args: def.Args, dir: dir, env: append(append([]string{}, def.Env...), accEnv...)})
 	if err != nil {
 		m.log.Error("chat: start job agent", "agent", agent, "err", err)
-		return nil, apiErr("AGENT_FAILED", "The agent could not be started.")
+		return nil, "", apiErr("AGENT_FAILED", "The agent could not be started.")
 	}
 	a := &jobAgent{m: m, p: p, h: &jobHandler{}, name: def.Name}
 	a.rpc = newRPC(p.out, p.in, a.h)
-	if err := a.handshake(ctx, dir); err != nil {
+	if err := a.initialize(ctx); err != nil {
 		a.close()
-		return nil, jobError(ctx, err)
+		return nil, "", jobError(ctx, err)
 	}
-	return a, nil
+	return a, dir, nil
 }
 
-func (a *jobAgent) handshake(ctx context.Context, dir string) error {
+func (a *jobAgent) initialize(ctx context.Context) error {
 	var ir initResult
 	err := a.rpc.Call(ctx, "initialize", map[string]any{
 		"protocolVersion": 1, "clientCapabilities": map[string]any{},
@@ -144,12 +158,16 @@ func (a *jobAgent) handshake(ctx context.Context, dir string) error {
 	if err != nil {
 		return err
 	}
-	sc := ir.AgentCapabilities.SessionCapabilities
-	if _, ok := sc["delete"]; ok {
+	a.caps = ir.caps()
+	if a.caps.Delete {
 		a.closeBy = "session/delete"
-	} else if _, ok := sc["close"]; ok {
+	} else if a.caps.Close {
 		a.closeBy = "session/close"
 	}
+	return nil
+}
+
+func (a *jobAgent) newSession(ctx context.Context, dir string) error {
 	if err := a.rpc.Call(ctx, "session/new", map[string]any{"cwd": dir, "mcpServers": []any{}}, &a.session); err != nil {
 		return err
 	}

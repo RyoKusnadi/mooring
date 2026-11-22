@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"slices"
 )
 
@@ -44,10 +45,18 @@ func (c *Chat) handshake(ctx context.Context, r *run) error {
 	cp := ir.caps()
 	c.mu.Lock()
 	c.caps = cp
-	saved := c.sessionID
+	saved, imported := c.sessionID, c.spec.Imported
 	c.mu.Unlock()
 	if err := c.load(); err != nil {
 		return err
+	}
+	// A session brought in from the agent's own program: its replay is the history. The mark
+	// is saved and cleared only after a load that worked, so a restart or a failed load retries.
+	importing := imported && saved != "" && cp.Load
+	if importing && c.hasTalk() {
+		c.mu.Lock()
+		c.noticeLocked("The last try to bring in this session stopped partway. The whole session follows again below.")
+		c.mu.Unlock()
 	}
 	servers, notes := c.mcpServers(ctx, cp)
 	if len(notes) > 0 {
@@ -58,11 +67,23 @@ func (c *Chat) handshake(ctx context.Context, r *run) error {
 		c.mu.Unlock()
 	}
 	params := map[string]any{"cwd": c.dir, "mcpServers": servers}
+	if dirs := c.extraDirs(cp); dirs != nil {
+		params["additionalDirectories"] = dirs
+	}
 	var res sessionResult
 	opened := false
 	if saved != "" {
 		params["sessionId"] = saved
 		switch {
+		case importing:
+			c.setImporting(true)
+			err = r.rpc.Call(ctx, "session/load", params, &res)
+			c.setImporting(false)
+			if err == nil {
+				c.mu.Lock()
+				c.spec.Imported = false // saved with the next info change, when the start ends
+				c.mu.Unlock()
+			}
 		case cp.Resume:
 			err = r.rpc.Call(ctx, "session/resume", params, &res)
 		case cp.Load:
@@ -74,6 +95,10 @@ func (c *Chat) handshake(ctx context.Context, r *run) error {
 		}
 		if err != nil && isAuth(err) {
 			return err
+		}
+		if importing && err != nil {
+			// Keep the link to the session; Resume tries the load again.
+			return fmt.Errorf("could not open the session to bring in: %w", err)
 		}
 		opened = err == nil
 		res.SessionID = saved
@@ -100,6 +125,26 @@ func (c *Chat) handshake(ctx context.Context, r *run) error {
 }
 
 var errNoResume = &rpcError{Code: -32601, Message: "agent cannot resume sessions"}
+
+// setImporting turns on recording of a replay; turning it off closes the last
+// replayed message, so the next reply starts a new one.
+func (c *Chat) setImporting(v bool) {
+	c.mu.Lock()
+	c.importing, c.openIdx = v, -1
+	c.mu.Unlock()
+}
+
+// hasTalk reports whether the chat has a user or agent message.
+func (c *Chat) hasTalk() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, m := range c.msgs {
+		if m.Kind == KindUser || m.Kind == KindAgent {
+			return true
+		}
+	}
+	return false
+}
 
 func (c *Chat) setReplaying(v bool) {
 	c.mu.Lock()

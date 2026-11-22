@@ -36,10 +36,29 @@ then click "Check again".
 Options in the picker:
 
 - "Work in its own worktree" starts the chat in a new git worktree. "Branch name (optional)" left
-  empty makes a branch that starts with `mooring/`. See [Git](git.md).
+  empty makes a branch that starts with `mooring/`. See [Git](git.md). If the agent can take extra
+  folders, the chat also gets the project folder to read, and the header says "Can also read"
+  and the project name. Hover it for the path. Agents that cannot do this only see the worktree.
 - "Tool servers for this chat" lists your enabled tool servers. Tick the ones this chat may use.
   "Set up tool servers" opens the tool server list. See below.
 - If you have chats from before, "Start with X" picks the same agent again.
+
+### Bring in a chat from the agent's own program
+
+If you started a chat in an agent's own program (for example its command line), you can continue
+it in Mooring. On the picker, open "Bring in a chat from an agent's own program", pick the agent
+if more than one is installed, and click "Find chats from NAME". The agent starts for a moment to
+answer, so this can take a few seconds. The palette item "Bring in a chat from an agent's own
+program" opens the picker with this part showing.
+
+The list holds the agent's chats for this project folder, newest first, each with its age. A chat
+without a title reads "Untitled session" and the start of its id. Chats that already open in
+Mooring are left out. Click "Bring in" on one: the chat opens with its earlier messages and you
+can carry on.
+
+If nothing is listed, the message says the agent has no chats for this folder that are not
+already open here. Not every agent can list and reopen its chats; then the message says that
+agent cannot, and the other errors (not installed, not signed in, too slow) say what to do.
 
 ## Talk to the agent
 
@@ -57,10 +76,23 @@ and edit files without asking you first. Switch anyway?" Click "Switch mode" or 
 an agent has no mode that asks before it acts, the chat warns that it may run commands without
 asking.
 
-The "Chat options" menu has "Shorten long output", "New chat from summary", a context meter
+The "Chat options" menu has "Shorten long output", "New chat from summary", "Get a second opinion", a context meter
 ("Context N of M") and "Cost so far". "New chat from summary" opens a draft of the summary, up to
 16 KB, that you can edit before starting a new chat with it. The new chat can use another agent: the
 picker offers "Start with" the same agent and says "Pick another below to switch".
+
+### Get a second opinion
+
+"Get a second opinion" in the "Chat options" menu hands a chat's work to another agent for review.
+It never runs by itself. It writes the summary as above and opens the picker with the summary
+editable. The picker marks the first installed agent that is not the earlier chat's agent as the main
+choice; the same agent is still in the list. When the new chat starts, Mooring reads the uncommitted
+changes in the earlier chat's folder (the diff against the last commit plus the names of new files, cut
+if long) and sends them with the summary. The folder needs a commit, otherwise the chat does not
+start. If the earlier chat worked in the project folder and not its own worktree, the changes may
+include edits that are not from that chat. The message box of the new chat holds a review request
+("Review the work of the earlier chat: ...") that you can edit before you send it. The changes
+show in the new chat under "Uncommitted changes sent with the summary".
 
 ## Permission prompts and Attention
 
@@ -71,8 +103,32 @@ button for each option the agent gives. If several are waiting it says "N more w
 
 A prompt, a question, or a stopped chat counts as Attention. The chat shows a mark in the sidebar,
 the status bar says how many chats need you, the browser tab title reads "(n) Mooring" and the page
-icon gets an amber dot. To get a browser notification when you are in another tab, open Settings,
+icon gets an amber dot. Click the status bar link to open the Board. To get a browser notification when you are in another tab, open Settings,
 Notifications and click "Allow notifications". The notification names the project only.
+
+## Status board
+
+The "Board" switch in the sidebar, next to "Files" and "Changes", lists every chat in every project
+in four groups. Groups with no chats are not shown.
+
+- "Waiting for you": a chat with a permission prompt or a usage limit, the one waiting longest first.
+  The prompt's buttons are in the row, so you can answer without opening the chat. A usage-limit row has
+  no buttons: open the chat to switch account.
+- "Running": chats that are replying.
+- "Finished since you looked": chats whose agent finished a reply while you were not looking at that
+  chat. A reply you stopped, or a summary, does not count. A chat leaves this group when you open it
+  or look at it in a pane.
+- "Idle": the newest 20 other chats.
+
+Each row shows the title, the agent, the project and how long ago it changed. A finished or idle chat
+has a "Reply to" box when the chat is ready for a message: type and press Send, and the message goes to
+the agent without opening the chat. A chat that is stopped or not signed in is in "Idle" with that
+state named, and has no box.
+Click a row to open the chat; if it belongs to another project, Mooring switches to that project first.
+While the Board shows it replaces the "Chats" list in the sidebar; click "Files" or "Changes" to go
+back. The number on the switch counts chats waiting for you plus chats finished since you looked.
+The "needs you" link in the status bar opens the Board, and on a narrow screen it opens the sidebar on
+the Board. A terminal that needs you has no row on the Board; with no chat waiting, the link opens it.
 
 ## Sessions
 
@@ -83,8 +139,43 @@ state: Starting, Replying, Not signed in or Stopped.
 - A chat that is not running says "X is not running. The messages are saved. Resume to keep going."
   Click "Resume chat".
 - Click the pencil to rename a chat. Click the cross to delete it: "Delete this chat?" then
-  "Delete" or "Keep".
+  "Delete" or "Keep". If the agent can delete its own copy of a chat, the question says so
+  ("Mooring removes it and asks NAME to delete its own copy"). A chat you brought in from the
+  agent's own program is only removed from Mooring; the agent keeps it.
 - "Filter chats" appears once a project has more than 5.
+
+## Send a reply to another chat
+
+You can pass one reply of an agent to another chat of the same project, for example to ask Grok
+about what Gemini wrote. Nothing is sent unless you press the button. If the chat you picked started answering in the meantime,
+the panel shows the error and sends nothing.
+
+1. When a turn has ended, click "Send to another chat" on the row under it, next to "Changed N files"
+   if there is one. It sends the last reply of that turn. The button is not there while the agent is
+   still working on the turn.
+2. Pick a chat. Each line shows the agent, then the chat title. A chat that is answering, starting,
+   stopped or not signed in is greyed out and says why in brackets. Only an idle chat can be picked.
+3. Optional: type in "Add a note (optional)".
+4. Click "Send". The line "Sent to ..." appears with "Open that chat". "Cancel" or Escape closes the
+   panel without sending.
+
+The other chat gets a message from you: your note, then the reply quoted with the agent and the chat
+title. Above it, "From <agent> · <chat title>" names where it came from. Click the title to open that
+chat, if it still exists. If that chat was deleted, the label says so and is not a link. A reply longer than 64 KB is cut, and the message says so. If the project has
+no other chat, the panel says so and has a "New chat" button.
+
+## Search chat history
+
+To find a chat by what was said in it, click "History" next to "Chats" in the sidebar, press Alt+Y,
+or pick "Search chat history" in the command palette. The "Chat history" dialog searches every saved
+chat in every project. With nothing typed it lists the newest chats.
+
+- Type words; a chat must have all of them. The last word may be the start of a word.
+- Results are grouped by project. Each row shows the chat title, the agent, when it last changed
+  and the passage that matched, with the matching words marked.
+- Click a row, or press Down to reach it and Enter, to open that chat. If it belongs to another
+  project, Mooring switches to that project first.
+- The search box takes up to 200 characters.
 
 ## Attach files, lines and output
 
@@ -113,6 +204,11 @@ Each row has Sign in, Rename, Make default and Remove. Tags show "Default for ne
 agent's own login", "Folder managed by Mooring" and "Your folder". Usage shows "N% used" per
 window, "Limit reached, ..." or "Usage: unknown." Usage comes from what the agent reports while you
 chat.
+
+Once the agent has reported usage, the chat header shows the fullest window of the chat's account,
+for example "5 hours: 62% used, resets at 14:00". Hover it to see the account and every
+window. The same lines are in the "…" menu at any width, under "Plan usage of X", as a list; on a
+phone the header stays one row, so they are only there. Nothing shows while usage is unknown.
 
 Each project can use a different account. Pick one under "X account for this project". Changing it
 restarts that agent's open chats in the project.

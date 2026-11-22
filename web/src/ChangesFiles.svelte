@@ -10,6 +10,7 @@
   import DiscardConfirm from './DiscardConfirm.svelte'
   import { survivor } from './lib/focusnext'
   import { pathsOf, type Change } from './lib/gitapi'
+  import { sideLabels } from './lib/gitoperation'
   import { git } from './lib/gitstore.svelte'
   import { parentPath } from './lib/paths'
 
@@ -29,6 +30,7 @@
   const rows = $derived<Pick[]>([...staged.map((c) => ({ path: c.path, staged: true })), ...unstaged.map((c) => ({ path: c.path, staged: false }))])
   const tabKey = $derived(sel && rows.some((r) => keyOf(r) === keyOf(sel)) ? keyOf(sel) : rows[0] ? keyOf(rows[0]) : '')
   const discardable = $derived(unstaged.filter((c) => c.kind !== 'conflicted'))
+  const skipped = $derived(unstaged.length - discardable.length)
   const detail = (c: Change, s: boolean) => (c.origPath && s ? `was ${c.origPath}` : parentPath(c.path))
 
   const el = (k: string) => [...(root?.querySelectorAll<HTMLElement>('button[data-key]') ?? [])].find((b) => b.dataset.key === k)
@@ -72,6 +74,7 @@
     const list = p.staged ? staged : unstaged
     const i = list.findIndex((c) => c.path === p.path)
     const c = list[i]
+    if (!p.staged && c.kind === 'conflicted') return
     const next = list[i + 1] ?? list[i - 1]
     const focused = root?.contains(document.activeElement)
     const ok = await (p.staged ? git.unstage(pathsOf(c, true)) : git.stage([c.path]))
@@ -146,7 +149,7 @@
 {#snippet list(isStaged: boolean, items: Change[])}
   <div class="bar">
     <h3>{isStaged ? 'Staged' : 'Changes'} <span class="count">{items.length}</span></h3>
-    <button type="button" class="btn ghost small" disabled={busy} onclick={() => (isStaged ? git.unstage(['']) : git.stage(['']))}>{isStaged ? 'Unstage all' : 'Stage all'}</button>
+    <button type="button" class="btn ghost small" disabled={busy || (!isStaged && discardable.length === 0)} title={!isStaged && skipped > 0 ? `${skipped} conflicted ${skipped === 1 ? 'file is' : 'files are'} left out. Resolve with its buttons.` : undefined} onclick={() => (isStaged ? git.unstage(['']) : git.stage(['']))}>{isStaged ? 'Unstage all' : 'Stage all'}</button>
   </div>
   <ul aria-label={isStaged ? 'Staged files' : 'Unstaged files'}>
     {#each items as c (c.path + (isStaged ? ':s' : ':u'))}
@@ -164,6 +167,8 @@
         onkeys={(e) => keys(e, p)}
         ontoggle={() => toggle(p)}
         ondiscard={() => askOne(c.path)}
+        labels={sideLabels(git.status?.operation)}
+        onresolve={(side) => git.resolve(c.path, side)}
       />
     {/each}
   </ul>

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Starts the server for browser tests (bin/mooring-e2e, built with -tags e2e by make build-e2e) with a stand-in agent behind the name "gemini".
+# Starts the server for browser tests (bin/mooring-e2e, built with -tags e2e by make build-e2e) with a stand-in agent behind the name "gemini" (and a copy behind "grok").
 # The stand-in is the chat package's test binary, which runs as an ACP agent when
 # MOORING_FAKE_AGENT=1 (see internal/fakeagent). Called from web/ by playwright.config.ts.
 # Language servers are stand-ins too: the lsp package test binary runs as one when
@@ -24,10 +24,18 @@ mkdir -p "$data/fakebin" "$data/fakestate"
 (cd .. && go test -c -o "web/$data/fakebin/fakeagent" ./internal/chat)
 cat > "$data/fakebin/gemini" <<WRAP
 #!/bin/sh
-export MOORING_FAKE_AGENT=1 FAKE_RESUME=1 FAKE_STREAM_TOOL=1 FAKE_STATE="$PWD/$data/fakestate"
+export MOORING_FAKE_AGENT=1 FAKE_RESUME=1 FAKE_STREAM_TOOL=1 FAKE_CAPS=additionalDirectories,delete FAKE_STATE="$PWD/$data/fakestate"
 exec "$PWD/$data/fakebin/fakeagent" "\$@"
 WRAP
 chmod +x "$data/fakebin/gemini"
+# A second stand-in agent behind the name "grok", for tests that need two agents (second opinion).
+# It also lists and reopens its own sessions (the import-a-chat test).
+cat > "$data/fakebin/grok" <<WRAP
+#!/bin/sh
+export MOORING_FAKE_AGENT=1 FAKE_RESUME=1 FAKE_STREAM_TOOL=1 FAKE_CAPS=list,additionalDirectories FAKE_LOAD=1 FAKE_STATE="$PWD/$data/fakestate"
+exec "$PWD/$data/fakebin/fakeagent" "\$@"
+WRAP
+chmod +x "$data/fakebin/grok"
 (cd .. && go test -c -o "web/$data/fakebin/fakelsp" ./internal/lsp)
 for name in gopls typescript-language-server; do
   cat > "$data/fakebin/$name" <<WRAP

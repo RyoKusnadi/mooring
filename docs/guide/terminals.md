@@ -36,6 +36,28 @@ shortcuts. A strip under the terminal says "Alt+Esc leaves the terminal. ⌘K op
 On a narrow window or a touch screen, a "Terminal keys" bar shows Ctrl, Esc, Tab and the arrows.
 Tap Ctrl first to send a control key.
 
+## Links in the output
+
+Web addresses and file paths in the output are links: they underline when you point at them. Click a
+web address to open it in a new browser tab. Click a path such as `src/app.ts:12:3` to open the file
+in the editor at line 12. Relative paths count from the folder the terminal started in. Paths outside
+the project, and paths in SSH terminals, are not links.
+
+## Search the output
+
+Click "Find in output" in the strip under the terminal, or press Cmd+F (Ctrl+Shift+F on Windows and
+Linux) while the terminal has focus. Plain Ctrl+F still goes to the shell. A "Find in output" field
+opens above the strip. Type to search the whole scrollback: the newest match is selected and the count
+reads "3 of 12", or "No matches". A lower-case search ignores case; one capital letter makes it exact.
+
+- Enter goes to the next older match, Shift+Enter to the next newer one. Both wrap around. The ↑ and ↓
+  buttons do the same.
+- Esc, or the × button, closes the bar, clears the selection and returns to the terminal.
+- A search covers the output Mooring holds in the terminal, and stops at 1000 matches. It looks at one
+  screen row at a time, so text that wraps onto the next row is not found.
+- In a terminal, Cmd+F (Ctrl+Shift+F elsewhere) finds in the output. To search the project's files from
+  there, use Alt+F, or Cmd+Shift+F on a Mac.
+
 ## Send terminal text to a chat
 
 Select text in the terminal and click "Send selection to chat". The text goes into your agent chat
@@ -58,7 +80,8 @@ notification names the project only.
 
 - A terminal keeps running on the server when you close the browser tab or lose the connection.
   Open Mooring again and the terminal is there. Mooring replays the last 256 KiB of output.
-- While the page reconnects the terminal says "Reconnecting to the terminal…".
+- While the page reconnects the terminal says "Reconnecting to the terminal…". When the network
+  comes back, or you return to the browser tab, it tries again at once.
 - If another window has the terminal open at a different size, you see "Sized by another window: C
   × R. Type here to take over the size."
 - Terminals do not survive a restart of Mooring. After a restart the tab says "This terminal is

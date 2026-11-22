@@ -3,6 +3,7 @@
   // selected file on the right. On a phone the list and the diff are two steps.
   import { tick, untrack } from 'svelte'
   import { actions } from './lib/actions'
+  import ChangesOperation from './ChangesOperation.svelte'
   import ChangesFiles, { type Pick } from './ChangesFiles.svelte'
   import ChangesHead from './ChangesHead.svelte'
   import CommitBox from './CommitBox.svelte'
@@ -93,7 +94,7 @@
       <div class="split" class:clean data-step={stepNow}>
         <div class="left">
           <div class="scroll">
-            {#if status.conflicted}<p class="warn" role="status">Some files have merge conflicts. Resolve and stage them before committing.</p>{/if}
+            {#if status.operation}<ChangesOperation op={status.operation} left={unstaged.filter((c) => c.kind === 'conflicted').length} />{:else if status.conflicted}<p class="warn" role="status">Some files have merge conflicts. Resolve and stage them before committing.</p>{/if}
             {#if clean}<p class="empty" role="status">No changes. Everything is committed{status.head ? ` (last commit ${status.head})` : ''}. Edited, new and deleted files show up here.</p>{/if}
             <ChangesFiles {staged} {unstaged} sel={shown} onselect={(p) => (sel = p)} onopen={() => (step = 'diff')} />
             {#if status.truncated}<p class="hint">The list is cut short because there are too many changes. Commit or discard some, then refresh.</p>{/if}

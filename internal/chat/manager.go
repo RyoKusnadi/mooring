@@ -73,6 +73,8 @@ type Config struct {
 	Settings *settings.Service
 	// Staged gives the staged diff of a folder for commit messages (git.Service.Staged).
 	Staged func(ctx context.Context, projectID, folder string) (stat, diff string, err error)
+	// Uncommitted gives a folder's changes against HEAD for a second opinion (git.Service.Uncommitted).
+	Uncommitted func(ctx context.Context, projectID, folder string) (stat, diff string, err error)
 	// JobHook sees every finished job's usage (the bench reads it).
 	JobHook func(JobRecord)
 	// JobTimeout is how long a small job may take; 0 means 60 seconds.

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
+	"time"
 )
 
 type line struct {
@@ -49,4 +51,35 @@ func (a *agent) replay(sid string) {
 		}
 		a.update(sid, map[string]any{"sessionUpdate": kind, "content": map[string]string{"type": "text", "text": l.Text}})
 	}
+}
+
+// saveCwd keeps the folder a session was made in, for session/list.
+func (a *agent) saveCwd(sid, cwd string) {
+	_ = os.WriteFile(strings.TrimSuffix(a.file(sid), ".json")+".cwd", []byte(cwd), 0o600)
+}
+
+// list answers session/list: the saved sessions made in cwd (all when cwd is ""),
+// titled by their first user line.
+func (a *agent) list(cwd string) map[string]any {
+	out := []map[string]any{}
+	paths, _ := filepath.Glob(a.file("*"))
+	for _, p := range paths {
+		sid := strings.TrimSuffix(strings.TrimPrefix(filepath.Base(p), "fake-session-"), ".json")
+		raw, err := os.ReadFile(strings.TrimSuffix(p, ".json") + ".cwd")
+		if err != nil || (cwd != "" && string(raw) != cwd) {
+			continue
+		}
+		s := map[string]any{"sessionId": sid, "cwd": string(raw)}
+		for _, l := range a.load(sid) {
+			if l.Role == "user" {
+				s["title"] = l.Text
+				break
+			}
+		}
+		if fi, err := os.Stat(p); err == nil {
+			s["updatedAt"] = fi.ModTime().UTC().Format(time.RFC3339)
+		}
+		out = append(out, s)
+	}
+	return map[string]any{"sessions": out}
 }

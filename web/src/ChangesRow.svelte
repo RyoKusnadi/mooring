@@ -4,7 +4,7 @@
   import { sideLetter, sideWord, type Change } from './lib/gitapi'
   import { baseName } from './lib/paths'
 
-  let { c, staged, picked, key, tab, busy, detail, onfocus, onopen, onkeys, ontoggle, ondiscard }: {
+  let { c, staged, picked, key, tab, busy, detail, onfocus, onopen, onkeys, ontoggle, ondiscard, labels, onresolve }: {
     c: Change
     staged: boolean
     picked: boolean
@@ -17,6 +17,8 @@
     onkeys: (e: KeyboardEvent) => void
     ontoggle: () => void
     ondiscard: () => void
+    labels: { ours: string; theirs: string }
+    onresolve: (side: 'ours' | 'theirs' | 'mark') => void
   } = $props()
 </script>
 
@@ -40,15 +42,23 @@
       {#if detail}<span class="dir">{detail}</span>{/if}
     </span>
   </button>
-  <button type="button" class="icon-btn" tabindex="-1" disabled={busy} aria-label={`${staged ? 'Unstage' : 'Stage'} ${c.path}`} title={staged ? 'Unstage (Space)' : 'Stage (Space)'} onclick={ontoggle}><Icon name={staged ? 'minus' : 'plus'} /></button>
+  {#if c.kind !== 'conflicted'}<button type="button" class="icon-btn" tabindex="-1" disabled={busy} aria-label={`${staged ? 'Unstage' : 'Stage'} ${c.path}`} title={staged ? 'Unstage (Space)' : 'Stage (Space)'} onclick={ontoggle}><Icon name={staged ? 'minus' : 'plus'} /></button>{/if}
   {#if !staged && c.kind !== 'conflicted'}
     <button type="button" class="icon-btn danger" tabindex="-1" disabled={busy} aria-label={`Discard changes to ${c.path}`} title="Discard (Delete)" onclick={ondiscard}><Icon name="trash" /></button>
+  {/if}
+  {#if c.kind === 'conflicted'}
+    <div class="fix" role="group" aria-label={`Resolve ${c.path}`}>
+      <button type="button" class="btn small" disabled={busy} onclick={() => onresolve('ours')}>{labels.ours}</button>
+      <button type="button" class="btn small" disabled={busy} onclick={() => onresolve('theirs')}>{labels.theirs}</button>
+      <button type="button" class="btn small" disabled={busy} onclick={() => onresolve('mark')}>Mark resolved</button>
+    </div>
   {/if}
 </li>
 
 <style>
   li {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     border-radius: var(--r-s);
     box-shadow: inset 2px 0 0 transparent;
@@ -124,5 +134,23 @@
   }
   .danger {
     color: var(--danger);
+  }
+  .fix {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: var(--s-1);
+    /* Lines up under the name: row padding, the 18px badge, the gap. */
+    padding: 0 var(--s-1) var(--s-1) calc(var(--s-1) + 18px + var(--s-1));
+  }
+  .small {
+    min-height: calc(var(--control-h) - 4px);
+    padding: 0 var(--s-1);
+    font-size: var(--fs-s);
+  }
+  @media (pointer: coarse) {
+    .small {
+      min-height: 44px;
+    }
   }
 </style>

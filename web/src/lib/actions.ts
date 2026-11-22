@@ -10,11 +10,14 @@ import { git } from './gitstore.svelte'
 import { findDiffTab, findKindTab, flipDiff, newCommitDiffTab, newCommitTab, newDiffTab } from './difftabs'
 import { isInside, joinPath } from './paths'
 import { fileActions } from './fileactions'
+import { termLinks } from './termplace'
 import { sshActions } from './sshactions'
 import { ssh } from './sshstore.svelte'
 import { accounts } from './accountstore.svelte'
 import { settings } from './settingsstore.svelte'
 import { tools } from './toolstore.svelte'
+import { chatHistory } from './chathistorystore.svelte'
+import { problemsView } from './problemsview.svelte'
 import { tick } from 'svelte'
 import { chordOf, composing } from './keys'
 
@@ -49,6 +52,8 @@ function leaveTerminal() {
   void tick().then(() => (id ? document.getElementById('tab-' + id)?.focus() : undefined))
 }
 
+terms.links = termLinks // file paths printed in a terminal open in the editor
+
 const paneMove = (run: () => void) => () => {
   run()
   followFocus()
@@ -71,9 +76,9 @@ export const actions = {
   /** A chat tab starts on the agent picker; the tab id becomes the chat id. */
   newChat: () => app.edit((l) => openTab(l, newTab(newCommandId(), 'chat', 'New chat'))),
   /** A new chat tab whose start screen holds a summary of chat `from`, to edit before it starts. */
-  chatFromSummary: (from: string, text: string, source: string) => {
+  chatFromSummary: (from: string, text: string, source: string, review = false) => {
     const tab = newTab(newCommandId(), 'chat', 'New chat')
-    chats.seeds[tab.id] = { fromChat: from, text, source }
+    chats.seeds[tab.id] = { fromChat: from, text, source, ...(review ? { review } : {}) }
     app.edit((l) => openTab(l, tab))
   },
   /** Replaces a blank tab with a chat tab, in place. */
@@ -167,6 +172,8 @@ export const actions = {
   openTools: () => (tools.dialog = true),
   openAccounts: () => (accounts.dialog = true),
   openSettings: () => (settings.dialog = true),
+  openChatHistory: () => (chatHistory.dialog = true),
+  openProblems: () => (problemsView.dialog = true),
   /** A file tab with unsaved edits asks first, unless `force` (the editor's own buttons) says to drop them. */
   closeTab: (id?: string, force = false) => {
     const l = app.layout
@@ -199,6 +206,15 @@ export const actions = {
   moveToNextPane: paneMove(() => app.edit((l) => moveTabToPane(l, 1))),
   moveToPrevPane: paneMove(() => app.edit((l) => moveTabToPane(l, -1))),
   leaveTerminal,
+  /** Opens the find bar of terminal `id` and puts the cursor in its field. */
+  findInTerminal: (id: string) => {
+    terms.patch(id, { find: true })
+    void tick().then(() => {
+      const field = document.querySelector<HTMLInputElement>(`[data-termfind="${CSS.escape(id)}"] input`)
+      field?.focus()
+      field?.select()
+    })
+  },
   moveToNewPane: (edge: Edge) => app.edit((l) => moveTab(l, l.focus, focusedGroup(l)?.active ?? '', edge)),
   drop: (tabId: string, anchorId: string, where: Edge | 'center', index?: number) =>
     app.edit((l) => moveTab(l, tabId, anchorId, where, index)),
@@ -226,6 +242,8 @@ const SHORTCUTS: Record<string, () => void> = {
   KeyF: () => (files.finder === 'text' ? document.getElementById('find-q')?.focus() : (files.finder = 'text')),
   KeyS: sshActions.openHosts,
   KeyM: () => (tools.dialog = true),
+  KeyY: actions.openChatHistory,
+  KeyP: actions.openProblems,
   KeyW: () => actions.closeTab(),
   ArrowRight: actions.nextTab,
   ArrowLeft: actions.prevTab,

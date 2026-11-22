@@ -12,12 +12,13 @@ test('a notification escape from a background terminal marks its tab and the sta
   await page.getByRole('menuitem', { name: /^Terminal/ }).click()
 
   const bar = page.getByRole('contentinfo')
-  await expect(bar.getByRole('button', { name: '1 terminal needs you' })).toBeVisible({ timeout: 15_000 })
+  // Other tests on the shared server can leave a chat waiting too ("1 chat and 1 terminal need you").
+  await expect(bar.getByRole('button', { name: /\b1 terminal needs? you$|and 1 terminal need you$/ })).toBeVisible({ timeout: 15_000 })
   const mark = page.getByRole('tab').getByRole('img', { name: 'Needs you' })
   await expect(mark).toHaveCount(1)
 
   await page.getByRole('tab').first().click()
   await expect(mark).toHaveCount(0)
-  await expect(bar.getByRole('button', { name: /needs you/ })).toHaveCount(0)
+  await expect(bar.getByRole('button', { name: /terminal/ })).toHaveCount(0)
   expect(problems).toEqual([])
 })

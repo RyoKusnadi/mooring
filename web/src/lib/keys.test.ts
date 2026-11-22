@@ -31,6 +31,14 @@ describe('chordOf', () => {
     expect(chordOf(k('KeyP', { ctrlKey: true, shiftKey: true }), true, false)).toBe('palette')
     expect(chordOf(k('KeyP', { ctrlKey: true }), true, true)).toBeNull()
   })
+  it('finds in a terminal with Cmd+F on a Mac and Ctrl+Shift+F elsewhere', () => {
+    expect(chordOf(k('KeyF', { metaKey: true }), true, true)).toBe('termfind')
+    expect(chordOf(k('KeyF', { metaKey: true }), false, true)).toBeNull()
+    expect(chordOf(k('KeyF', { metaKey: true, shiftKey: true }), true, true)).toBe('search')
+    expect(chordOf(k('KeyF', { ctrlKey: true, shiftKey: true }), true, false)).toBe('termfind')
+    expect(chordOf(k('KeyF', { ctrlKey: true, shiftKey: true }), false, false)).toBe('search')
+    expect(chordOf(k('KeyF', { ctrlKey: true }), true, false)).toBeNull()
+  })
 })
 
 describe('input method composition', () => {

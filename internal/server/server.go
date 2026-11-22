@@ -82,6 +82,7 @@ func New(cfg Config) (*Server, error) {
 	mux.Handle("GET /api/terminals/{id}", s.requireSession(srv.terminals))
 	mux.Handle("GET /api/chats/{id}", s.requireSession(srv.chatSocket))
 	mux.Handle("GET /api/chats/{id}/outputs/{outputId}", s.requireSession(srv.chatOutputs))
+	mux.Handle("GET /api/chats/search", s.requireSession(srv.chatSearch))
 	mux.Handle("GET /api/lsp/{id}", s.requireSession(srv.lspSocket))
 	srv.files.Mount(mux, s.requireSession)
 	srv.git.Mount(mux, s.requireSession)

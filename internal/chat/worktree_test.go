@@ -123,3 +123,61 @@ func TestFailedChatStartDropsItsWorktree(t *testing.T) {
 		t.Fatalf("a worktree was made for a full project")
 	}
 }
+
+// A worktree chat may also read the project folder, sent on every start when the
+// agent takes extra folders; other chats and other agents get none.
+func TestWorktreeChatReadsTheProjectFolder(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git is not installed")
+	}
+	calls := filepath.Join(t.TempDir(), "calls")
+	r := newRig(t, "FAKE_CAPS=additionalDirectories", "FAKE_RESUME=1", "FAKE_CALLS="+calls)
+	real, err := filepath.EvalSymlinks(r.dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, a := range [][]string{{"init", "-q"}, {"config", "user.name", "T"}, {"config", "user.email", "t@example.com"},
+		{"commit", "-q", "--allow-empty", "-m", "first"}} {
+		gitIn(t, real, a...)
+	}
+	gs := git.New(git.Config{Dir: func(string) (string, error) { return real, nil }, TrashDir: "-"})
+	gs.SetChats(chatFolders{r.m})
+	r.m.Worktrees = gs
+	start := func(id string, spec map[string]any) *Chat {
+		if _, err := r.run("chat.start", map[string]any{"id": id, "projectId": r.project, "spec": spec}); err != nil {
+			t.Fatalf("start %s: %v", id, err)
+		}
+		c := r.m.get(id)
+		r.waitState(c, StateIdle)
+		return c
+	}
+	start("plain", map[string]any{})
+	c := start("w1", map[string]any{"folder": map[string]any{"worktree": true}})
+	if _, err := r.run("chat.close", map[string]any{"id": "w1"}); err != nil {
+		t.Fatal(err)
+	}
+	r.waitState(c, StateStopped)
+	if _, err := r.run("chat.resume", map[string]any{"id": "w1"}); err != nil {
+		t.Fatal(err)
+	}
+	r.waitState(c, StateIdle)
+	raw, _ := os.ReadFile(calls)
+	want := "session/new dirs " + r.dir + "\nsession/resume dirs " + r.dir + "\n"
+	if string(raw) != want {
+		t.Fatalf("calls:\n%s\nwant:\n%s", raw, want)
+	}
+}
+
+func TestNoExtraFolderWithoutTheCapability(t *testing.T) {
+	c := &Chat{dir: "/p/.wt/x", projectDir: "/p", spec: Spec{Folder: FolderSlot{Worktree: true}}}
+	if d := c.extraDirs(caps{}); d != nil {
+		t.Fatalf("sent %v to an agent without extra folders", d)
+	}
+	if d := c.extraDirs(caps{AdditionalDirectories: true}); len(d) != 1 || d[0] != "/p" {
+		t.Fatalf("extra folders: %v", d)
+	}
+	c.dir = "/p"
+	if d := c.extraDirs(caps{AdditionalDirectories: true}); d != nil {
+		t.Fatalf("sent the chat's own folder again: %v", d)
+	}
+}

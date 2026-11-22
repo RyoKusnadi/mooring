@@ -30,8 +30,12 @@ export interface ChatMessage {
   job?: string
   /** user: what was attached, without the text. */
   attachments?: Chip[]
+  /** user: a reply the user sent on from another chat, with the chat, its agent id and the message. */
+  relay?: { chat: string; agent: string; msg: number }
   /** context: the chat whose summary this chat started from. */
   fromChat?: string
+  /** context: the uncommitted changes sent with the summary of a second opinion. */
+  changes?: string
 }
 
 export interface Welcome {
@@ -89,6 +93,14 @@ export class ChatConnection {
     this.teardown()
     this.clock.clearTimeout(this.retry)
     this.retry = null
+  }
+
+  /** The network or the tab came back: a connection waiting out its backoff tries now. */
+  wake() {
+    if (this.stopped || this.retry === null) return
+    this.clock.clearTimeout(this.retry)
+    this.delay = BACKOFF_START_MS
+    this.connect()
   }
 
   private setState(s: WireState) {

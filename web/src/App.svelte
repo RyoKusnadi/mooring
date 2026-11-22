@@ -3,12 +3,15 @@
   import Login from './Login.svelte'
   import Shell from './Shell.svelte'
   import { watchAttention } from './lib/notifywatch.svelte'
+  import { watchSeen } from './lib/seenwatch.svelte'
 
   type View = 'loading' | 'signed-in' | 'signed-out' | 'unreachable'
   let view = $state<View>('loading')
 
   // System notifications and the bell switch watch the stores while signed in.
   $effect(() => (view === 'signed-in' ? watchAttention() : undefined))
+  // The server hears which chats are on screen, so "finished since you looked" stays true.
+  $effect(() => (view === 'signed-in' ? watchSeen() : undefined))
 
   checkSession().then(
     (s) => (view = s),

@@ -177,7 +177,7 @@
   {:else if !diff}
     <p class="note" role="status">Loading the diff…</p>
   {:else if diff.binary}
-    <p class="note">This is a binary file, so there are no lines to show. {commit ? '' : staged ? 'It is staged.' : 'Stage it to include it in a commit.'}</p>
+    {#await import('./DiffBinary.svelte') then m}<m.default project={app.currentId} {folder} {path} {staged} {commit} />{/await}
   {:else if diff.tooLarge}
     <p class="note">This diff is over 2 MB, too large to show here. Open a terminal and run git diff for this file.</p>
   {:else if rows.length === 0 && diff.origPath}
@@ -188,7 +188,7 @@
       <button type="button" class="btn" onclick={() => flip(!staged)}>{staged ? 'Show unstaged changes' : 'Show staged changes'}</button>
     </div>
   {:else}
-    {#if !commit && why === 'conflict'}<p class="sub pad">This file has merge conflicts, so lines cannot be chosen. Resolve it in the editor, then stage the file.</p>{/if}
+    {#if !commit && why === 'conflict'}<p class="sub pad">This file has merge conflicts, so lines cannot be chosen. Use the buttons under the file in the list, or edit it and choose Mark resolved.</p>{/if}
     {#if !commit && why === 'rename'}<p class="sub pad">A staged rename is unstaged as a whole file. Use Unstage file to choose lines again.</p>{/if}
     <VirtualList bind:this={list} count={rows.length} label={`Changes in ${path}`} estimate={21} bind:follow jump="Jump to end">
       {#snippet row(i)}

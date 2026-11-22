@@ -5,6 +5,8 @@
   import { inline } from './lib/chatfmt'
   import { actions } from './lib/actions'
   import { tools } from './lib/toolstore.svelte'
+  import { otherAgent } from './lib/secondopinion'
+  import ChatImport from './ChatImport.svelte'
   import ChatSeed, { MAX_CONTEXT } from './ChatSeed.svelte'
 
   let { id }: { id: string } = $props()
@@ -12,6 +14,7 @@
   let starting = $state('')
   let checking = $state(false)
   let error = $state('')
+  let errorCode = $state('')
   let own = $state(false)
   let branch = $state('')
   let picked = $state<string[]>([])
@@ -26,8 +29,11 @@
   // Agents that can start come first; the ones that are not installed follow.
   const sorted = $derived([...chats.agents].sort((a, b) => Number(b.installed) - Number(a.installed)))
   // A chat from a summary starts with the agent of the chat it came from, when that agent is installed.
-  const same = $derived(seed ? chats.agents.find((a) => a.id === chats.list[seed.fromChat]?.agent && a.installed) : undefined)
-  const first = $derived(same?.id ?? chats.agents.find((a) => a.installed)?.id)
+  // A second opinion starts with another agent instead.
+  const earlier = $derived(seed ? chats.list[seed.fromChat]?.agent : undefined)
+  const review = $derived(!!seed?.review)
+  const same = $derived(seed && !review ? chats.agents.find((a) => a.id === earlier && a.installed) : undefined)
+  const first = $derived(review ? otherAgent(chats.agents, earlier)?.id : (same?.id ?? chats.agents.find((a) => a.installed)?.id))
 
   onMount(() => {
     if (!tools.loaded) retryTools()
@@ -37,10 +43,12 @@
   async function start(a: Agent) {
     starting = a.id
     error = ''
+    errorCode = ''
     try {
-      await chats.start((n, args) => app.run(n, args), app.currentId, id, a.id, own ? { branch: branch.trim() } : undefined, picked.filter((p) => tools.get(p)?.enabled), seed?.text.trim() ? { fromChat: seed.fromChat, context: seed.text.trim() } : undefined)
+      await chats.start((n, args) => app.run(n, args), app.currentId, id, a.id, own ? { branch: branch.trim() } : undefined, picked.filter((p) => tools.get(p)?.enabled), seed?.text.trim() ? { fromChat: seed.fromChat, context: seed.text.trim(), ...(seed.review ? { withChanges: true } : {}) } : undefined)
     } catch (e) {
       error = e instanceof Error ? e.message : 'Could not start the chat.'
+      errorCode = (e as { code?: string }).code ?? ''
     } finally {
       starting = ''
     }
@@ -61,7 +69,7 @@
 
 <div class="picker">
   <h2>Start a chat</h2>
-  <p class="help">Pick an agent. It starts in <code>{app.current?.path ?? 'the project folder'}</code> and asks first where the agent supports it.</p>
+  <p class="help">{review ? 'Pick the agent that gives the second opinion. A different agent from the earlier chat is the main choice.' : 'Pick an agent.'} It starts in <code>{app.current?.path ?? 'the project folder'}</code> and asks first where the agent supports it.</p>
   {#if !chats.known}
     <p class="help" role="status">Loading agents…</p>
   {:else if chats.agents.length === 0}
@@ -71,6 +79,10 @@
   {#if same}
     <button type="button" class="btn primary" data-same-agent disabled={!!starting || seedBytes > MAX_CONTEXT} onclick={() => start(same)}>{starting === same.id ? 'Starting…' : `Start with ${same.name}`}</button>
     <p class="help">The same agent as the earlier chat. Pick another below to switch.</p>
+  {/if}
+  {#if review && chats.known && !first && chats.agents.some((a) => a.installed)}<p class="help">Only the agent of the earlier chat is installed. You can still pick it below.</p>{/if}
+  {#if error || chats.startError[id]}
+    <p class="error" role="alert">{error || chats.startError[id]}{#if review && (errorCode === 'NO_COMMIT' || errorCode === 'NOT_A_REPO')} A second opinion needs a git folder with at least one commit. Make a commit, or clear the summary box to start without the changes.{/if}</p>
   {/if}
   <ul bind:this={list}>
     {#each sorted as a (a.id)}
@@ -82,7 +94,7 @@
           {:else if a.note}<span class="why">{#each inline(a.note) as s, i (i)}{#if s.code}<code>{s.text}</code>{:else}{s.text}{/if}{/each}</span>{/if}
         </div>
         {#if a.installed}
-          <button type="button" class="btn" class:primary={a.id === first && !same} disabled={!!starting || seedBytes > MAX_CONTEXT} onclick={() => start(a)}>
+          <button type="button" class="btn" class:primary={a.id === first && !same} data-primary={a.id === first && !same ? '' : undefined} disabled={!!starting || seedBytes > MAX_CONTEXT} onclick={() => start(a)}>
             {starting === a.id ? 'Starting…' : 'Start chat'}<span class="sr"> with {a.name}</span>
           </button>
         {:else}
@@ -91,7 +103,7 @@
       </li>
     {/each}
   </ul>
-  {#if error || chats.startError[id]}<p class="error" role="alert">{error || chats.startError[id]}</p>{/if}
+  {#if !seed}<ChatImport {id} />{/if}
   <details class="opts">
     <summary>Options</summary>
     <div class="tree">

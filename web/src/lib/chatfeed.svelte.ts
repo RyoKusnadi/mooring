@@ -3,6 +3,7 @@
 import { SvelteMap } from 'svelte/reactivity'
 import type { SocketLike } from './events'
 import { ChatConnection, type ChatMessage, type WireState, type Welcome } from './chatwire'
+import { onWake } from './wake'
 
 export class ChatFeed {
   readonly msgs = new SvelteMap<number, ChatMessage>()
@@ -17,6 +18,9 @@ export class ChatFeed {
   readonly mine = new Set<string>()
   private waiting = new Set<number>()
   private conn: ChatConnection
+  private users = 0
+  private gen = 0 // goes up on shut(), so a release from before it does nothing
+  private unwake: (() => void) | null = null
 
   constructor(
     createSocket: () => SocketLike,
@@ -35,12 +39,43 @@ export class ChatFeed {
     return this.conn.pos
   }
 
-  open() {
-    this.conn.start()
+  /**
+   * The socket is open while anything holds it: the chat view, or a permission prompt on the board.
+   * Returns the release for this hold; it runs once, and not at all after shut().
+   */
+  open(): () => void {
+    if (this.users++ === 0) this.start()
+    const gen = this.gen
+    let done = false
+    return () => {
+      if (done || gen !== this.gen) return
+      done = true
+      this.close()
+    }
   }
 
+  /** Lets go of one hold; the socket closes with the last one. */
   close() {
+    if (this.users > 0 && --this.users > 0) return
+    this.stop()
+  }
+
+  /** Closes the socket whatever holds it, for a chat that stopped or was removed. */
+  shut() {
+    this.gen++
+    this.users = 0
+    this.stop()
+  }
+
+  private start() {
+    this.conn.start()
+    this.unwake ??= onWake(() => this.conn.wake())
+  }
+
+  private stop() {
     this.conn.stop()
+    this.unwake?.()
+    this.unwake = null
   }
 
   private welcome(w: Welcome) {

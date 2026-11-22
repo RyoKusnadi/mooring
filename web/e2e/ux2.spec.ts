@@ -63,7 +63,7 @@ test('chat while offline: the header says Offline and a message waits to send', 
   sock.cut()
   await expect(panel.getByText('Offline', { exact: true })).toBeVisible({ timeout: 15_000 })
   await page.getByLabel('Message to Gemini').fill('hello')
-  await page.getByRole('button', { name: 'Send' }).click()
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
   await expect(panel.getByText(/Waiting to send/)).toBeVisible()
   sock.restore()
   await expect(panel.getByText('Hello world', { exact: true })).toBeVisible({ timeout: 30_000 })

@@ -212,30 +212,11 @@ func (s *Service) CommitDiff(ctx context.Context, projectID, folder, id, rel str
 	if err != nil {
 		return nil, err
 	}
-	if rel == "" || len(rel) > 4096 || strings.ContainsRune(rel, 0) || strings.HasPrefix(rel, "/") || path.Clean(rel) != rel || rel == ".." || strings.HasPrefix(rel, "../") {
-		return nil, apiErr("BAD_REQUEST", "That path is not valid. Paths are relative to the repository.")
-	}
-	full, err := s.resolveCommit(ctx, pl, id)
-	if err != nil {
-		return nil, err
-	}
-	pre, err := s.run(ctx, pl.top, false, nil, "rev-parse", full+"^@")
-	if err != nil {
-		return nil, s.failure(err)
-	}
-	c := LogCommit{ID: full, Parents: strings.Fields(string(pre))}
-	files, _, err := s.commitFiles(ctx, pl, c)
+	c, hit, err := s.commitFile(ctx, pl, id, rel)
 	if err != nil {
 		return nil, err
 	}
 	res := &Diff{Path: rel, Hunks: []Hunk{}}
-	var hit *CommitFile
-	for i := range files {
-		if files[i].Path == rel {
-			hit = &files[i]
-			break
-		}
-	}
 	if hit == nil {
 		return res, nil
 	}
@@ -256,4 +237,31 @@ func (s *Service) CommitDiff(ctx context.Context, projectID, folder, id, rel str
 	}
 	fill(res, raw, tooLarge)
 	return res, nil
+}
+
+// commitFile finds one file of a commit or stash; hit is nil when the commit did not change
+// it. The path is relative to the repository top.
+func (s *Service) commitFile(ctx context.Context, pl *place, id, rel string) (c LogCommit, hit *CommitFile, err error) {
+	if rel == "" || len(rel) > 4096 || strings.ContainsRune(rel, 0) || strings.HasPrefix(rel, "/") || path.Clean(rel) != rel || rel == ".." || strings.HasPrefix(rel, "../") {
+		return c, nil, apiErr("BAD_REQUEST", "That path is not valid. Paths are relative to the repository.")
+	}
+	full, err := s.resolveCommit(ctx, pl, id)
+	if err != nil {
+		return c, nil, err
+	}
+	pre, err := s.run(ctx, pl.top, false, nil, "rev-parse", full+"^@")
+	if err != nil {
+		return c, nil, s.failure(err)
+	}
+	c = LogCommit{ID: full, Parents: strings.Fields(string(pre))}
+	files, _, err := s.commitFiles(ctx, pl, c)
+	if err != nil {
+		return c, nil, err
+	}
+	for i := range files {
+		if files[i].Path == rel {
+			return c, &files[i], nil
+		}
+	}
+	return c, nil, nil
 }

@@ -19,7 +19,7 @@ test('phone chat: the header is 40px, its menu opens and closes, Model and Mode 
   const message = page.getByLabel('Message to Gemini')
   await expect(message).toBeEnabled()
   await page.getByLabel('Message to Gemini').fill('hello')
-  await page.getByRole('button', { name: 'Send' }).click()
+  await page.getByRole('button', { name: 'Send', exact: true }).click()
   await expect(page.getByRole('region', { name: /messages$/ }).getByText('Hello world', { exact: true })).toBeVisible()
 
   const header = page.locator('header.head')

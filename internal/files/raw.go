@@ -22,6 +22,16 @@ var imageTypes = map[string]string{
 	".webp": "image/webp", ".avif": "image/avif", ".bmp": "image/bmp", ".ico": "image/x-icon", ".svg": "image/svg+xml",
 }
 
+// ImageType is the content type of an image Mooring may show, named name and starting
+// with head, or "" when the name or the bytes are not one of the allowed kinds.
+func ImageType(name string, head []byte) string {
+	want := imageTypes[strings.ToLower(filepath.Ext(name))]
+	if want == "" || sniffImage(head) != want {
+		return ""
+	}
+	return want
+}
+
 // sniffImage names the image type of the first bytes of a file, or "".
 func sniffImage(head []byte) string {
 	has := func(off int, s string) bool { return len(head) >= off+len(s) && string(head[off:off+len(s)]) == s }

@@ -18,12 +18,16 @@ func (s *Service) Mount(mux *http.ServeMux, wrap func(http.Handler) http.Handler
 	mux.Handle("GET /api/git/commit", wrap(http.HandlerFunc(s.httpCommit)))
 	mux.Handle("GET /api/git/branches", wrap(http.HandlerFunc(s.httpBranches)))
 	mux.Handle("GET /api/git/stashes", wrap(http.HandlerFunc(s.httpStashes)))
+	mux.Handle("GET /api/git/blame", wrap(http.HandlerFunc(s.httpBlame)))
+	mux.Handle("GET /api/git/image", wrap(http.HandlerFunc(s.httpImage))) // GET patterns also match HEAD
 }
 
 var statusOf = map[string]int{
 	"BAD_REQUEST": 400, "OUTSIDE_PROJECT": 403, "NOT_FOUND": 404, "NOT_A_REPO": 409, "TIMEOUT": 504,
 	"GIT_NOT_INSTALLED": 500, "BUSY": 409, "DIRTY": 409, "ALREADY_EXISTS": 409,
 	"DIFF_CHANGED": 409, "LOG_CHANGED": 409, "NOTHING_TO_STASH": 409, "CONFLICTED": 409,
+	"NOT_TRACKED": 409, "TOO_LARGE": 413, "NOT_AN_IMAGE": 415,
+	"NOT_CONFLICTED": 409, "HAS_MARKERS": 409, "NO_OPERATION": 409, "NOTHING_TO_STAGE": 409,
 }
 
 func reply(w http.ResponseWriter, status int, v any) {

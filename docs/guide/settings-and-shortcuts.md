@@ -60,13 +60,14 @@ phone use the "Commands" button. Type to filter, use Up and Down, and press Ente
 
 It lists these:
 
-- Always: Settings, Sign out, Add project, the theme switch, Tool servers, Accounts and usage,
+- Always: Settings, Sign out, Search chat history, Add project, the theme switch, Tool servers, Accounts and usage,
   SSH hosts and Language servers.
 - With a project open: New terminal, New chat, Open file by name, Search text in project, Show
   changes, Show history, Refresh changes, Split right, Split down, Switch branch, New tab menu,
   Close tab, Leave the terminal for its tab, Focus next pane, Move tab to next pane and Move tab
   to a new pane on the right.
-- "Format document", when the open file has a formatter.
+- "Format document", when the open file has a formatter. "Find references" and "Rename symbol", when it has a
+  running language server.
 - Each saved SSH host, each worktree and each project ("Switch to project NAME") add rows.
 
 ## Keyboard shortcuts
@@ -89,6 +90,9 @@ Use Cmd on a Mac and Ctrl elsewhere.
 
 Elsewhere, Ctrl+P and Ctrl+, go to a terminal that has focus, because shells use them.
 
+In a terminal, Cmd+F finds in the terminal's output (Ctrl+Shift+F elsewhere). Cmd+Shift+F still searches
+the project on a Mac; use Alt+F for that from a terminal elsewhere. Outside a terminal Cmd+F is the browser's.
+
 ### Alt keys
 
 | Key | What it does |
@@ -102,6 +106,8 @@ Elsewhere, Ctrl+P and Ctrl+, go to a terminal that has focus, because shells use
 | Alt+H | Show history |
 | Alt+S | SSH hosts |
 | Alt+M | Tool servers |
+| Alt+Y | Search chat history |
+| Alt+P | Show problems |
 | Alt+W | Close tab |
 | Alt+Right, Alt+Left | Next and previous tab |
 | Alt+Down, Alt+Up | Next and previous pane |
@@ -140,7 +146,10 @@ In a text box, Alt plus the arrows and Alt+Esc keep their editing meaning.
 | Enter | Send a chat message (not on a touch screen) |
 | Shift+Enter | New line in a chat message |
 | Up, Down, Enter, Esc | Move, open and close in the find dialog |
+| Alt+R | In the search panel: go to "Replace with" (on a Mac, not from the search box) |
 | F12 | Go to definition |
+| Shift+F12 | Find references |
+| F2 | Rename the name under the cursor |
 | Cmd+Shift+Space (Ctrl+Shift+Space elsewhere) | Signature help |
 | Cmd+Shift+Up and Down | Previous and next signature |
 | Esc, then Tab | Leave the editor with the keyboard |

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { composing } from './lib/keys'
+  import { composing, isMac } from './lib/keys'
   import { onMount } from 'svelte'
   import { actions } from './lib/actions'
   import { FileError, listNames, plainError, search, type Match } from './lib/filesapi'
@@ -19,6 +19,11 @@
   let regex = $state(false)
   let matchCase = $state(false)
   let glob = $state('')
+  let replacing = $state(false)
+  let stage = $state<'edit' | 'preview' | 'done'>('edit')
+  let repBusy = $state(false)
+  // The plan was made for this search; it stays fixed until the user goes back.
+  const frozen = $derived(stage !== 'edit' || repBusy)
 
   // Open file by name
   let paths = $state<string[]>(cached(project)?.paths ?? [])
@@ -28,6 +33,7 @@
   let attempt = $state(0)
   // Search in files
   let hits = $state<Match[]>([])
+  const hitPaths = $derived([...new Set(hits.map((h) => h.path))])
   let phase = $state<'idle' | 'searching' | 'done' | 'cut' | 'error'>('idle')
   let problem = $state('')
   let seenTick = $state(0)
@@ -134,6 +140,12 @@
     actions.openFile(row.path, mode === 'text' ? row.line : undefined)
   }
 
+  // Alt+R in the panel opens the replace field, or goes to it.
+  function openReplace() {
+    if (replacing) document.getElementById('find-replace')?.focus()
+    else replacing = true
+  }
+
   function keys(e: KeyboardEvent) {
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault()
@@ -163,7 +175,7 @@
 
 {#key mode}
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions: Escape closes the search panel from anywhere in it -->
-<dialog use:place bind:this={dialog} class="dlg wide" class:panel={mode === 'text'} aria-label="Find in project" onkeydown={(e) => e.key === 'Escape' && mode === 'text' && (e.preventDefault(), dialog?.close())} onclose={onclosed} onclick={(e) => mode === 'file' && e.target === dialog && dialog.close()}>
+<dialog use:place bind:this={dialog} class="dlg wide" class:panel={mode === 'text'} aria-label="Find in project" onkeydown={(e) => (e.key === 'Escape' && mode === 'text' ? (e.preventDefault(), dialog?.close()) : e.altKey && e.code === 'KeyR' && mode === 'text' && !(isMac && (e.target as HTMLElement).id === 'find-q') && (e.preventDefault(), openReplace()))} onclose={onclosed} onclick={(e) => mode === 'file' && e.target === dialog && dialog.close()}>
   <div class="modes" role="group" aria-label="What to find">
     <button type="button" class="btn ghost" aria-pressed={mode === 'file'} onclick={() => setMode('file')}>Open file</button>
     <button type="button" class="btn ghost" aria-pressed={mode === 'text'} onclick={() => setMode('text')}>Search text</button>
@@ -184,10 +196,16 @@
     spellcheck="false"
     autofocus
     bind:value={query}
+    disabled={replacing && frozen}
     oninput={() => ((active = 0), run())}
     onkeydown={keys}
   />
-  {#if mode === 'text'}<FindOptions bind:matchCase bind:regex bind:glob onChange={run} />{/if}
+  {#if mode === 'text'}<FindOptions bind:matchCase bind:regex bind:glob disabled={replacing && frozen} onChange={run} />
+    <div class="repbar"><button type="button" class="btn ghost" aria-expanded={replacing} aria-controls="find-replace-box" disabled={repBusy} title="Replace in files (Alt+R)" onclick={() => ((replacing = !replacing), (stage = 'edit'))}>Replace…</button></div>
+    <div id="find-replace-box">
+      {#if replacing}{#await import('./FindReplace.svelte') then m}<m.default {project} {query} {regex} {matchCase} paths={hitPaths} {phase} bind:stage bind:busy={repBusy} onApplied={run} />{/await}{/if}
+    </div>
+  {/if}
   <p class="status" role="status">
     {#if mode === 'file'}{indexing ? 'Listing files…' : incomplete ? 'This project has more files than can be listed, so some names are missing. Search text searches all of them.' : ''}{:else}{summary}{#if stale}{' '}Files changed since this search. <button type="button" class="btn small" onclick={run}>Refresh results</button>{/if}{/if}
   </p>
@@ -195,7 +213,7 @@
     <p class="error" role="alert">Could not list the files. Check that the server is running. <button type="button" class="btn small" onclick={() => attempt++}>Try again</button></p>
   {/if}
   {#if problem}<p class="error" role="alert">{problem}</p>{/if}
-  <FindList {rows} {current} {mode} {query} {indexing} onopen={open} onhover={(i) => (active = i)} />
+  {#if stage === 'edit' || !replacing}<FindList {rows} {current} {mode} {query} {indexing} onopen={open} onhover={(i) => (active = i)} />{/if}
 </dialog>
 {/key}
 
@@ -204,6 +222,9 @@
     display: flex;
     gap: var(--s-1);
     padding: var(--s-2) var(--s-2) 0;
+  }
+  .repbar {
+    padding: var(--s-1) var(--s-2) 0;
   }
   .shut {
     margin-left: auto;

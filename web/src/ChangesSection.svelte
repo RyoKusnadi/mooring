@@ -2,6 +2,7 @@
   // What the sidebar keeps of Changes: the branch, how many files changed, and a button for the full view.
   import { untrack } from 'svelte'
   import { actions } from './lib/actions'
+  import { operationText } from './lib/gitoperation'
   import { git } from './lib/gitstore.svelte'
   import { app } from './lib/state.svelte'
 
@@ -37,7 +38,7 @@
         <code>{status.detached ? `detached at ${status.head}` : status.branch || 'no commits yet'}</code>
         <span class="count">{count === 0 ? 'No changes' : count === 1 ? '1 changed file' : `${count} changed files`}</span>
       </p>
-      {#if status.conflicted}<p class="hint warn" role="status">Some files have merge conflicts.</p>{/if}
+      {#if status.operation}<p class="hint warn" role="status">{operationText(status.operation, status.files.filter((c) => c.kind === 'conflicted').length).title} Finish it in Changes.</p>{:else if status.conflicted}<p class="hint warn" role="status">Some files have merge conflicts.</p>{/if}
     {/if}
     <div class="act">
       <button type="button" class="btn" onclick={() => (actions.showChanges(), onNavigate())}>Open changes</button>

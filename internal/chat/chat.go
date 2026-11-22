@@ -67,8 +67,13 @@ type Info struct {
 	Messages  int       `json:"messages"`
 	LastLine  string    `json:"lastLine"`           // the end of the newest message of the user or the agent, scrubbed
 	FromChat  string    `json:"fromChat,omitempty"` // the chat whose summary this one started from
-	CreatedAt int64     `json:"createdAt"`
-	UpdatedAt int64     `json:"updatedAt"`
+	// FinishedAt is when the last reply to the user ended (not a job, not one the
+	// user stopped); SeenAt when the user last looked. Unseen: finished after that.
+	FinishedAt int64 `json:"finishedAt"`
+	SeenAt     int64 `json:"seenAt"`
+	Unseen     bool  `json:"unseen"`
+	CreatedAt  int64 `json:"createdAt"`
+	UpdatedAt  int64 `json:"updatedAt"`
 }
 
 // Chat is one conversation: its messages, its stream and, while it runs, its agent.
@@ -102,6 +107,9 @@ type Chat struct {
 	usage     *Usage
 	commands  []Command
 	removed   bool
+	turnJob   string // the job of the running turn; "" for the user's own words
+	finished  int64  // see Info.FinishedAt
+	seen      int64  // see Info.SeenAt
 
 	// Token saving: raw usage per turn, whether the agent named the chat, how many
 	// terminal/* calls it made, and outputs not yet shown on a tool message.
@@ -125,6 +133,7 @@ type Chat struct {
 	flushT     *time.Timer
 	flushMu    sync.Mutex
 	replaying  bool
+	importing  bool // a load of a session brought in from the agent's own program: its replay is kept
 
 	// limited: the last turn stopped for the account's limit. turnRejected and
 	// turnResetsAt collect what the agent said about it during the turn.
@@ -163,6 +172,7 @@ func (c *Chat) infoLocked() Info {
 		Error: c.errInfo, Attention: len(c.perms) > 0 || c.limited, LimitOnly: c.limited && len(c.perms) == 0, Mode: c.mode, Modes: c.modes, Model: c.model,
 		Models: c.models, Usage: c.usage, Caps: c.caps, Commands: c.commands, Spec: c.spec.redacted(), SwitchTo: c.switchToLocked(),
 		Messages: c.count(), LastLine: c.lastLineLocked(), FromChat: c.fromChat, CreatedAt: c.created, UpdatedAt: c.updated,
+		FinishedAt: c.finished, SeenAt: c.seen, Unseen: c.finished > c.seen,
 	}
 }
 

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
@@ -32,8 +33,12 @@ func TestOpenCreatesPrivateDatabaseAndMigratesOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() { _ = s.Close() }()
+	files, err := fs.Glob(migrationFiles, "migrations/*.sql")
+	if err != nil || len(files) == 0 {
+		t.Fatalf("migration files: %v %v", files, err)
+	}
 	var n int
-	if err := s.DB.QueryRow(`SELECT COUNT(*) FROM schema_migrations`).Scan(&n); err != nil || n != 7 {
-		t.Fatalf("migrations recorded = %d, %v", n, err)
+	if err := s.DB.QueryRow(`SELECT COUNT(*) FROM schema_migrations`).Scan(&n); err != nil || n != len(files) {
+		t.Fatalf("migrations recorded = %d of %d, %v", n, len(files), err)
 	}
 }

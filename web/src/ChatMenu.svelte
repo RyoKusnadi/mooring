@@ -6,13 +6,14 @@
   import { chats, type ChatInfo } from './lib/chatstore.svelte'
   import { canSummarize, tokens } from './lib/chatfmt'
   import { costText, summarizeError } from './lib/tokenfmt'
+  import { chatUsage } from './lib/chatusage'
   import { app } from './lib/state.svelte'
 
   let { id, info }: { id: string; info: ChatInfo } = $props()
 
   let shown = $state(false)
   let error = $state('')
-  let busy = $state(false)
+  let busy = $state<'' | 'summary' | 'review'>('')
   let root: HTMLElement | undefined = $state()
   let trigger: HTMLButtonElement | undefined = $state()
   let panel: HTMLElement | undefined = $state()
@@ -23,6 +24,7 @@
   const usage = $derived(info.usage && info.usage.size > 0 ? info.usage : null)
   const percent = $derived(usage ? Math.min(100, Math.round((usage.used / usage.size) * 100)) : 0)
   const near = $derived(percent >= 80)
+  const plan = $derived(chatUsage(info))
 
   async function open() {
     shown = true
@@ -43,17 +45,17 @@
     }
   }
 
-  async function summarize() {
+  async function summarize(review = false) {
     error = ''
-    busy = true
+    busy = review ? 'review' : 'summary'
     try {
       const r = await chats.summarize((n, a) => app.run(n, a), id)
       close(false)
-      actions.chatFromSummary(id, r.text, r.source)
+      actions.chatFromSummary(id, r.text, r.source, review)
     } catch (e) {
       error = summarizeError(e)
     } finally {
-      busy = false
+      busy = ''
     }
   }
 </script>
@@ -82,13 +84,20 @@
         Shorten long output
       </label>
       <p id="{uid}-d" class="help">The agent gets the start and the end of command output that is hundreds of lines long. The full output stays in this chat.</p>
-      <button type="button" class="btn" disabled={!usable || busy} onclick={summarize}>{busy ? 'Writing the summary…' : 'New chat from summary'}</button>
+      <button type="button" class="btn" disabled={!usable || !!busy} onclick={() => summarize()}>New chat from summary</button>
+      <button type="button" class="btn" disabled={!usable || !!busy} aria-describedby="{uid}-r{usable ? '' : ' ' + uid + '-w'}" onclick={() => summarize(true)}>Get a second opinion</button>
+      {#if busy}<p class="help" role="status">Writing the summary…</p>{:else if !usable}<p class="help" id="{uid}-w">Both need a message in this chat, and the agent must not be replying.</p>{/if}
+      <p id="{uid}-r" class="help">Another agent reviews this chat's summary and the uncommitted changes in its folder. You choose the agent and send the request.</p>
       {#if usage}
         <div class="meter" class:near role="meter" aria-label="Context used" aria-valuemin="0" aria-valuemax={usage.size} aria-valuenow={usage.used} aria-valuetext={`${tokens(usage.used)} of ${tokens(usage.size)} tokens`}>
           <span>Context {tokens(usage.used)} of {tokens(usage.size)}{near ? ', nearly full' : ''}</span>
           <span class="bar"><span class="fill" style:width="{percent}%"></span></span>
         </div>
         {#if usage.cost != null}<p class="help" title="Cost of this chat so far, as the agent reports it">Cost so far {costText(usage.cost, usage.currency)}</p>{/if}
+      {/if}
+      {#if plan}
+        <p class="help" id="{uid}-u">Plan usage of {plan.name}</p>
+        <ul class="plan" aria-labelledby="{uid}-u">{#each plan.all.split('\n') as w (w)}<li>{w}</li>{/each}</ul>
       {/if}
       {#if error}<p class="error" role="alert">{error}</p>{/if}
     </div>
@@ -141,6 +150,13 @@
   .help,
   .error {
     margin: 0;
+  }
+  .plan {
+    margin: 0;
+    padding: 0;
+    color: var(--muted);
+    font-size: var(--fs-s);
+    list-style: none;
   }
   .meter {
     display: grid;

@@ -129,6 +129,21 @@ describe('TerminalConnection', () => {
     expect(sockets).toHaveLength(2)
   })
 
+  it('tries at once on wake while waiting out the backoff, and not when stopped or live', () => {
+    conn.wake()
+    expect(sockets).toHaveLength(0)
+    conn.start()
+    join(sockets[0])
+    conn.wake()
+    expect(sockets).toHaveLength(1)
+    sockets[0].onclose?.()
+    conn.wake()
+    expect(sockets).toHaveLength(2)
+    conn.stop()
+    conn.wake()
+    expect(sockets).toHaveLength(2)
+  })
+
   it('treats a gap in positions as a lost connection', () => {
     conn.start()
     join(sockets[0])

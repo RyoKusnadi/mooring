@@ -27,6 +27,8 @@ type cmdArgs struct {
 	Version     string   `json:"version"`
 	Lines       [][2]int `json:"lines"`
 	Amend       bool     `json:"amend"`
+	Side        string   `json:"side"` // git.resolve: ours, theirs or mark
+	How         string   `json:"how"`  // git.finish: abort or continue
 }
 
 // Run runs a git command. Errors are *ledger.Error.
@@ -69,6 +71,10 @@ func (s *Service) Run(ctx context.Context, cmd events.Command) (any, error) {
 		return empty, s.StashDrop(ctx, a.ProjectID, a.Folder, a.ID)
 	case "git.stageLines":
 		return empty, s.StageLines(ctx, a.ProjectID, a.Folder, a.Path, a.Staged, a.Version, a.Lines)
+	case "git.resolve":
+		return empty, s.Resolve(ctx, a.ProjectID, a.Folder, a.Paths, a.Side)
+	case "git.finish":
+		return s.Finish(ctx, a.ProjectID, a.Folder, a.How)
 	}
 	return nil, apiErr("BAD_REQUEST", "Unknown command %q.", cmd.Name)
 }

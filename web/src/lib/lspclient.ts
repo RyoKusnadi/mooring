@@ -7,6 +7,8 @@ import { lintGutter } from '@codemirror/lint'
 import type { Extension } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
 import { lsp, lspKey } from './lspstore.svelte'
+import { toProblems } from './problems'
+import { problems } from './problems.svelte'
 import { fileUri, isFormatKey, pathFromUri, type LspServer } from './lspmatch'
 import { sanitizeHTML } from './lspsanitize'
 import { ignoreLateCompletions } from './lstale'
@@ -57,6 +59,14 @@ export class Conn {
           // takes longer to answer `initialize`, and then never reported what it can do.
           timeout: 30_000,
           workspace: (c) => new MooringWorkspace(c, host),
+          // Every file's diagnostics go to the Problems list too; false lets the editor show them as before.
+          notificationHandlers: {
+            'textDocument/publishDiagnostics': (_c, p: { uri?: string; diagnostics?: unknown }) => {
+              const path = pathFromUri(place.projectPath, String(p?.uri ?? ''))
+              if (path !== null) problems.set(this.key, place.projectId, path, toProblems(path, p.diagnostics))
+              return false
+            },
+          },
           extensions: extensions(),
         })
         quietWhenGone(client, () => this.client === client)
@@ -81,6 +91,7 @@ export class Conn {
   }
 
   private drop() {
+    problems.drop(this.key)
     this.client?.disconnect()
     this.client = null
     this.changed()

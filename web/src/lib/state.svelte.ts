@@ -11,6 +11,7 @@ import { accounts } from './accountstore.svelte'
 import { tools } from './toolstore.svelte'
 import { settings } from './settingsstore.svelte'
 import { emptyLayout, parseLayout, type Layout } from './layout'
+import { listen, onWake } from './wake'
 export interface Project {
   id: string
   name: string
@@ -90,13 +91,11 @@ class AppState {
     const media = matchMedia(PHONE_QUERY)
     const onMedia = () => (this.narrow = media.matches)
     onMedia()
-    media.addEventListener('change', onMedia)
-    document.addEventListener('visibilitychange', onVisibility)
-    window.addEventListener('pagehide', this.flushAll)
     this.cleanup = [
-      () => media.removeEventListener('change', onMedia),
-      () => document.removeEventListener('visibilitychange', onVisibility),
-      () => window.removeEventListener('pagehide', this.flushAll),
+      listen(media, 'change', onMedia),
+      listen(document, 'visibilitychange', onVisibility),
+      listen(window, 'pagehide', this.flushAll),
+      onWake(() => this.client?.wake()),
     ]
     onVisibility()
   }

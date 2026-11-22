@@ -4,6 +4,7 @@
   import { chats } from './lib/chatstore.svelte'
   import { attentionLabel } from './lib/chatfmt'
   import { app } from './lib/state.svelte'
+  import { deleteQuestion } from './lib/chatfolders'
   import { relativeTime } from './lib/historyapi'
 
   let { onNavigate }: { onNavigate: () => void } = $props()
@@ -34,7 +35,10 @@
 
 {#if app.ready && app.current}
   <section aria-label={`Chats in ${app.current.name}`}>
-    <h2>Chats</h2>
+    <div class="head">
+      <h2>Chats</h2>
+      <button type="button" class="btn small" aria-label="Search chat history" title="Search every chat in every project" onclick={actions.openChatHistory}>History</button>
+    </div>
     {#if !chats.known}
       <p class="hint" role="status">Loading chats…</p>
     {:else if all.length === 0}
@@ -50,9 +54,9 @@
         {#each saved as c (c.id)}
           <li>
             {#if confirming === c.id}
-              <span class="ask">Delete this chat?</span>
+              <span class="ask">{deleteQuestion(chats.list[c.id], agentName(c.agent))}</span>
               <button type="button" class="btn danger small" onclick={() => (actions.deleteChat(c.id), (confirming = ''))}>Delete</button>
-              <button type="button" class="btn small" onclick={() => (confirming = '')}>Keep</button>
+              <button type="button" class="btn small" onclick={() => (confirming = '')} {@attach (n: HTMLButtonElement) => n.focus()}>Keep</button>
             {:else if renaming === c.id}
               <input class="input rename" aria-label="Chat title" maxlength="120" bind:value={draft} onblur={saveRename} onkeydown={(e) => (e.key === 'Enter' ? saveRename() : e.key === 'Escape' && ((renaming = ''), e.stopPropagation()))} {@attach (n: HTMLInputElement) => (n.focus(), n.select())} />
             {:else}
@@ -82,6 +86,12 @@
     min-height: 0;
     border-top: 1px solid var(--border);
   }
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: var(--s-2);
+  }
   h2 {
     margin: 0;
     padding: var(--s-3) var(--s-3) var(--s-1);
@@ -103,6 +113,7 @@
   }
   li {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--s-1);
     min-height: var(--control-h);
@@ -186,7 +197,8 @@
     color: var(--fg);
   }
   .ask {
-    flex: 1;
+    flex: 1 1 14ch;
+    min-width: 0;
     padding: 0 var(--s-2);
   }
   .small {
@@ -196,6 +208,9 @@
   @media (pointer: coarse) {
     .del {
       opacity: 1;
+    }
+    .small {
+      min-height: 44px;
     }
   }
 </style>

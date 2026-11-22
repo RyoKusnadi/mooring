@@ -26,6 +26,9 @@
   import { accounts } from './lib/accountstore.svelte'
   import { tools } from './lib/toolstore.svelte'
   import { settings } from './lib/settingsstore.svelte'
+  import { chatHistory } from './lib/chathistorystore.svelte'
+  import { problemsView } from './lib/problemsview.svelte'
+  import { refactorView } from './lib/refactorview.svelte'
 
   let { onSignOut }: { onSignOut: () => void } = $props()
 
@@ -62,6 +65,11 @@
   // Show changes (Alt+G, the palette, a chat's button) opens the view; on a phone the drawer gets out of its way.
   $effect(() => {
     if (git.reveal > 0 && untrack(() => app.narrow)) void setDrawer(false)
+  })
+
+  // The status bar's link opens the board; on a phone that is the drawer. Focus goes to the board itself.
+  $effect(() => {
+    if (git.boardTick > 0 && untrack(() => app.narrow)) drawer = true
   })
 
   // Reveal in files (a tab's menu, a breadcrumb) shows the tree; on a phone that is the drawer.
@@ -110,13 +118,15 @@
       return
     }
     if (composing(e)) return
-    if (adding || settings.lsp || palette || (files.finder && files.finder !== 'text') || ssh.modal || tools.dialog || accounts.dialog || settings.dialog || e.defaultPrevented) return
+    if (adding || settings.lsp || palette || (files.finder && files.finder !== 'text') || ssh.modal || tools.dialog || accounts.dialog || settings.dialog || chatHistory.dialog || problemsView.dialog || refactorView.request || e.defaultPrevented) return
     const t = e.target as HTMLElement | null
-    const inTerminal = !!t?.closest('[data-terminal]')
+    const termEl = t?.closest<HTMLElement>('[data-terminal],[data-termfind]')
+    const inTerminal = !!termEl
     const chord = chordOf(e, inTerminal)
     if (chord) {
       e.preventDefault()
-      if (chord === 'palette') palette = true
+      if (chord === 'termfind') actions.findInTerminal(termEl?.dataset.terminal ?? termEl?.dataset.termfind ?? '')
+      else if (chord === 'palette') palette = true
       else if (chord === 'settings') actions.openSettings()
       else if (app.layout) openFinder(chord === 'file' ? 'file' : 'text')
       return
@@ -136,7 +146,7 @@
   // The dialogs open from the drawer, which closes behind them; on a phone focus goes back to Projects.
   let hadDialog = false
   $effect(() => {
-    const open = tools.dialog || ssh.dialog || accounts.dialog || settings.dialog
+    const open = tools.dialog || ssh.dialog || accounts.dialog || settings.dialog || chatHistory.dialog || problemsView.dialog
     if (hadDialog && !open && untrack(() => app.narrow)) void tick().then(() => document.activeElement === document.body && projectsButton?.focus())
     hadDialog = open
   })
@@ -188,6 +198,9 @@
 {#if ssh.modal}{#await import('./SshOverlays.svelte') then m}<m.default />{/await}{/if}
 {#if tools.dialog}{#await import('./ToolOverlays.svelte') then m}<m.default />{/await}{/if}
 {#if accounts.dialog}{#await import('./AccountOverlays.svelte') then m}<m.default />{/await}{/if}
+{#if chatHistory.dialog}{#await import('./ChatHistoryOverlays.svelte') then m}<m.default />{/await}{/if}
+{#if problemsView.dialog}{#await import('./ProblemsOverlays.svelte') then m}<m.default />{/await}{/if}
+{#if refactorView.request}{#await import('./Refactor.svelte') then m}<m.default />{/await}{/if}
 {#if settings.dialog}{#await import('./SettingsOverlays.svelte') then m}<m.default onSignOut={signOut} />{/await}{/if}
 {#if palette}<Palette {items} onClose={() => (palette = false)} />{/if}
 

@@ -142,13 +142,17 @@ func resource(uri, text string) map[string]any {
 }
 
 // promptBlocks builds the content blocks of a prompt. With embedded context the
-// context and the attachments are resource blocks; without it they are text in
-// the one text block: the context quoted before the user's words, fenced attachments after.
-func promptBlocks(text string, embedded bool, context, fromChat string, atts []sent) []any {
+// start context and the attachments are resource blocks; without it they are text
+// in the one text block: the summary quoted and the changes fenced before the
+// user's words, fenced attachments after.
+func promptBlocks(text string, embedded bool, start Message, atts []sent) []any {
 	if embedded {
 		var blocks []any
-		if context != "" {
-			blocks = append(blocks, resource("mooring://summary/"+fromChat, context))
+		if start.Text != "" {
+			blocks = append(blocks, resource("mooring://summary/"+start.FromChat, start.Text))
+		}
+		if start.Changes != "" {
+			blocks = append(blocks, resource("mooring://changes/"+start.FromChat, start.Changes))
 		}
 		blocks = append(blocks, map[string]string{"type": "text", "text": text})
 		for _, a := range atts {
@@ -157,8 +161,11 @@ func promptBlocks(text string, embedded bool, context, fromChat string, atts []s
 		return blocks
 	}
 	var b strings.Builder
-	if context != "" {
-		b.WriteString("Summary of an earlier chat:\n" + quote(context) + "\n\n")
+	if start.Text != "" {
+		b.WriteString("Summary of an earlier chat:\n" + quote(start.Text) + "\n\n")
+	}
+	if start.Changes != "" {
+		b.WriteString("Uncommitted changes in that chat's folder:\n" + fence(start.Changes) + "\n\n")
 	}
 	b.WriteString(text)
 	for _, a := range atts {

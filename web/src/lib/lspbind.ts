@@ -11,30 +11,11 @@ import { formatChanges } from './lspformat'
 import { trackSymbols, type SymbolStep } from './lspsymbols'
 import { fileActions } from './fileactions'
 import { app } from './state.svelte'
+import { viewKey, views, waitForView, waiters } from './lspviews'
 
 export { restart } from './lspclient'
+export { applyRename, findReferences, openPaths, planRename, renameTarget } from './lsprefactor'
 
-const views = new Map<string, EditorView>()
-const waiters = new Set<() => void>()
-const viewKey = (projectId: string, path: string) => `${projectId}\n${path}`
-
-function waitForView(projectId: string, path: string, ms = 5000): Promise<EditorView | null> {
-  const k = viewKey(projectId, path)
-  return new Promise((resolve) => {
-    const done = (v: EditorView | null) => {
-      waiters.delete(check)
-      clearTimeout(timer)
-      resolve(v)
-    }
-    const check = () => {
-      const v = views.get(k)
-      if (v) done(v)
-    }
-    const timer = setTimeout(() => done(null), ms)
-    waiters.add(check)
-    check()
-  })
-}
 
 export interface Binding {
   /** Moves the cursor to a symbol the editor reported. */

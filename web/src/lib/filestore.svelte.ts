@@ -53,6 +53,10 @@ class FileStore {
   revealTick = $state(0)
   /** Format commands of the editors that can format now, by tab id (set by the editor). */
   formatters = $state<Record<string, () => void>>({})
+  /** Find references and rename of the editors that have a ready language server, by tab id (set by the editor). */
+  refactors = $state<Record<string, { refs: () => void; rename: () => void }>>({})
+  /** The blame switch of each file tab: whether it is on, and a way to flip it (set by the editor). */
+  blamers = $state<Record<string, { on: boolean; toggle: () => void; openLine?: () => void }>>({})
   /** A request to show a line in an editor tab; the editor takes it once the text is loaded. */
   jump = $state<{ tabId: string; line: number } | null>(null)
   /** An editor's state while its tab is not showing, so switching tabs keeps unsaved edits and undo. */

@@ -127,6 +127,14 @@ export class EventsClient {
     this.connect()
   }
 
+  /** The network or the tab came back: a connection waiting out its backoff tries now. */
+  wake() {
+    if (this.stopped || this.retry === null) return
+    this.clock.clearTimeout(this.retry)
+    this.delay = BACKOFF_START_MS
+    this.connect()
+  }
+
   /** Runs a command once. The same id is resent after every reconnect until a result arrives. */
   send(name: string, args: unknown, o: SendOptions = {}): Promise<unknown> {
     const id = o.id ?? this.newId()

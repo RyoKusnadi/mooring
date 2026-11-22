@@ -2,6 +2,7 @@
 import { actions } from './actions'
 import { appearance } from './appearance.svelte'
 import type { PaletteItem } from './filter'
+import { chatImport } from './chatimport.svelte'
 import { files } from './filestore.svelte'
 import { git } from './gitstore.svelte'
 import { modLabel, showKey } from './keys'
@@ -41,19 +42,32 @@ export function paletteItems(hooks: PaletteHooks): PaletteItem[] {
     { id: 'sign-out', label: 'Sign out', run: hooks.signOut },
   ]
   const more: PaletteItem[] = [
+    { id: 'chat-history', label: 'Search chat history', hint: showKey('Alt+Y'), run: actions.openChatHistory },
     { id: 'add', label: 'Add project', run: hooks.addProject },
     { id: 'theme-toggle', label: appearance.drawn === 'light' ? 'Switch to dark theme' : 'Switch to light theme', run: () => appearance.toggleTheme() },
     { id: 'tool-servers', label: 'Tool servers', hint: showKey('Alt+M'), run: actions.openTools },
     { id: 'accounts', label: 'Accounts and usage', run: actions.openAccounts },
     { id: 'ssh-hosts', label: 'SSH hosts', hint: showKey('Alt+S'), run: actions.openHosts },
+    { id: 'problems', label: 'Show problems', hint: showKey('Alt+P'), run: actions.openProblems },
     { id: 'lsp', label: 'Language servers', run: hooks.languageServers },
   ]
   if (open) {
     // Only when the editor in view has a language server that formats.
     const shown = app.layout ? focusedGroup(app.layout)?.active : undefined
     if (shown && files.formatters[shown]) more.unshift({ id: 'format', label: 'Format document', hint: showKey('Alt+Shift+F'), run: files.formatters[shown] })
+    const blamer = shown ? files.blamers[shown] : undefined
+    if (blamer) more.unshift({ id: 'blame', label: blamer.on ? 'Hide who changed each line' : 'Show who changed each line', run: blamer.toggle })
+    if (blamer?.on && blamer.openLine) more.unshift({ id: 'blame-open', label: 'Open the commit that changed this line', run: blamer.openLine })
+    const refactor = shown ? files.refactors[shown] : undefined
+    if (refactor) {
+      more.unshift(
+        { id: 'refs', label: 'Find references', hint: showKey('Shift+F12'), run: refactor.refs },
+        { id: 'rename', label: 'Rename symbol', hint: 'F2', run: refactor.rename },
+      )
+    }
     more.push(
       { id: 'history-show', label: 'Show history', hint: showKey('Alt+H'), run: () => actions.openHistory() },
+      { id: 'chat-import', label: "Bring in a chat from an agent's own program", run: () => ((chatImport.wanted = true), actions.newChat()) },
       { id: 'changes-refresh', label: 'Refresh changes', run: () => git.refresh() },
       { id: 'tab-new', label: 'New tab menu', hint: showKey('Alt+T'), run: actions.openPlusMenu },
       { id: 'tab-close', label: 'Close tab', hint: showKey('Alt+W'), run: () => actions.closeTab() },

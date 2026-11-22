@@ -21,6 +21,11 @@ type Spec struct {
 	ToolServers []ToolServer `json:"toolServers"`
 	Account     AccountSlot  `json:"account"`
 	Filters     []string     `json:"filters"`
+	// Imported marks a chat made on a session from the agent's own program (chat.import).
+	Imported bool `json:"imported,omitempty"`
+	// AgentMade: the session was made in the agent's own program, so removing the chat
+	// leaves the agent's copy alone. Never cleared.
+	AgentMade bool `json:"agentMade,omitempty"`
 }
 
 // AgentSlot picks a catalog entry.

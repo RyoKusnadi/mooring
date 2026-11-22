@@ -25,6 +25,8 @@ export class FileDoc {
   notice = $state('')
   /** True for a few seconds after a clean editor took a newer version from disk. */
   updated = $state(false)
+  /** Goes up each time the editor text is replaced from disk, and again when the last chunk is in. */
+  reloads = $state(0)
   conflict = $state<Conflict>('')
   writable = $state(true)
   dirty = $state(false)
@@ -142,6 +144,7 @@ export class FileDoc {
           v.dispatch({ effects: [separator.reconfigure(lineEnding(eol)), editable.reconfigure(readOnly(true))] })
           v.dispatch({ changes: { from: 0, to: v.state.doc.length, insert: c.content }, annotations: quiet })
           this.progress = c.done ? null : { loaded: c.next, total: c.size }
+          this.reloads++
           this.status = 'ready'
           void this.applyLanguage(v)
         },
@@ -151,6 +154,7 @@ export class FileDoc {
           const cut = eol === '\r\n' && text.startsWith('\n') && doc.sliceString(doc.length - 1) === '\r'
           v.dispatch({ changes: { from: cut ? doc.length - 1 : doc.length, insert: cut ? '\r' + text : text }, annotations: quiet })
           this.progress = loaded >= total ? null : { loaded, total }
+          if (loaded >= total) this.reloads++
         },
       })
     } catch (e) {

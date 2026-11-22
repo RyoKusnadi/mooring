@@ -87,6 +87,14 @@ export class TerminalConnection {
     this.retry = null
   }
 
+  /** The network or the tab came back: a connection waiting out its backoff tries now. */
+  wake() {
+    if (this.stopped || this.retry === null) return
+    this.clock.clearTimeout(this.retry)
+    this.delay = BACKOFF_START_MS
+    this.connect()
+  }
+
   sendInput(data: string | Uint8Array) {
     const bytes = typeof data === 'string' ? this.encoder.encode(data) : data
     if (!this.live) return

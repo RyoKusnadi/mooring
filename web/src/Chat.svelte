@@ -7,7 +7,6 @@
   import ChatHeader from './ChatHeader.svelte'
   import ChatMessage from './ChatMessage.svelte'
   import ChatPermission from './ChatPermission.svelte'
-  import ChatPicker from './ChatPicker.svelte'
   import VirtualList from './VirtualList.svelte'
   import { actions } from './lib/actions'
   import { loginCommand } from './lib/chatfmt'
@@ -36,8 +35,7 @@
   $effect(() => {
     const f = feed
     if (!f || !visible) return
-    f.open()
-    return () => f.close()
+    return f.open()
   })
 
   // A chat that was stopped cleanly (a server restart, a closed tab) starts again when shown.
@@ -107,7 +105,12 @@
     {:else if !chats.known}
       <p class="note" role="status">Loading chats…</p>
     {:else}
-      <ChatPicker {id} />
+      <!-- The picker loads on its own, so the chat chunk stays under its size limit. -->
+      {#await import('./ChatPicker.svelte') then picker}
+        <picker.default {id} />
+      {:catch}
+        <p class="note">The agent list could not load. Reload the page and try again.</p>
+      {/await}
     {/if}
   {:else if feed}
     <ChatHeader {id} {info} />

@@ -62,6 +62,8 @@ test('git: review, commit and push an agent\'s worktree', async ({ page }) => {
   await panel.getByRole('button', { name: 'Start chat with Gemini' }).click()
   await expect(page.getByLabel('Message to Gemini')).toBeEnabled()
   await expect(panel.getByText(branch, { exact: true })).toBeVisible()
+  // The stand-in takes extra folders, so the chat can also read the project folder.
+  await expect(panel.getByText(/^Can also read /)).toBeVisible()
 
   // The agent's work, written into the worktree on disk: a new file, a deleted one, a renamed one.
   const trees = join(repo, '.mooring', 'worktrees')

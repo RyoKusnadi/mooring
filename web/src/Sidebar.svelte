@@ -1,4 +1,5 @@
 <script lang="ts">
+  import BoardLazy from './BoardLazy.svelte'
   import ChangesSection from './ChangesSection.svelte'
   import ChatsSection from './ChatsSection.svelte'
   import FilesSection from './FilesSection.svelte'
@@ -6,12 +7,17 @@
   import ProjectRow from './ProjectRow.svelte'
   import { actions, paletteKey } from './lib/actions'
   import { appearance } from './lib/appearance.svelte'
+  import { boardCounts, onBoard } from './lib/board'
+  import { switchLabel } from './lib/boardfmt'
+  import { chats } from './lib/chatstore.svelte'
   import { git } from './lib/gitstore.svelte'
   import { app } from './lib/state.svelte'
 
   let { onAdd, onPalette, onNavigate }: { onAdd: () => void; onPalette: () => void; onNavigate: () => void } = $props()
 
   let error = $state('')
+  const counts = $derived(boardCounts(onBoard(Object.values(chats.list), app.projects.map((p) => p.id))))
+  const badge = $derived(counts.waiting + counts.finished)
   const themeLabel = $derived(appearance.drawn === 'light' ? 'Switch to dark theme' : 'Switch to light theme')
 
   /** Opens a dialog from the footer; on a phone the drawer closes first. */
@@ -53,12 +59,20 @@
       <button type="button" aria-pressed={git.view === 'changes'} aria-label={git.status?.repo && git.status.files.length > 0 ? `Changes, ${git.status.files.length} files` : undefined} onclick={() => (git.view = 'changes')}>
         Changes{#if git.status?.repo && git.status.files.length > 0}<span class="n">{git.status.files.length}</span>{/if}
       </button>
+      <button type="button" aria-pressed={git.view === 'board'} aria-label={switchLabel(counts)} onclick={() => (git.view = 'board')}>
+        Board{#if badge > 0}<span class="n">{badge}</span>{/if}
+      </button>
     </div>
   {/if}
   <!-- Both stay mounted: the file tree keeps its watch and the changes keep reading while the other shows. -->
   <div class="pane" hidden={git.view !== 'files'}><FilesSection {onNavigate} {onAdd} /></div>
   <div class="pane" hidden={git.view !== 'changes'}><ChangesSection {onNavigate} /></div>
-  <div class="chats"><ChatsSection {onNavigate} /></div>
+  <!-- The board replaces the Chats list while it shows: it lists the chats of every project. -->
+  {#if git.view === 'board'}
+    <div class="pane"><BoardLazy {onNavigate} /></div>
+  {:else}
+    <div class="chats"><ChatsSection {onNavigate} /></div>
+  {/if}
   {#if error}
     <p class="error" role="alert">{error}</p>
   {/if}
@@ -125,7 +139,9 @@
     align-items: center;
     justify-content: center;
     gap: var(--s-1);
+    min-width: 0;
     min-height: var(--control-h);
+    padding: 0 var(--s-1);
     border: 1px solid transparent;
     border-radius: var(--r-s);
     background: none;

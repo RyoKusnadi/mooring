@@ -53,6 +53,8 @@ func (s *Service) commit(ctx context.Context, projectID, folder, message string,
 				args = args[:len(args)-2]
 				args = append(args, "--no-edit")
 			}
+		} else if s.operation(ctx, pl) == "merge" {
+			// A merge commit may keep HEAD's files as they are.
 		} else if _, _, err := s.runX(ctx, pl.top, false, nil, 0, nil, "diff", "--cached", "--quiet", "--no-ext-diff"); err == nil {
 			return apiErr("NOTHING_TO_COMMIT", "Nothing is staged. Stage some changes first.")
 		} else if re, ok := err.(*runError); !ok || re.exit != 1 {

@@ -42,6 +42,25 @@ beforeEach(() => {
 })
 
 describe('ChatFeed', () => {
+  it('shares one socket between holds; a release counts once and not after shut', () => {
+    const n = sockets.length
+    const row = feed.open()
+    row()
+    row()
+    const board = feed.open()
+    expect(sockets.length).toBe(n) // the first hold from beforeEach still has it open
+    feed.shut()
+    const view = feed.open()
+    expect(sockets.length).toBe(n + 1)
+    board() // from before shut: does not close the view's socket
+    const other = feed.open()
+    expect(sockets.length).toBe(n + 1)
+    view()
+    other()
+    feed.open()
+    expect(sockets.length).toBe(n + 2)
+  })
+
   it('fills from the snapshot and streams text into one message', () => {
     const s = open()
     s.serve(welcome('e1', 5, [agentMsg(0, 'Hel')]))

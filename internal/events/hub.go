@@ -98,7 +98,9 @@ type Attachment struct {
 
 // Attach decides resume or snapshot and subscribes the client, atomically with
 // respect to Publish: nothing is missed or sent twice by the hub. snapshot is
-// called only when the client must reset, with publishing paused.
+// called only when the client must reset, with publishing paused. It holds the
+// hub's lock while snapshot takes the services' locks, so a service must never
+// call Publish while holding a lock its snapshot takes.
 func (h *Hub) Attach(epoch string, pos uint64, snapshot func() (any, error)) (*Attachment, error) {
 	h.mu.Lock()
 	defer h.mu.Unlock()

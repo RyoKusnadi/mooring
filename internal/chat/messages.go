@@ -57,9 +57,11 @@ type Message struct {
 	// user: a job prompt (such as "summary") and what the user attached
 	Job         string      `json:"job,omitempty"`
 	Attachments []AttachRef `json:"attachments,omitempty"`
+	Relay       *RelayRef   `json:"relay,omitempty"` // another chat's reply, sent on by the user
 
-	// context
+	// context: the summary is Text; Changes are the earlier chat's uncommitted changes, for a review
 	FromChat string `json:"fromChat,omitempty"`
+	Changes  string `json:"changes,omitempty"`
 
 	// permission
 	RequestID string   `json:"requestId,omitempty"`

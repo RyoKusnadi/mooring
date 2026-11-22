@@ -26,13 +26,34 @@ export interface TermUi {
   letterbox: { cols: number; rows: number } | null
   /** The on-screen Ctrl key is waiting for the next key. */
   ctrl: boolean
+  /** The find bar is open. */
+  find: boolean
 }
 
-export const emptyUi: TermUi = { title: '', wire: 'connecting', letterbox: null, ctrl: false }
+export const emptyUi: TermUi = { title: '', wire: 'connecting', letterbox: null, ctrl: false, find: false }
 
 type Run = <T>(name: string, args: unknown) => Promise<T>
 
+/** What the shell may ask of a terminal's view (termview.ts, loaded on first use). */
+export interface TermViewApi {
+  dispose(): void
+  press(data: string): void
+  focus(): void
+  selection(): string
+  /** Searches the scrollback: up is older, down newer, same keeps the place. at is 0 with no hit. */
+  find(query: string, dir: 'up' | 'down' | 'same'): { at: number; total: number }
+  clearFind(): void
+}
+
+/** Opens file paths printed in a terminal; set by the shell (termplace.ts). */
+export interface TermLinks {
+  /** The project file a path in terminal `id` names, or null when it is not a link. */
+  path(id: string, path: string): string | null
+  open(path: string, line?: number): void
+}
+
 class Terms {
+  links: TermLinks | null = null
   list = $state<Record<string, TermInfo>>({})
   ui = $state<Record<string, TermUi>>({})
   /** Opening, by tab id: the command is on its way. */
@@ -41,7 +62,7 @@ class Terms {
   openError = $state<Record<string, string>>({})
   /** The first snapshot arrived, so "not in the list" means gone. */
   known = $state(false)
-  views = new Map<string, { dispose(): void; press(data: string): void; focus(): void; selection(): string }>()
+  views = new Map<string, TermViewApi>()
 
   reset(byProject: Record<string, TermInfo[]> | undefined) {
     const next: Record<string, TermInfo> = {}

@@ -29,6 +29,28 @@ describe('retryNow', () => {
   })
 })
 
+describe('wake', () => {
+  it('connects at once only while a retry is waiting', () => {
+    const sockets: ReturnType<typeof socket>[] = []
+    const clock: Clock = { setTimeout: () => 1, clearTimeout: () => {} }
+    const client = new EventsClient({
+      createSocket: () => sockets[sockets.push(socket()) - 1],
+      clock,
+      onReset: () => {},
+      onEvent: () => {},
+      onStatus: () => {},
+    })
+    client.wake()
+    expect(sockets).toHaveLength(0)
+    client.start()
+    client.wake()
+    expect(sockets).toHaveLength(1)
+    sockets[0].onclose?.()
+    client.wake()
+    expect(sockets).toHaveLength(2)
+  })
+})
+
 describe('closeSocket', () => {
   it('closes a socket that is still connecting only once it opens, and others at once', () => {
     let closed = 0

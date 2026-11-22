@@ -1,6 +1,7 @@
 package git
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -42,6 +43,12 @@ func TestResolveAMergeAndCommit(t *testing.T) {
 	_, err := r.s.Finish(bg, "p1", "", "continue")
 	r.wantCode(err, "CONFLICTED")
 	r.wantCode(r.s.Resolve(bg, "p1", "", []string{"a.txt"}, "mark"), "HAS_MARKERS")
+	// The unstaged diff of a conflicted file shows its markers.
+	d, err := r.s.Diff(bg, "p1", "", "a.txt", false)
+	r.must(err)
+	if !strings.Contains(fmt.Sprint(d.Hunks), "<<<<<<<") {
+		t.Fatalf("conflict diff %+v", d)
+	}
 	r.wantCode(r.s.Resolve(bg, "p1", "", []string{"README.md"}, "ours"), "NOT_CONFLICTED")
 	r.wantCode(r.s.Resolve(bg, "p1", "", []string{""}, "ours"), "BAD_REQUEST")
 	r.wantCode(r.s.Resolve(bg, "p1", "", []string{"a.txt"}, "both"), "BAD_REQUEST")

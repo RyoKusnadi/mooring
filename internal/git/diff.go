@@ -96,10 +96,19 @@ func (s *Service) workDiff(ctx context.Context, pl *place, p string, staged bool
 		if err != nil {
 			return nil, "", false, err
 		}
-		if untracked {
+		unmerged, err := s.run(ctx, pl.top, false, nil, "ls-files", "-u", "-z", "--", p)
+		if err != nil {
+			return nil, "", false, s.failure(err)
+		}
+		switch {
+		case untracked:
 			args = append(append([]string{}, diffBase...), "--no-index", "--", os.DevNull, filepath.FromSlash(p))
 			okExit = []int{0, 1}
-		} else {
+		case len(unmerged) > 0:
+			// A conflicted file has no staged version, and git's combined diff does not parse:
+			// compare it with HEAD, so its conflict markers show as added lines.
+			args = append(append([]string{}, diffBase...), "HEAD", "--", p)
+		default:
 			args = append(append([]string{}, diffBase...), "--", p)
 		}
 	}

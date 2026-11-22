@@ -207,7 +207,11 @@ func (c *Chat) writeFile(raw json.RawMessage) (any, error) {
 	if info, err := os.Stat(real); err == nil && info.IsDir() {
 		return nil, &rpcError{Code: -32002, Message: "That path is a folder"}
 	}
-	if err := files.WriteAtomic(real, []byte(p.Content)); err != nil {
+	write := c.m.WriteFile
+	if write == nil {
+		write = files.WriteAtomic
+	}
+	if err := write(real, []byte(p.Content)); err != nil {
 		return nil, &rpcError{Code: -32002, Message: "Cannot write that file"}
 	}
 	return nil, nil

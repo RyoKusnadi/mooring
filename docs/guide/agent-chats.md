@@ -9,7 +9,7 @@ agent, and Mooring starts it.
 | Agent | Mooring runs | Needs on PATH | Sign in |
 | --- | --- | --- | --- |
 | Claude | `npx -y` with the Claude ACP adapter | `npx` | `claude auth login` |
-| Gemini | `gemini --acp` | `gemini` | |
+| Gemini | `gemini --acp` | `gemini` | A paid Gemini API key or Code Assist Enterprise. Otherwise use Antigravity. |
 | Codex | `npx -y @agentclientprotocol/codex-acp` | `npx` and `codex` | |
 | Grok | `grok agent stdio` | `grok` | `grok login`, or set `XAI_API_KEY` |
 | Cursor | `agent acp` | `agent` | |
@@ -224,8 +224,9 @@ To add an account:
 
 Each row has Sign in, Rename, Make default and Remove. Tags show "Default for new projects", "The
 agent's own login", "Folder managed by Mooring" and "Your folder". Usage shows "N% used" per
-window, "Limit reached, ..." or "Usage: unknown." Usage comes from what the agent reports while you
-chat.
+window, "Limit reached, ..." or "Usage: unknown." When the agent names a window but gives no
+percentage (Claude often does), the row says "within limit", "near limit" or "limit reached"
+instead. Usage comes from what the agent reports while you chat.
 
 Once the agent has reported usage, the chat header shows the fullest window of the chat's account,
 for example "5 hours: 62% used, resets at 14:00". Hover it to see the account and every

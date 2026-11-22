@@ -33,6 +33,8 @@ type Options struct {
 	Data        string
 	Shell       string // program for terminals; empty: not passed
 	SecretsPass string // passphrase file; empty: not passed
+	TLSCert     string // certificate and key files for HTTPS; empty: plain HTTP
+	TLSKey      string
 	PathEnv     string // PATH of the current shell, so agents and tools are found
 	ShellEnv    string // SHELL of the current shell
 }
@@ -50,6 +52,9 @@ func (o Options) args(exe string) []string {
 	}
 	if o.SecretsPass != "" {
 		a = append(a, "-secrets-passphrase-file", o.SecretsPass)
+	}
+	if o.TLSCert != "" {
+		a = append(a, "-tls-cert", o.TLSCert, "-tls-key", o.TLSKey)
 	}
 	return append(a, "-quiet")
 }
@@ -122,7 +127,11 @@ func On(e Env, o Options, w io.Writer) error {
 	if err := e.start(file); err != nil {
 		return err
 	}
-	fmt.Fprintf(w, "Autostart is on. Mooring starts at login and listens on http://%s.\nFile: %s\n", o.Addr, file)
+	scheme := "http"
+	if o.TLSCert != "" {
+		scheme = "https"
+	}
+	fmt.Fprintf(w, "Autostart is on. Mooring starts at login and listens on %s://%s.\nFile: %s\n", scheme, o.Addr, file)
 	if e.GOOS == "linux" {
 		fmt.Fprintln(w, "A user unit starts when you log in, not at boot. Turning on lingering (loginctl enable-linger) changes that; Mooring does not do it.")
 	}

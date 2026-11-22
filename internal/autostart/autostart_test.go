@@ -90,6 +90,18 @@ func TestParsingGivesBackTheCommand(t *testing.T) {
 	}
 }
 
+func TestTLSFilesArePassedOn(t *testing.T) {
+	e, o, _ := setup(t, "darwin")
+	o.TLSCert, o.TLSKey = "/certs/box.pem", "/certs/box key.pem"
+	got := strings.Join(o.args(e.Exe), "\x00")
+	if !strings.Contains(got, "-tls-cert\x00/certs/box.pem\x00-tls-key\x00/certs/box key.pem") {
+		t.Fatalf("args %q", got)
+	}
+	if back := parsePlist(plist(e, o)); strings.Join(back, "\x00") != got {
+		t.Fatalf("plist gives %q", back)
+	}
+}
+
 func TestMacOSOnOnAgainOffOffAgain(t *testing.T) {
 	e, o, f := setup(t, "darwin")
 	var out bytes.Buffer

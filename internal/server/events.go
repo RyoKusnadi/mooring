@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
 	"github.com/ryokusnadi/mooring/internal/accounts"
 	"github.com/ryokusnadi/mooring/internal/chat"
@@ -113,7 +115,7 @@ func (s *Server) mountEvents(srv *server, cfg Config) error {
 	s.git = git.New(git.Config{Pub: hub, Dir: svc.Dir, Log: cfg.Logger, Home: home})
 	s.tools, err = mcp.New(mcp.Config{
 		DB: cfg.Store.DB, Pub: hub, Secrets: cfg.Secrets, Home: home, DataDir: cfg.DataDir,
-		RedirectBase: "http://" + cfg.ListenAddr, Log: cfg.Logger, Context: ctx, Now: cfg.Now,
+		RedirectBase: baseURL(cfg), Log: cfg.Logger, Context: ctx, Now: cfg.Now,
 	})
 	if err != nil {
 		cancel()
@@ -137,10 +139,13 @@ func (s *Server) mountEvents(srv *server, cfg Config) error {
 		known[d.ID] = true
 	}
 	s.settings = settings.New(settings.Config{DB: cfg.Store.DB, Pub: hub, KnownAgent: func(id string) bool { return known[id] }, Log: cfg.Logger})
+	s.files = files.New(files.Config{
+		Pub: hub, Dir: svc.Dir, Ledger: led, Log: cfg.Logger, Context: ctx, Home: home,
+	})
 	s.chats, err = chat.New(chat.Config{
 		DB: cfg.Store.DB, Pub: hub, Dir: svc.Dir, Catalog: defs, Worktrees: s.git, Checkpoints: s.git, Tools: s.tools, Accounts: s.accounts,
 		DataDir: cfg.DataDir, Settings: s.settings, Staged: s.git.Staged, Uncommitted: s.git.Uncommitted,
-		Log: cfg.Logger, Context: ctx, Now: cfg.Now,
+		WriteFile: s.files.WriteReal, Log: cfg.Logger, Context: ctx, Now: cfg.Now,
 	})
 	if err != nil {
 		cancel()
@@ -155,9 +160,6 @@ func (s *Server) mountEvents(srv *server, cfg Config) error {
 	s.chatSocket = s.chats.Handler()
 	s.chatOutputs = s.chats.OutputHandler()
 	s.chatSearch = s.chats.SearchHandler()
-	s.files = files.New(files.Config{
-		Pub: hub, Dir: svc.Dir, Ledger: led, Log: cfg.Logger, Context: ctx, Home: home,
-	})
 	s.lsp, err = lsp.New(lsp.Config{
 		DB: cfg.Store.DB, Pub: hub, Dir: svc.Dir, Files: s.files, DataDir: cfg.DataDir, Log: cfg.Logger,
 		Context: ctx, Now: cfg.Now, Idle: cfg.LSPIdle, MemoryMB: cfg.LSPMemoryMB,
@@ -167,7 +169,9 @@ func (s *Server) mountEvents(srv *server, cfg Config) error {
 		return err
 	}
 	s.lspSocket = s.lsp.Handler()
-	s.password = password.NewService(password.Config{Dir: cfg.DataDir, Reserve: srv.auth.reserve, Log: cfg.Logger})
+	s.password = password.NewService(password.Config{Dir: cfg.DataDir, Log: cfg.Logger,
+		// Password changes come from a signed-in browser, so they share one count.
+		Reserve: func() (func(), time.Duration) { return srv.limit.reserve("signed-in") }})
 	cmds := commands{password: s.password, projects: svc, terms: s.terms, chats: s.chats, files: s.files, git: s.git, lsp: s.lsp, ssh: s.ssh, tools: s.tools, accounts: s.accounts, settings: s.settings}
 	s.events = events.Handler(events.Config{
 		Hub: hub, Ledger: led, Commands: cmds, Snapshot: cmds.Snapshot,
@@ -188,4 +192,12 @@ func (s *server) requireSession(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(tw, r)
 	})
+}
+
+// baseURL is where a browser reaches Mooring, for redirects back to it.
+func baseURL(cfg Config) string {
+	if cfg.BaseURL != "" {
+		return strings.TrimSuffix(cfg.BaseURL, "/")
+	}
+	return "http://" + cfg.ListenAddr
 }

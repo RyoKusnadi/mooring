@@ -8,7 +8,8 @@ import "io"
 type Backend interface {
 	io.ReadWriter
 	// Wait blocks until the shell has ended and returns its exit code
-	// (128+signal when killed, 255 when the connection ended).
+	// (128+signal when killed, 255 when the connection ended; an SSH shell then
+	// also has Lost() true).
 	Wait() int
 	// Resize sets the size of the terminal the shell sees.
 	Resize(cols, rows uint16) error

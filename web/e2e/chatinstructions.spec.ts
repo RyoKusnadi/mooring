@@ -68,6 +68,8 @@ test('instructions: the switch decides the notice, and a project text is kept', 
   // Put the shared server back as it was.
   await again.getByLabel(`Extra instructions for ${name}`).fill('')
   await again.getByLabel(`Extra instructions for ${name}`).blur()
+  // Wait for that save, so the switch is not clicked while the dialog redraws.
+  await expect(again.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible()
   await again.getByRole('checkbox', { name: "Add Mooring's instructions to new chats" }).check()
   await expect(again.getByRole('status').filter({ hasText: 'Saved.' })).toBeVisible()
   expect(problems).toEqual([])

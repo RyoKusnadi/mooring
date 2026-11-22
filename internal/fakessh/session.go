@@ -198,7 +198,7 @@ func (sh *shellRun) run(ch ssh.Channel) {
 }
 
 // runEcho echoes every key, and answers a typed line: "size" tells the pty
-// size, "exit" or "exit N" ends the shell, anything else comes back as "got:<line>".
+// size, "exit" or "exit N" ends the shell, "kill SIG" ends it by that signal, anything else comes back as "got:<line>".
 func (sh *shellRun) runEcho(ch ssh.Channel) {
 	_, _ = io.WriteString(ch, "fake$ ")
 	br := bufio.NewReader(ch)
@@ -223,6 +223,13 @@ func (sh *shellRun) runEcho(ch ssh.Channel) {
 			var n uint32
 			_, _ = fmt.Sscanf(strings.TrimPrefix(text, "exit"), "%d", &n)
 			exitStatus(ch, n)
+			return
+		case strings.HasPrefix(text, "kill "):
+			_, _ = ch.SendRequest("exit-signal", false, ssh.Marshal(struct {
+				Signal     string
+				CoreDumped bool
+				Msg, Lang  string
+			}{Signal: strings.TrimPrefix(text, "kill ")}))
 			return
 		default:
 			_, _ = fmt.Fprintf(ch, "got:%s\r\n", text)

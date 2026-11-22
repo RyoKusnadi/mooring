@@ -81,9 +81,10 @@ type Config struct {
 	JobHook func(JobRecord)
 	// JobTimeout is how long a small job may take; 0 means 60 seconds.
 	JobTimeout time.Duration
+	// WriteFile saves an agent's file write under the editor's save lock; nil writes directly.
+	WriteFile  func(real string, data []byte) error
 	Now        func() time.Time
-	// Tests shrink these.
-	KillGrace  time.Duration
+	KillGrace  time.Duration // tests shrink this and the two below
 	CancelWait time.Duration
 	Idle       time.Duration
 }

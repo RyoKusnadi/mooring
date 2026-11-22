@@ -90,7 +90,7 @@ notification names the project only.
   terminal".
 - If the terminal could not start, you see "The terminal could not start." with a reason and a
   "Close tab" button.
-- An SSH terminal that loses its host says "The connection to the host ended" and offers
+- An SSH terminal that loses its host says "The connection to the host ended." and offers
   "Reconnect".
 
 Next: [Agent chats](agent-chats.md).

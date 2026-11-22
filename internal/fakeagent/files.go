@@ -8,7 +8,7 @@ import (
 
 // fileTurn answers "readfile <path>" and "readlimit <path>" (reads through the
 // client) and "WRITEFILE <abs path> <text>" (writes the file itself, as an agent
-// that edits files does).
+// that edits files does), and "writefile <abs path> <text>" (writes through the client).
 func (a *agent) fileTurn(sid, text string) {
 	verb, rest, _ := strings.Cut(text, " ")
 	switch verb {
@@ -22,6 +22,10 @@ func (a *agent) fileTurn(sid, text string) {
 	case "readlimit":
 		res := a.call("fs/read_text_file", map[string]any{"sessionId": sid, "path": rest, "line": 2, "limit": json.Number("9223372036854775807")})
 		a.chunk(sid, "read:"+string(res.Result)+string(res.Error))
+	case "writefile":
+		path, body, _ := strings.Cut(rest, " ")
+		res := a.call("fs/write_text_file", map[string]any{"sessionId": sid, "path": path, "content": body})
+		a.chunk(sid, "wrote:"+string(res.Result)+string(res.Error))
 	case "WRITEFILE":
 		path, body, _ := strings.Cut(rest, " ")
 		if err := os.WriteFile(path, []byte(body+"\n"), 0o644); err != nil {

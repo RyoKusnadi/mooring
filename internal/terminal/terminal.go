@@ -26,7 +26,8 @@ type Info struct {
 	Rows      uint16 `json:"rows"`
 	Exited    bool   `json:"exited"`
 	Code      int    `json:"code"`
-	SSH       string `json:"ssh,omitempty"` // the connection a remote shell runs on
+	Lost      bool   `json:"lost,omitempty"` // a remote shell's connection ended before it did
+	SSH       string `json:"ssh,omitempty"`  // the connection a remote shell runs on
 
 	Attention bool `json:"attention,omitempty"` // a signal is waiting for the user
 	Bell      bool `json:"bell,omitempty"`      // the signal is a bell alone
@@ -54,6 +55,7 @@ type Terminal struct {
 	reaped   bool      // the shell was waited for
 	exited   bool
 	code     int
+	lost     bool
 	exitedAt time.Time
 	closing  bool
 	removed  bool // closed by the user or by shutdown: no exited event
@@ -86,7 +88,7 @@ func newTerminal(m *Manager, id, projectID, ssh string, b Backend, cols, rows ui
 func (t *Terminal) info() Info {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	return Info{ID: t.id, ProjectID: t.projectID, Cols: t.cols, Rows: t.rows, Exited: t.exited, Code: t.code, SSH: t.ssh, Attention: t.sig.on, Bell: t.sig.on && t.sig.bell}
+	return Info{ID: t.id, ProjectID: t.projectID, Cols: t.cols, Rows: t.rows, Exited: t.exited, Code: t.code, Lost: t.lost, SSH: t.ssh, Attention: t.sig.on, Bell: t.sig.on && t.sig.bell}
 }
 
 // readLoop moves PTY output into batches. It stops reading while the active
@@ -194,19 +196,23 @@ func (t *Terminal) run() {
 		}
 	}
 	_ = t.b.Close()
-	t.markExited(code)
+	lost := false
+	if l, ok := t.b.(interface{ Lost() bool }); ok {
+		lost = l.Lost()
+	}
+	t.markExited(code, lost)
 }
 
-func (t *Terminal) markExited(code int) {
+func (t *Terminal) markExited(code int, lost bool) {
 	t.mu.Lock()
-	t.exited, t.code, t.exitedAt = true, code, t.m.now()
+	t.exited, t.code, t.lost, t.exitedAt = true, code, lost, t.m.now()
 	removed := t.removed
-	info := Info{ID: t.id, ProjectID: t.projectID, Cols: t.cols, Rows: t.rows, Exited: true, Code: code, SSH: t.ssh}
+	id, projectID := t.id, t.projectID
 	t.wakeLocked()
 	t.mu.Unlock()
-	t.log.Info("terminal: exited", "code", code)
+	t.log.Info("terminal: exited", "code", code, "lost", lost)
 	if !removed {
-		t.m.pub.Publish("terminal.exited", map[string]any{"id": info.ID, "projectId": info.ProjectID, "code": code})
+		t.m.pub.Publish("terminal.exited", map[string]any{"id": id, "projectId": projectID, "code": code, "lost": lost})
 	}
 	close(t.done)
 }

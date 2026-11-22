@@ -41,7 +41,7 @@ app: `docs/guide/`.
 - Go: standard library first. A new dependency needs its reason in the commit message.
   Wrap errors with context. Log with `log/slog` at boundaries and on failures.
 - Never log or store in SQLite: tokens, passwords, cookies, keys. Secrets go to the secret store.
-- Every request and socket checks Host and Origin. Bind to loopback only until TLS exists.
+- Every request and socket checks Host and Origin. Bind to loopback only unless a TLS cert and a password are set.
 - Every file path from the browser goes through one resolve-then-check function.
 - Every command from the browser carries a client id and runs once. Every stream has a position.
 - Web: Svelte 5 runes. No UI kit, no CSS framework. Styles are scoped in components; colours

@@ -74,13 +74,13 @@ func (s *server) handleLink(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	if wait := s.auth.retryAfter(); wait > 0 {
+	if wait := s.limit.retryAfter(clientKey(r)); wait > 0 {
 		http.Redirect(w, r, "/?link=wait", http.StatusSeeOther)
 		return
 	}
 	switch s.auth.redeem(code) {
 	case linkBad:
-		s.auth.fail()
+		s.limit.fail(clientKey(r))
 		s.log.Warn("sign-in link: refused", "remote", r.RemoteAddr)
 		http.Redirect(w, r, "/?link=invalid", http.StatusSeeOther)
 		return

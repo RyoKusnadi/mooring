@@ -39,7 +39,18 @@ Mooring serves on 127.0.0.1:7340. If another program has that port, the server w
 
 To find what has it, run `lsof -i :7340`. Stop that program, or start Mooring on another port with
 `mooring -addr 127.0.0.1:7341`. Then pass the same `-addr` to `mooring open`, and to `mooring
-autostart on` if you use it. Only loopback addresses are accepted.
+autostart on` if you use it. A non-local address is refused unless you give `-tls-cert` and
+`-tls-key` and have set a password. See [Open Mooring from another
+device](getting-started.md#open-mooring-from-another-device).
+
+## Another device gets 403 or a certificate warning
+
+A 403 means the name in the address bar is not in the certificate. Open Mooring by a DNS name or IP
+the certificate lists, such as the https address Mooring prints at start.
+
+A browser warning about the certificate usually means the certificate came from `mkcert` and that
+device does not have mkcert's root CA. Install the root CA on that device. A certificate from
+`tailscale cert` needs no extra step.
 
 ## macOS will not open mooring
 

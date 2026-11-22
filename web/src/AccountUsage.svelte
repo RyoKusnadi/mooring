@@ -1,7 +1,7 @@
 <script lang="ts">
   // Usage of one account: each window the agent reported, and the login state.
   import type { Account } from './lib/accountapi'
-  import { limited, loginLabel, percentText, resetText, usageKnown, windowName } from './lib/accountfmt'
+  import { limited, loginLabel, resetText, usageKnown, usedText, windowName } from './lib/accountfmt'
 
   let { account: a }: { account: Account } = $props()
   const hit = $derived(limited(a.usage))
@@ -17,7 +17,7 @@
       {#each a.usage.windows ?? [] as w (w.name)}
         <li>
           <span class="w">{windowName(w.name)}</span>
-          <span>{percentText(w)} used</span>
+          <span>{usedText(w)}</span>
           <span class="muted">{resetText(w.resetsAt)}</span>
         </li>
       {/each}

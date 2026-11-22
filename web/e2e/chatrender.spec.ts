@@ -46,8 +46,9 @@ test('chat queues a message while the agent replies and sends it after', async (
   test.setTimeout(120_000)
   await signIn(page)
   const problems = collectProblems(page)
-  await startChat(page, `queue-${Date.now()}`)
-  await page.getByLabel('Message to Gemini').fill('long')
+  await startChat(page, `queue-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
+  // "hold" runs until Stop; "long" can end by itself on a slow machine before Stop is pressed.
+  await page.getByLabel('Message to Gemini').fill('hold')
   await page.getByRole('button', { name: 'Send', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Stop reply' })).toBeVisible()
   await page.getByLabel('Message to Gemini').fill('hello')

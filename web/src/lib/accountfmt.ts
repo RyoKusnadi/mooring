@@ -19,9 +19,16 @@ export function windowName(name: string): string {
   return WINDOW_NAMES[name] ?? name.replace(/_/g, ' ')
 }
 
-/** "42%", or "unknown" when the agent did not say. Never a guess. */
-export function percentText(w: UsageWindow): string {
-  return w.usedPercent === null || w.usedPercent === undefined ? 'unknown' : `${Math.round(w.usedPercent)}%`
+const STATUS_TEXT: Record<string, string> = {
+  allowed: 'within limit',
+  allowed_warning: 'near limit',
+  rejected: 'limit reached',
+}
+
+/** "42% used", or what the window's status says when the agent gave no percentage. Never a guess. */
+export function usedText(w: UsageWindow): string {
+  if (w.usedPercent !== null && w.usedPercent !== undefined) return `${Math.round(w.usedPercent)}% used`
+  return STATUS_TEXT[w.status] ?? 'usage not reported'
 }
 
 /** "resets at 14:05" today, "resets Mon 14:05" later, "reset time unknown" for 0. */
@@ -57,7 +64,7 @@ export function usageLine(u: Usage, now = Date.now()): { text: string; all: stri
   const top = live.reduce((a, b) => (b.usedPercent! > a.usedPercent! || (b.usedPercent === a.usedPercent && b.resetsAt > a.resetsAt) ? b : a))
   const one = (w: UsageWindow) => {
     if (stale(w)) return `${windowName(w.name)}: not reported since the ${resetText(w.resetsAt, now)}`
-    return `${windowName(w.name)}: ${has(w) ? `${percentText(w)} used` : 'unknown'}, ${resetText(w.resetsAt, now)}`
+    return `${windowName(w.name)}: ${usedText(w)}, ${resetText(w.resetsAt, now)}`
   }
   return { text: one(top), all: windows.map(one).join('\n') }
 }

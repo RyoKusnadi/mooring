@@ -3,6 +3,7 @@
   import { actions, paletteKey } from './lib/actions'
   import { isMac, showKey } from './lib/keys'
   import { emptyUi, terms } from './lib/termstore.svelte'
+  import { endText } from './lib/termend'
   import type { TermView } from './lib/termview'
   import TermKeys from './TermKeys.svelte'
   import TermFind from './TermFind.svelte'
@@ -111,7 +112,7 @@
     {/if}
     {#if ended}
       <div class="ended" role="status">
-        <span>{info?.ssh ? 'The connection to the host ended' : 'The shell exited'}{info?.code ? ` with code ${info.code}` : ''}.</span>
+        <span>{endText(info)}</span>
         <button type="button" class="btn primary" bind:this={restart} onclick={() => actions.restartTerminal(id)}>{info?.ssh ? 'Reconnect' : 'Start a new terminal'}</button>
       </div>
     {/if}

@@ -39,13 +39,13 @@ func (s *server) takeSlot(ctx context.Context) (func(), error) {
 // and all run the hash. The attempt is counted before the hash runs and given
 // back on success, so a burst of parallel requests cannot get more guesses
 // than the limit allows.
-func (s *server) passwordLogin(ctx context.Context, username, pw string) (string, bool, error) {
+func (s *server) passwordLogin(ctx context.Context, key, username, pw string) (string, bool, error) {
 	done, err := s.takeSlot(ctx)
 	if err != nil {
 		return "", false, err
 	}
 	defer done()
-	release, wait := s.auth.reserve()
+	release, wait := s.limit.reserve(key)
 	if wait > 0 {
 		return "", false, blockedError{wait}
 	}
@@ -71,6 +71,20 @@ func (s *server) passwordLogin(ctx context.Context, username, pw string) (string
 	release()
 	value, err := s.auth.newSession()
 	return value, err == nil, err
+}
+
+// tokenLogin checks a login token, counted like a password attempt so parallel
+// guesses cannot pass the limit.
+func (s *server) tokenLogin(key, token string) (string, bool, error) {
+	release, wait := s.limit.reserve(key)
+	if wait > 0 {
+		return "", false, blockedError{wait}
+	}
+	id, ok, err := s.auth.login(token)
+	if ok || err != nil {
+		release()
+	}
+	return id, ok, err
 }
 
 // handleLoginState says whether a password is set, so the login page knows
@@ -122,7 +136,7 @@ func (s *server) handleSignOutOthers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer done()
-	release, wait := s.auth.reserve()
+	release, wait := s.limit.reserve(clientKey(r))
 	if wait > 0 {
 		w.Header().Set("Retry-After", strconv.Itoa(int(math.Ceil(wait.Seconds()))))
 		writeError(w, http.StatusTooManyRequests, "too_many_attempts")

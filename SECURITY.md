@@ -12,14 +12,19 @@ product.
 
 ## How access is limited
 
-- Mooring listens on loopback only (127.0.0.1 or ::1). It refuses an `-addr` that is not a
-  loopback address. There is no TLS yet, so it is not meant to be reached over a network. If you
+- Mooring listens on loopback (127.0.0.1 or ::1) by default. It refuses any other `-addr` unless
+  you give both `-tls-cert` and `-tls-key` and have set a sign-in password. Then it serves HTTPS
+  (TLS 1.2 or newer), sends HSTS on non-loopback hosts, and marks the session cookie Secure. If you
   forward the port yourself (an SSH tunnel, a reverse proxy), the protection is whatever you add.
-- Every request checks the Host header, which blocks DNS rebinding. Requests that change
+- Every request checks the Host header, which blocks DNS rebinding. It allows loopback names and the
+  names and IPs in the certificate, and refuses a certificate with none. Requests that change
   something check Origin. WebSockets use the same check.
 - Sign-in is by a login token kept in the data folder, or by one username and password if you set
   one. `mooring open` prints a link that works once and for 5 minutes. A sign-in cookie is
-  HttpOnly and SameSite=Strict, and lasts 30 days. Failed logins are limited to 5 per minute.
+  HttpOnly and SameSite=Strict, and lasts 30 days. Failed logins are limited to 5 per minute for
+  each client address (each IPv6 /48 counts as one), so another device cannot lock the owner out.
+  Mooring does not trust `X-Forwarded-For`, so behind a reverse proxy every client counts as one
+  address.
 - Remembered SSH passwords go to the macOS keychain, `secret-tool` on Linux, or a file encrypted
   with a passphrase you give. Tokens, passwords and cookies are not written to logs or to the
   database.
@@ -31,7 +36,9 @@ product.
 
 - Running commands, editing files or opening SSH connections as a signed-in user.
 - Attacks that need access to your account, your data folder or your browser profile.
-- Exposing Mooring beyond loopback with your own tunnel or proxy, and what that exposes.
+- Exposing Mooring with your own tunnel or proxy, and what that exposes. Serving it on a
+  non-loopback address with `-tls-cert` and `-tls-key` is supported, but a weak password or a
+  leaked key file is on you.
 - Bugs in the agents, tool servers, language servers or SSH hosts that Mooring starts or talks
   to. Report those to their authors.
 - Missing macOS signing or notarisation of the release binaries.

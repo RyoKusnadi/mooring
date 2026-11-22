@@ -31,6 +31,11 @@ export interface ChatInfo {
   usage: { used: number; size: number; cost?: number; currency?: string } | null
   caps: Record<string, boolean | string[]> | null
   spec?: { folder?: { path?: string; worktree?: boolean }; account?: { id?: string }; filters?: string[]; agentMade?: boolean } | null
+  /** Mooring's instructions went to the agent when this chat last started. */
+  instructed?: boolean
+  /** The group this chat works in, and the group's title when it has one. */
+  groupId?: string
+  groupTitle?: string
   /** The chat this one started from a summary of. */
   fromChat?: string
   /** After a limit: the account to move to, or null when no other account has room. */
@@ -45,6 +50,8 @@ export interface ChatInfo {
   /** The end of the newest message of the user or the agent, for lists. */
   lastLine?: string
   updatedAt: number
+  /** When the chat was made, unix ms. */
+  createdAt?: number
 }
 
 type Run = <T>(name: string, args: unknown) => Promise<T>

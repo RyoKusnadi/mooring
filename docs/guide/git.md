@@ -46,6 +46,34 @@ commit.
 Other diff buttons: "Stage file" or "Unstage file", "Open in editor", and "Show unstaged changes"
 or "Show staged changes".
 
+## See what the agent changed in its last turn
+
+Above the file list, "Uncommitted" shows your working copy as before. "Last turn" shows only what
+one chat's agent changed during its latest turn, so your own edits made before the turn do not
+appear. The scope names the chat ("Last turn of <chat title>"). It is the chat in the focused tab;
+with several chats in the project, the list next to it picks another.
+
+Before and after each agent turn Mooring records the folder as a checkpoint, without touching your
+staged changes, branches or stashes. The list shows each file with Added, Changed, Deleted or
+Renamed and its line counts. Click a file for its diff. This view is read-only: nothing can be
+staged here. Until a chat has finished a turn with a checkpoint, the view says "<chat> has not
+finished a turn with a checkpoint yet."
+
+Settings, under Token saving, has "Save a checkpoint before each agent turn" for the open project.
+It is on unless you turn it off. Files in .gitignore are not recorded.
+
+## Comment on diff lines and send them to a chat
+
+In any diff (uncommitted, a commit, or Last turn) point at a line and click "Comment on line N".
+Type the note in "Comment for the agent" and click "Add comment". Each comment can be edited or
+removed under its line. Comments are kept in this browser tab until you send or discard them.
+
+The bar under the diff says how many comments are waiting. "Send to chat…" puts all of them in the
+message box of a chat: for each one the file and line, the quoted line in a code block, then your
+comment. If several chats are open it asks which one. You read and send the message yourself; the
+comments are cleared once they are in the box. "Discard comments" drops them. All comments together
+may be 64 KB at most.
+
 ## Discard changes
 
 Select a file and press Delete, or click "Discard all" for every unstaged file. Mooring asks

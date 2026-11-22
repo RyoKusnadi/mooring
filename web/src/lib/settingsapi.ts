@@ -10,6 +10,12 @@ export interface Settings {
   titleJobs: boolean
   commitJobs: boolean
   jobTokensPerDay: number
+  /** Mooring's instructions go to new chats (on when the server has no value). */
+  agentInstructions: boolean
+  /** Extra instructions per project id, up to MAX_PROJECT_INSTRUCTIONS characters each. */
+  projectInstructions: Record<string, string>
+  /** Projects whose agent turns are not checkpointed (project id to true). Absent means on. Saved as a whole map. */
+  checkpointsOff: Record<string, boolean>
 }
 
 export interface Model {
@@ -26,6 +32,7 @@ export function suggestSmall(agent: string, models: Model[]): Model | undefined 
   return models.find((m) => /haiku/i.test(m.id) || /haiku/i.test(m.name))
 }
 
+export const MAX_PROJECT_INSTRUCTIONS = 2000
 export const MIN_JOB_TOKENS = 1000
 export const MAX_JOB_TOKENS = 100_000_000
 

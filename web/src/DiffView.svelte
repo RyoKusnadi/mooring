@@ -2,7 +2,7 @@
   // One file's changes: hunks with old and new line numbers, drawn only when in view. Working-copy and
   // staged diffs let the user pick lines to stage; a commit's diff is read-only.
   import { tick, untrack } from 'svelte'
-  import DiffLine from './DiffLine.svelte'
+  import DiffCommentLine from './DiffCommentLine.svelte'
   import DiffPickBar from './DiffPickBar.svelte'
   import VirtualList from './VirtualList.svelte'
   import { actions } from './lib/actions'
@@ -26,8 +26,7 @@
   let note = $state('')
   let wrap: HTMLElement | undefined = $state()
   let list: VirtualList | undefined = $state()
-  let active = $state(-1)
-  let swallow = false
+  let active = $state(-1), swallow = false
   let ctl: AbortController | undefined
   const pick = new LinePick()
   const rows = $derived(diff ? diffRows(diff.hunks) : [])
@@ -193,7 +192,7 @@
     {#if !commit && why === 'rename'}<p class="sub pad">A staged rename is unstaged as a whole file. Use Unstage file to choose lines again.</p>{/if}
     <VirtualList bind:this={list} count={rows.length} label={`Changes in ${path}`} estimate={21} bind:follow jump="Jump to end">
       {#snippet row(i)}
-        <DiffLine row={rows[i]} {i} {choosable} {staged} {busy} chosen={pick.has(i)} tab={i === tabRow} ondown={down} onenter={(k) => pick.dragging && pick.dragOver(rows, k)} onclick={click} onkey={keys} onblock={block} />
+        <DiffCommentLine row={rows[i]} {path} {i} {choosable} {staged} {busy} chosen={pick.has(i)} tab={i === tabRow} ondown={down} onenter={(k) => pick.dragging && pick.dragOver(rows, k)} onclick={click} onkey={keys} onblock={block} />
       {/snippet}
     </VirtualList>
   {/if}

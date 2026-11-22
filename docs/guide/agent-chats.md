@@ -166,6 +166,24 @@ title. Above it, "From <agent> · <chat title>" names where it came from. Click 
 chat, if it still exists. If that chat was deleted, the label says so and is not a link. A reply longer than 64 KB is cut, and the message says so. If the project has
 no other chat, the panel says so and has a "New chat" button.
 
+## Work with other chats in a group
+
+A group puts 2 or 3 chats of the same project side by side, for example one agent writing and
+another reviewing.
+
+1. In a chat, open "Chat options" and click "Group with other chats…".
+2. Tick 1 or 2 other chats. Only chats that are not in a group yet are listed.
+3. Optional: type a group title. Click "Group chats".
+
+The Chats list shows the group as one row, with its chats nested under it. The row is named by its
+title, or "Group: " and the chat titles, and it has the amber mark when any chat in it needs you.
+Click the row to open the group tab. Each chat there is a normal chat with its own message box,
+and "Send to another chat" works between them. On a narrow window the chats are stacked.
+
+"Leave group" above a chat takes that chat out. A group left with one chat is dissolved.
+"Ungroup" in the tab header takes them all out and opens each chat in its own tab. The chats keep
+their messages either way. Clicking a chat under the group row still opens it alone.
+
 ## Search chat history
 
 ![The Chat history dialog with the word "farewell" searched and the matching chat shown with the word marked.](images/agent-chats-history.png)

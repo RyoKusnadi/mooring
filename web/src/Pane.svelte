@@ -3,6 +3,7 @@
   import { zoneAt } from './lib/dropzone'
   import { groups, type Group } from './lib/layout'
   import { tabLabels } from './lib/tablabels'
+  import { groupTitle, membersOf } from './lib/chatgroups'
   import { app } from './lib/state.svelte'
   import TabStrip from './TabStrip.svelte'
   import PaneBody from './PaneBody.svelte'
@@ -17,7 +18,7 @@
   const fileTabs = $derived(group.tabs.filter((t) => t.kind === 'file' && t.path))
   const fileNames = $derived(new Map(fileLabels(fileTabs.map((t) => t.path!)).map((n, i) => [fileTabs[i].id, n])))
   const labels = $derived(
-    tabLabels(group.tabs, (id, kind) => (kind === 'terminal' ? terms.ui[id]?.title : kind === 'chat' ? chats.list[id]?.title : kind === 'file' ? fileNames.get(id) : undefined), (h) => ssh.host(h)?.name),
+    tabLabels(group.tabs, (id, kind) => (kind === 'terminal' ? terms.ui[id]?.title : kind === 'chat' ? chats.list[id]?.title : kind === 'group' ? groupTitle(membersOf(chats.list, id)) : kind === 'file' ? fileNames.get(id) : undefined), (h) => ssh.host(h)?.name),
   )
   const label = (t: { id: string }) => labels.get(t.id) ?? 'Tab'
 

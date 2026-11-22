@@ -70,7 +70,8 @@ kill -0 $fakemcp 2>/dev/null || { echo "serve.sh: the stand-in tool server did n
 # accounts get their own folder and start signed out.
 mkdir -p "$PWD/$data/fake-login" && touch "$PWD/$data/fake-login/signed-in"
 [ -z "$MOORING_E2E_HOME" ] || export HOME="$MOORING_E2E_HOME"
-FAKE_CONFIG="$PWD/$data/fake-login" PATH="$PWD/$data/fakebin:$PATH" ../bin/mooring-e2e -fake-account-agent gemini -addr 127.0.0.1:$base -data "$PWD/$data" -shell "$PWD/e2e/shell.sh" -lsp-idle 3s -lsp-memory-mb 150 -secrets-passphrase-file "$data/secrets-pass" &
+# The test folders sit inside this repo: stop git there, so checkpoints and status never see it.
+GIT_CEILING_DIRECTORIES="$PWD/$data" FAKE_CONFIG="$PWD/$data/fake-login" PATH="$PWD/$data/fakebin:$PATH" ../bin/mooring-e2e -fake-account-agent gemini -addr 127.0.0.1:$base -data "$PWD/$data" -shell "$PWD/e2e/shell.sh" -lsp-idle 3s -lsp-memory-mb 150 -secrets-passphrase-file "$data/secrets-pass" &
 app=$!
 trap 'kill $fake $fakemcp $app 2>/dev/null' EXIT INT TERM
 wait $app

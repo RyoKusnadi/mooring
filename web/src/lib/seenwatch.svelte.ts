@@ -2,6 +2,7 @@
 // Installed from App.svelte next to watchAttention.
 import { app } from './state.svelte'
 import { chats } from './chatstore.svelte'
+import { membersOf } from './chatgroups'
 import { seenToSend, visibleChats } from './seen'
 
 export function watchSeen(): () => void {
@@ -17,7 +18,7 @@ export function watchSeen(): () => void {
     let retry = $state(0)
     $effect(() => {
       void retry
-      const ids = shown ? visibleChats(app.layout) : []
+      const ids = shown ? visibleChats(app.layout, (g) => membersOf(chats.list, g).map((m) => m.id)) : []
       const send = seenToSend(
         before,
         ids,

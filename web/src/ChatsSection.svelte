@@ -1,7 +1,8 @@
 <script lang="ts">
   import AttentionMark from './AttentionMark.svelte'
   import { actions } from './lib/actions'
-  import { chats } from './lib/chatstore.svelte'
+  import { chats, type ChatInfo } from './lib/chatstore.svelte'
+  import { chatRows } from './lib/chatgroups'
   import { attentionLabel } from './lib/chatfmt'
   import { app } from './lib/state.svelte'
   import { deleteQuestion } from './lib/chatfolders'
@@ -13,6 +14,12 @@
   const all = $derived(chats.inProject(app.currentId))
   let find = $state('')
   const saved = $derived(find.trim() ? all.filter((c) => (c.title || 'New chat').toLowerCase().includes(find.trim().toLowerCase())) : all)
+  const rows = $derived(chatRows(saved))
+  // With the filter on, say how many of the group's chats match.
+  const groupCount = (gid: string, shown: number) => {
+    const total = all.filter((c) => c.groupId === gid).length
+    return shown < total ? `${shown} of ${total} chats match` : `Group of ${total} chats`
+  }
   let confirming = $state('')
   let renaming = $state('')
   let draft = $state('')
@@ -50,28 +57,43 @@
       {#if saved.length === 0}
         <p class="hint">No chats match "{find}". <button type="button" class="btn small" onclick={() => (find = '')}>Clear</button></p>
       {/if}
+      {#snippet row(c: ChatInfo)}
+        <li>
+      {#if confirming === c.id}
+        <span class="ask">{deleteQuestion(chats.list[c.id], agentName(c.agent))}</span>
+        <button type="button" class="btn danger small" onclick={() => (actions.deleteChat(c.id), (confirming = ''))}>Delete</button>
+        <button type="button" class="btn small" onclick={() => (confirming = '')} {@attach (n: HTMLButtonElement) => n.focus()}>Keep</button>
+      {:else if renaming === c.id}
+        <input class="input rename" aria-label="Chat title" maxlength="120" bind:value={draft} onblur={saveRename} onkeydown={(e) => (e.key === 'Enter' ? saveRename() : e.key === 'Escape' && ((renaming = ''), e.stopPropagation()))} {@attach (n: HTMLInputElement) => (n.focus(), n.select())} />
+      {:else}
+        <button type="button" class="open" title={c.title} onclick={() => (actions.openChat(c.id), onNavigate())}>
+          <span class="text"><span class="title">{c.title || 'New chat'}</span>{#if c.lastLine}<span class="last">{c.lastLine}</span>{/if}<span class="when">{agentName(c.agent)} · {relativeTime(c.updatedAt / 1000)}</span></span>
+          {#if c.attention}
+            <AttentionMark label={attentionLabel(c)} />
+          {:else if STATE[c.state]}
+            <span class="state">{STATE[c.state]}</span>
+          {/if}
+        </button>
+        <button type="button" class="del" aria-label={`Rename chat ${c.title || 'New chat'}`} title="Rename" onclick={() => startRename(c.id, c.title)}>✎</button>
+        <button type="button" class="del" aria-label={`Delete chat ${c.title || 'New chat'}`} onclick={() => (confirming = c.id)}>×</button>
+      {/if}
+    </li>
+      {/snippet}
       <ul>
-        {#each saved as c (c.id)}
-          <li>
-            {#if confirming === c.id}
-              <span class="ask">{deleteQuestion(chats.list[c.id], agentName(c.agent))}</span>
-              <button type="button" class="btn danger small" onclick={() => (actions.deleteChat(c.id), (confirming = ''))}>Delete</button>
-              <button type="button" class="btn small" onclick={() => (confirming = '')} {@attach (n: HTMLButtonElement) => n.focus()}>Keep</button>
-            {:else if renaming === c.id}
-              <input class="input rename" aria-label="Chat title" maxlength="120" bind:value={draft} onblur={saveRename} onkeydown={(e) => (e.key === 'Enter' ? saveRename() : e.key === 'Escape' && ((renaming = ''), e.stopPropagation()))} {@attach (n: HTMLInputElement) => (n.focus(), n.select())} />
-            {:else}
-              <button type="button" class="open" title={c.title} onclick={() => (actions.openChat(c.id), onNavigate())}>
-                <span class="text"><span class="title">{c.title || 'New chat'}</span>{#if c.lastLine}<span class="last">{c.lastLine}</span>{/if}<span class="when">{agentName(c.agent)} · {relativeTime(c.updatedAt / 1000)}</span></span>
-                {#if c.attention}
-                  <AttentionMark label={attentionLabel(c)} />
-                {:else if STATE[c.state]}
-                  <span class="state">{STATE[c.state]}</span>
-                {/if}
+        {#each rows as r (('group' in r ? 'g' + r.group.id : r.chat.id))}
+          {#if 'group' in r}
+            <li class="group">
+              <button type="button" class="open" title={r.group.title} onclick={() => (actions.openGroup(r.group.id), onNavigate())}>
+                <span class="text"><span class="title">{r.group.title}</span><span class="when">{groupCount(r.group.id, r.group.members.length)}</span></span>
+                {#if r.group.attention}<AttentionMark label="A chat in this group needs you" />{/if}
               </button>
-              <button type="button" class="del" aria-label={`Rename chat ${c.title || 'New chat'}`} title="Rename" onclick={() => startRename(c.id, c.title)}>✎</button>
-              <button type="button" class="del" aria-label={`Delete chat ${c.title || 'New chat'}`} onclick={() => (confirming = c.id)}>×</button>
-            {/if}
-          </li>
+              <ul class="members" aria-label={`Chats in ${r.group.title}`}>
+                {#each r.group.members as m (m.id)}{@render row(m)}{/each}
+              </ul>
+            </li>
+          {:else}
+            {@render row(r.chat)}
+          {/if}
         {/each}
       </ul>
     {/if}
@@ -121,6 +143,26 @@
   }
   li:hover {
     background: var(--hover);
+  }
+  li.group {
+    display: block;
+  }
+  li.group:hover {
+    background: transparent;
+  }
+  li.group > .open {
+    width: 100%;
+    border-radius: var(--r-s);
+  }
+  li.group > .open:hover {
+    background: var(--hover);
+  }
+  .members {
+    margin: 0;
+    padding: 0 0 0 var(--s-3);
+    overflow: visible;
+    border-left: 1px solid var(--border);
+    margin-left: var(--s-3);
   }
   .open {
     display: flex;

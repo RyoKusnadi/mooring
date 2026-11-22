@@ -6,6 +6,8 @@
   import ChangesOperation from './ChangesOperation.svelte'
   import ChangesFiles, { type Pick } from './ChangesFiles.svelte'
   import ChangesHead from './ChangesHead.svelte'
+  import ChangesScope from './ChangesScope.svelte'
+  import ChangesTurn from './ChangesTurn.svelte'
   import CommitBox from './CommitBox.svelte'
   import DiffLazy from './DiffLazy.svelte'
   import StashSection from './StashSection.svelte'
@@ -16,6 +18,8 @@
   const status = $derived(git.status)
   const staged = $derived(status ? stagedOf(status) : [])
   const unstaged = $derived(status ? unstagedOf(status) : [])
+  let scope = $state<'now' | 'turn'>('now')
+  let turnChat = $state('')
   let sel = $state<Pick | null>(null)
   let step = $state<'list' | 'diff'>('list')
   let root: HTMLElement | undefined = $state()
@@ -83,7 +87,10 @@
 {#if app.ready && app.current}
   <section aria-label={`Changes in ${app.current.name}`} tabindex="-1" bind:this={root}>
     <ChangesHead />
-    {#if !status}
+    <ChangesScope bind:scope bind:chat={turnChat} />
+    {#if scope === 'turn'}
+      <ChangesTurn chat={turnChat} />
+    {:else if !status}
       {#if !git.readError}<p class="hint" role="status">Reading changes…</p>{/if}
     {:else if !status.repo}
       <div class="empty">

@@ -82,6 +82,17 @@ class AttachStore {
     })
   }
 
+  /** Puts the comments on diff lines into a chat's draft. `sent` runs once they are in, which may be after the chat is picked. */
+  sendComments(text: string, sent: () => void): string {
+    if (new TextEncoder().encode(text).length > MAX_ATTACH_BYTES) return 'The comments are over 64 KB. Send fewer.'
+    return this.deliver('No chat is open in this project. Start one, then send the comments again.', (id) => {
+      this.addText(id, text)
+      sent()
+      actions.focusTab(id)
+      return ''
+    })
+  }
+
   sendText(text: string): string {
     if (new TextEncoder().encode(text).length > MAX_ATTACH_BYTES) return 'The selection is over 64 KB. Select less.'
     return this.deliver('No chat is open in this project. Start one, then send the selection again.', (id) => {

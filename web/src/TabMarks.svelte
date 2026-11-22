@@ -3,6 +3,7 @@
   // computer (SSH) and a pinned tab.
   import Icon from './Icon.svelte'
   import { chats } from './lib/chatstore.svelte'
+  import { membersOf } from './lib/chatgroups'
   import { files } from './lib/filestore.svelte'
   import { ssh } from './lib/sshstore.svelte'
   import { terms } from './lib/termstore.svelte'
@@ -11,7 +12,7 @@
   const hostName = $derived(host ? (ssh.host(host)?.name ?? 'a remote host') : '')
 </script>
 
-{#if chats.list[id]?.attention}<span class="dot" role="img" aria-label="Needs permission" title="Needs permission"></span>{/if}{#if terms.needs(id)}<span class="dot" role="img" aria-label="Needs you" title="Needs you"></span>{/if}{#if files.dirty[id]}<span class="mod" role="img" aria-label="Unsaved changes" title="Unsaved changes"></span>{/if}{#if host}<span class="chip" role="img" aria-label="SSH" title="On {hostName} (SSH)">SSH</span>{/if}{#if pinned}<span class="mark" role="img" aria-label="Pinned" title="Pinned"><Icon name="pin" /></span>{/if}
+{#if chats.list[id]?.attention || membersOf(chats.list, id).some((m) => m.attention)}<span class="dot" role="img" aria-label="Needs permission" title="Needs permission"></span>{/if}{#if terms.needs(id)}<span class="dot" role="img" aria-label="Needs you" title="Needs you"></span>{/if}{#if files.dirty[id]}<span class="mod" role="img" aria-label="Unsaved changes" title="Unsaved changes"></span>{/if}{#if host}<span class="chip" role="img" aria-label="SSH" title="On {hostName} (SSH)">SSH</span>{/if}{#if pinned}<span class="mark" role="img" aria-label="Pinned" title="Pinned"><Icon name="pin" /></span>{/if}
 
 <style>
   .dot,

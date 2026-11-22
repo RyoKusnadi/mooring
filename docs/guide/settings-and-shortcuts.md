@@ -28,8 +28,15 @@ These settings cut the number of tokens Mooring spends. They are saved on the se
 | Shorten long command output in new chats | Off | New chats start with long command output shortened. |
 | Name chats with a small model | Off | Uses a small model to title chats. |
 | Suggest commit messages | Off | Adds a "Suggest message" button to the commit box. |
+| Add Mooring's instructions to new chats | On | Tells the agent how Mooring shortens long output and how to ask for the rest. Sent once when a chat starts. Never includes your files or secrets. "What is sent" shows the exact text. |
 | Daily token limit for small jobs | 200,000 | Whole number from 1,000 to 100,000,000. Chats are not counted. |
 | Small model per agent | None set | Pick a model for each agent. "Find models" asks the agent for its list, and needs an open project because it starts the agent in that folder. A model Mooring suggests is tagged "(suggested)". |
+
+Below the switch, "Extra instructions for <project>" takes up to 2,000 characters for the project
+that is open. They are added after Mooring's text in new chats of that project, and saved when you
+leave the box. Clear the box to remove them. An agent that cannot take extra instructions starts the
+chat without them, and the chat says so once: "<agent> does not take extra instructions, so this chat
+starts without them." Turn the switch off to stop sending them to every agent.
 
 Without a small model for an agent, that agent does no small jobs. A bad daily limit shows "The
 daily limit is a whole number from 1,000 to 100,000,000."

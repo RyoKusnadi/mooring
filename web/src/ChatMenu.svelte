@@ -1,6 +1,7 @@
 <script lang="ts">
   // The "…" of the chat header: shorten long output, a new chat from a summary, context and cost.
   import { tick } from 'svelte'
+  import ChatGroupForm from './ChatGroupForm.svelte'
   import Icon from './Icon.svelte'
   import { actions } from './lib/actions'
   import { chats, type ChatInfo } from './lib/chatstore.svelte'
@@ -99,6 +100,7 @@
         <p class="help" id="{uid}-u">Plan usage of {plan.name}</p>
         <ul class="plan" aria-labelledby="{uid}-u">{#each plan.all.split('\n') as w (w)}<li>{w}</li>{/each}</ul>
       {/if}
+      <ChatGroupForm {id} {info} done={() => close(false)} />
       {#if error}<p class="error" role="alert">{error}</p>{/if}
     </div>
   {/if}

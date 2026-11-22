@@ -99,11 +99,11 @@ func (s *Service) Checkpoint(ctx context.Context, projectID, dir, chatID string,
 		return fmt.Errorf("checkpoint: %w", err)
 	}
 	if !repo {
-		s.log.Info("git: no checkpoint, the folder is not a git repository", "chat", chatID)
+		s.log.Debug("git: no checkpoint, the folder is not a git repository", "chat", chatID)
 		return nil
 	}
 	defer s.repoLock(top)()
-	sha, err := s.writeTree(ctx, top, gitDir, end)
+	sha, err := s.writeTree(ctx, top, dir, gitDir, end)
 	if err != nil {
 		return fmt.Errorf("checkpoint: %w", err)
 	}
@@ -126,8 +126,10 @@ func (s *Service) Checkpoint(ctx context.Context, projectID, dir, chatID string,
 	return nil
 }
 
-// writeTree commits the working tree through a private copy of the index.
-func (s *Service) writeTree(ctx context.Context, top, gitDir string, end bool) (string, error) {
+// writeTree commits the working tree through a private copy of the index. Only dir, the
+// chat's folder, is read from disk: a project inside a much larger repository (a home folder
+// kept in git) must not have the whole repository copied on every turn.
+func (s *Service) writeTree(ctx context.Context, top, dir, gitDir string, end bool) (string, error) {
 	tmp, err := os.MkdirTemp(gitDir, "mooring-cp-")
 	if err != nil {
 		return "", err
@@ -149,7 +151,7 @@ func (s *Service) writeTree(ctx context.Context, top, gitDir string, end bool) (
 			return "", s.failure(err)
 		}
 	}
-	if _, err := s.run(cx, top, true, nil, "add", "-A", "--ignore-errors"); err != nil {
+	if _, err := s.run(cx, dir, true, nil, "add", "-A", "--ignore-errors", "--", "."); err != nil {
 		return "", s.failure(err)
 	}
 	out, err := s.run(cx, top, true, nil, "write-tree")

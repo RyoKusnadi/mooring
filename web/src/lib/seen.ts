@@ -1,10 +1,10 @@
 // When to tell the server the user has looked at a chat (chat.seen).
 import { groups, type Layout } from './layout'
 
-/** The chats whose tab is the selected one in its pane. */
-export function visibleChats(layout: Layout | null): string[] {
+/** The chats whose tab is the selected one in its pane; a group tab shows all its members. */
+export function visibleChats(layout: Layout | null, membersOf: (groupId: string) => string[] = () => []): string[] {
   if (!layout) return []
-  return groups(layout.root).flatMap((g) => g.tabs.filter((t) => t.id === g.active && t.kind === 'chat').map((t) => t.id))
+  return groups(layout.root).flatMap((g) => g.tabs.filter((t) => t.id === g.active).flatMap((t) => (t.kind === 'chat' ? [t.id] : t.kind === 'group' ? membersOf(t.id) : [])))
 }
 
 /**

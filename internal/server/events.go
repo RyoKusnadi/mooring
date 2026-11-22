@@ -180,10 +180,12 @@ func (s *Server) mountEvents(srv *server, cfg Config) error {
 // anything else (in particular before a WebSocket upgrade).
 func (s *server) requireSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Wrapped before the cookie check, so a key change from here on closes the socket.
+		tw := s.socks.wrap(w, r)
 		if !s.authorize(w, r) {
 			writeError(w, http.StatusUnauthorized, "login_required")
 			return
 		}
-		next.ServeHTTP(s.socks.wrap(w, r), r)
+		next.ServeHTTP(tw, r)
 	})
 }

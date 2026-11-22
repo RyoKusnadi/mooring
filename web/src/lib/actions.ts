@@ -89,6 +89,12 @@ export const actions = {
     if (l && findTab(l, id)) return app.edit((l) => focusTab(l, id))
     app.edit((l) => openTab(l, newTab(id, 'chat', chats.list[id]?.title || 'Chat')))
   },
+  /** Shows the tab of a group of chats: the members side by side. */
+  openGroup: (id: string) => {
+    const l = app.layout
+    if (l && findTab(l, id)) return app.edit((l) => focusTab(l, id))
+    app.edit((l) => openTab(l, newTab(id, 'group', 'Group')))
+  },
   /** Shows a terminal's tab when it is open in this project. */
   openTerminalTab: (id: string) => {
     const l = app.layout

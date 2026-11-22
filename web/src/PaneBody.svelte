@@ -1,5 +1,6 @@
 <script lang="ts">
   import ChatLazy from './ChatLazy.svelte'
+  import ChatGroupLazy from './ChatGroupLazy.svelte'
   import ChangesLazy from './ChangesLazy.svelte'
   import DiffLazy from './DiffLazy.svelte'
   import EmptyPane from './EmptyPane.svelte'
@@ -18,6 +19,8 @@
   {#key active.id}<Terminal id={active.id} />{/key}
 {:else if active?.kind === 'chat'}
   {#key active.id}<ChatLazy id={active.id} />{/key}
+{:else if active?.kind === 'group'}
+  {#key active.id}<ChatGroupLazy id={active.id} />{/key}
 {:else if active?.kind === 'file' && active.path !== undefined}
   <!-- The path is in the key: a renamed file gets a fresh view that keeps the tab's state. -->
   {#key active.id + ':' + active.path}<FileLazy id={active.id} path={active.path} />{/key}

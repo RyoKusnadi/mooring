@@ -155,3 +155,15 @@ func TestCheckpointRejectsABadChatID(t *testing.T) {
 		t.Fatal("a chat id with a slash was accepted")
 	}
 }
+
+// A chat in a folder of a larger repository saves only that folder from disk.
+func TestCheckpointReadsOnlyTheChatFolder(t *testing.T) {
+	r := newRig(t, opts{subfolder: "app"})
+	r.write("app/in.txt", "x\n")
+	r.write("outside.txt", "y\n")
+	r.must(r.s.Checkpoint(context.Background(), "p1", filepath.Join(r.root, "app"), "c1", false))
+	tree := r.git(r.root, "ls-tree", "-r", "--name-only", cpNS+"c1/1")
+	if !strings.Contains(tree, "app/in.txt") || strings.Contains(tree, "outside.txt") {
+		t.Fatalf("tree = %q", tree)
+	}
+}

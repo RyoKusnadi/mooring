@@ -6,6 +6,7 @@ export function tabIcon(kind: string): IconName {
     case 'terminal':
       return 'terminal'
     case 'chat':
+    case 'group':
       return 'chat'
     case 'file':
     case 'rfile':

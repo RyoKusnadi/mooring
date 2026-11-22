@@ -1,6 +1,8 @@
 <script lang="ts">
   // Token-saving section of Settings. Each change is saved as it is made; the server answers with the whole
   // settings and tells other devices.
+  import SettingsCheckpoints from './SettingsCheckpoints.svelte'
+  import SettingsInstructions from './SettingsInstructions.svelte'
   import SettingsModels from './SettingsModels.svelte'
   import { MAX_JOB_TOKENS, MIN_JOB_TOKENS, type Settings } from './lib/settingsapi'
   import { settings } from './lib/settingsstore.svelte'
@@ -57,6 +59,9 @@
     <span class="help">Adds a Suggest message button to the commit box. A small model reads the staged changes and writes a message. It uses tokens from the daily limit.</span>
   </span>
 </label>
+
+<SettingsInstructions {save} />
+<SettingsCheckpoints {save} />
 
 <div class="field">
   <label for="{uid}-limit"><strong>Daily token limit for small jobs</strong></label>

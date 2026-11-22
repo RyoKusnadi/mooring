@@ -5,7 +5,7 @@ import { fetchSettings, type Model, type Settings } from './settingsapi'
 
 type Run = <T>(name: string, args: unknown) => Promise<T>
 
-export const defaults: Settings = { compactDefault: false, smallModel: {}, titleJobs: false, commitJobs: false, jobTokensPerDay: 200000 }
+export const defaults: Settings = { compactDefault: false, smallModel: {}, titleJobs: false, commitJobs: false, jobTokensPerDay: 200000, agentInstructions: true, projectInstructions: {}, checkpointsOff: {} }
 
 class SettingsStore {
   value = $state<Settings>({ ...defaults })
@@ -67,7 +67,7 @@ class SettingsStore {
 
   private put(s: Settings) {
     this.rev++
-    this.value = { ...defaults, ...s, smallModel: { ...(s.smallModel ?? {}) } }
+    this.value = { ...defaults, ...s, smallModel: { ...(s.smallModel ?? {}) }, projectInstructions: { ...(s.projectInstructions ?? {}) }, checkpointsOff: { ...(s.checkpointsOff ?? {}) } }
   }
 }
 

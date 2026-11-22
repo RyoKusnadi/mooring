@@ -23,6 +23,7 @@ type proc struct {
 	outF   io.ReadCloser
 	errOut io.ReadCloser
 	exited chan struct{}
+	errEnd chan struct{} // closed when stderr reaches its end
 
 	mu     sync.Mutex
 	stderr []byte // last 8 KiB; never logged whole
@@ -56,7 +57,7 @@ func startProc(argv []string, dir string, env []string) (*proc, error) {
 		_ = errR.Close()
 		return nil, fmt.Errorf("start %s: %w", argv[0], err)
 	}
-	p := &proc{cmd: cmd, in: inW, out: bufio.NewReaderSize(outR, 64<<10), outF: outR, errOut: errR, exited: make(chan struct{})}
+	p := &proc{cmd: cmd, in: inW, out: bufio.NewReaderSize(outR, 64<<10), outF: outR, errOut: errR, exited: make(chan struct{}), errEnd: make(chan struct{})}
 	go p.drainStderr()
 	go func() {
 		_ = cmd.Wait()
@@ -75,6 +76,7 @@ func (p *proc) killGroup() { _ = syscall.Kill(-p.pid(), syscall.SIGKILL) }
 func (p *proc) pid() int { return p.cmd.Process.Pid }
 
 func (p *proc) drainStderr() {
+	defer close(p.errEnd)
 	buf := make([]byte, 4096)
 	for {
 		n, err := p.errOut.Read(buf)
@@ -89,6 +91,15 @@ func (p *proc) drainStderr() {
 		if err != nil {
 			return
 		}
+	}
+}
+
+// waitStderr gives the reader up to d to take the last of stderr from a server that
+// ended, so its final words make it into the tail. A grandchild may hold the pipe open.
+func (p *proc) waitStderr(d time.Duration) {
+	select {
+	case <-p.errEnd:
+	case <-time.After(d):
 	}
 }
 

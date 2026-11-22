@@ -205,6 +205,7 @@ func (i *inst) crashed() {
 	}
 	closeAll(socks, 4002, "crashed")
 	i.out.close()
+	i.proc.waitStderr(300 * time.Millisecond)
 	tail := i.proc.stderrTail(2048)
 	i.proc.kill()
 	i.releaseWatch()

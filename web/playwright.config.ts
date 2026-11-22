@@ -27,12 +27,12 @@ export default defineConfig({
   // SSH questions (host key, password) show as a dialog in every window, which would take the
   // focus from the other tests' pages, so the SSH tests run last, on their own.
   projects: [
-    { name: 'main', testIgnore: /(chat|tokens|ssh)\.spec|\/lsp\.spec|e2e\/docs\// },
     // Language server consent is kept for the whole server, and lsp.spec needs gopls not yet
-    // allowed. Other tests allow it when they see the question, so lsp.spec runs on its own.
-    { name: 'lsp', testMatch: /\/lsp\.spec/, dependencies: ['main'] },
+    // allowed. Other tests allow it when they see the question, so lsp.spec runs first, alone.
+    { name: 'lsp', testMatch: /\/lsp\.spec/ },
+    { name: 'main', testIgnore: /(chat|tokens|ssh)\.spec|\/lsp\.spec|e2e\/docs\//, dependencies: ['lsp'] },
     // The server runs at most 20 chats at once; this stops the ones the main tests left running.
-    { name: 'stop chats', testMatch: /stopall\.setup\.ts/, dependencies: ['lsp'] },
+    { name: 'stop chats', testMatch: /stopall\.setup\.ts/, dependencies: ['main'] },
     { name: 'chat', testMatch: /(chat|tokens)\.spec/, dependencies: ['stop chats'] },
     { name: 'ssh', testMatch: /ssh\.spec/, dependencies: ['chat'] },
   ],

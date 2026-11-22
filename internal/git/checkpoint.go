@@ -61,27 +61,6 @@ type cpRef struct {
 	end  bool
 }
 
-// topOf finds the work tree and git directory of dir. repo is false outside a repository.
-func (s *Service) topOf(ctx context.Context, dir string) (top, gitDir string, repo bool, err error) {
-	out, err := s.run(ctx, dir, false, nil, "rev-parse", "--show-toplevel", "--absolute-git-dir")
-	if err != nil {
-		var re *runError
-		if asRun(err, &re) && re.notRepo() {
-			return "", "", false, nil
-		}
-		return "", "", false, err
-	}
-	lines := strings.Split(strings.TrimRight(string(out), "\r\n"), "\n")
-	if len(lines) < 2 {
-		return "", "", false, fmt.Errorf("git rev-parse gave %d lines", len(lines))
-	}
-	top, err = filepath.EvalSymlinks(lines[0])
-	if err != nil {
-		return "", "", false, err
-	}
-	return top, lines[1], true, nil
-}
-
 // Checkpoint saves the working tree of dir (the folder of a chat) as the start
 // or the end of a turn. It does nothing outside a git repository or when the
 // project has checkpoints off. Turns older than the newest 20 are pruned.

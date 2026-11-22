@@ -17,7 +17,8 @@ concurrency:
 # so they are spread over several runners: the "main" Playwright project in three shards, and
 # the chat and SSH projects on a runner of their own (they run after "main" only to keep out of
 # its way on one server; here each runner has its own server). The language server test runs
-# there too: it needs a server where no other test has allowed gopls yet.
+# there too: it needs a server where no other test has allowed gopls yet, so locally it runs
+# before "main".
 jobs:
   check:
     name: ${{ matrix.part }} (${{ matrix.os }})
@@ -73,7 +74,7 @@ jobs:
       - name: Browser tests, main project
         if: startsWith(matrix.part, 'e2e ') && matrix.part != 'e2e lsp chat and ssh'
         working-directory: web
-        run: pnpm exec playwright test --project main --shard "${PART#e2e }"
+        run: pnpm exec playwright test --project main --no-deps --shard "${PART#e2e }"
         env:
           PART: ${{ matrix.part }}
 

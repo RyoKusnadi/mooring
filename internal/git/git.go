@@ -63,6 +63,8 @@ type Service struct {
 	locks    map[string]*sync.Mutex
 
 	lc logCache
+	// tops remembers where the repository of a chat's folder is, for checkpoints.
+	tops topCache
 
 	verOnce sync.Once
 	verErr  error

@@ -99,11 +99,11 @@
     const ok = await gitplus.stageLines(folder, path, staged, diff.version, pairs)
     const changed = !ok && git.failure?.code === 'DIFF_CHANGED'
     if (ok || changed) pick.clear()
-    if (ok) note = `${pairs.length} ${pairs.length === 1 ? 'line' : 'lines'} ${staged ? 'unstaged' : 'staged'}.`
-    else if (changed) note = 'The diff was read again. Choose the lines again.'
     await load()
     await tick()
     wrap?.querySelector<HTMLElement>('[role="region"]')?.focus()
+    if (ok) note = `${pairs.length} ${pairs.length === 1 ? 'line' : 'lines'} ${staged ? 'unstaged' : 'staged'}.`
+    else if (changed) note = 'The diff was read again. Choose the lines again.'
   }
 
   const block = (i: number) => apply(blockRows(rows, i))

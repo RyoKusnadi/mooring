@@ -1,0 +1,15 @@
+/bin/
+/internal/webui/dist/*
+!/internal/webui/dist/.gitkeep
+/web/node_modules/
+/web/test-results/
+/web/playwright-report/
+/web/.e2e-data/
+/web/.docs-data/
+.DS_Store
+/proofs/**/node_modules/
+/.claude/worktrees/
+/.claude/settings.local.json
+.env
+.env.*
+*.db

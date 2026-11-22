@@ -1,0 +1,21 @@
+name: Feature request
+description: Something Mooring should do that it does not.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the task, not the solution.
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: What do you do today instead?
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Mooring to do?
+    validations:
+      required: true

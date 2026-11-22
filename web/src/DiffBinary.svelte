@@ -18,10 +18,13 @@
   ]
   const url = (side: ImageSide) => gitImageUrl(project, folder, path, side, { staged, commit })
 
-  // Another file, side or commit in the same view starts over.
+  // Another file, side or commit in the same view starts over. The first run must not reset: a picture
+  // that loaded before this effect ran has already said so, and an unchanged address never loads again.
+  let shown = ''
   $effect(() => {
-    void [url('old'), url('new')]
-    state = { old: 'loading', new: 'loading' }
+    const now = url('old') + url('new')
+    if (shown && now !== shown) state = { old: 'loading', new: 'loading' }
+    shown = now
   })
 
   // The picture alone cannot say why it failed, so ask again only then: a missing version is a 404.

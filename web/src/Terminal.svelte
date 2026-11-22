@@ -28,6 +28,14 @@
     sendNote = text.trim() ? attach.sendText(text) : 'Select some text in the terminal first.'
   }
 
+  // The chunk can arrive after the user moved on (opened a menu, typed in a box): leave
+  // their focus where it is.
+  function elsewhere(b: HTMLElement): boolean {
+    const a = document.activeElement
+    if (!a || a === document.body || b.contains(a) || a.closest('[data-terminal]')) return false
+    return !!a.closest('[role="menu"], [role="dialog"], input, textarea, [contenteditable="true"]')
+  }
+
   // The xterm chunk loads here, the first time a terminal tab is shown.
   $effect(() => {
     if (!info || !stage || !box) return
@@ -40,7 +48,7 @@
         view = m.openView(id)
         view.mount(s, b)
         if (untrack(() => ended)) view.end()
-        else view.focus()
+        else if (!elsewhere(b)) view.focus()
       })
       .catch(() => (failed = true))
     return () => {

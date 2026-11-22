@@ -42,7 +42,7 @@ type Server struct {
 	cfg *ssh.ServerConfig
 
 	mu       sync.Mutex
-	conns    map[*ssh.ServerConn]struct{}
+	conns    map[net.Conn]struct{} // from Accept, so a drop also reaches one still in its handshake
 	attempts []string
 	agentReq int
 	execs    []string
@@ -69,7 +69,7 @@ func Start(o Options) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("fakessh: listen: %w", err)
 	}
-	s := &Server{o: o, ln: ln, conns: map[*ssh.ServerConn]struct{}{}, paused: make(chan struct{})}
+	s := &Server{o: o, ln: ln, conns: map[net.Conn]struct{}{}, paused: make(chan struct{})}
 	close(s.paused)
 	s.cfg = s.serverConfig()
 	s.wg.Add(1)
@@ -186,7 +186,7 @@ func (s *Server) Resume() {
 // DropConnections closes every client connection but keeps listening.
 func (s *Server) DropConnections() {
 	s.mu.Lock()
-	all := make([]*ssh.ServerConn, 0, len(s.conns))
+	all := make([]net.Conn, 0, len(s.conns))
 	for c := range s.conns {
 		all = append(all, c)
 	}
@@ -227,20 +227,20 @@ func (s *Server) accept() {
 }
 
 func (s *Server) serve(nc net.Conn) {
-	sc, chans, reqs, err := ssh.NewServerConn(nc, s.cfg)
-	if err != nil {
-		_ = nc.Close()
-		return
-	}
 	s.mu.Lock()
-	s.conns[sc] = struct{}{}
+	s.conns[nc] = struct{}{}
 	s.mu.Unlock()
 	defer func() {
 		s.mu.Lock()
-		delete(s.conns, sc)
+		delete(s.conns, nc)
 		s.mu.Unlock()
-		_ = sc.Close()
+		_ = nc.Close()
 	}()
+	sc, chans, reqs, err := ssh.NewServerConn(nc, s.cfg)
+	if err != nil {
+		return
+	}
+	defer func() { _ = sc.Close() }()
 	go func() {
 		for r := range reqs {
 			s.mu.Lock()

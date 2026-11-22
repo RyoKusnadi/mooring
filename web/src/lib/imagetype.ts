@@ -8,3 +8,6 @@ export const isImagePath = (path: string): boolean => IMAGE.test(path)
 export function rawUrl(projectId: string, path: string, version: string | number): string {
   return `/api/files/raw?project=${encodeURIComponent(projectId)}&path=${encodeURIComponent(path)}&v=${encodeURIComponent(String(version))}`
 }
+
+/** A name that ends in .pdf. The raw route checks for "%PDF-" in the file. */
+export const isPdfPath = (path: string): boolean => /\.pdf$/i.test(path)

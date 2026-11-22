@@ -69,7 +69,7 @@ func TestSettingsRouteNeedsSessionAndGivesDefaults(t *testing.T) {
 	}
 	cookie := sessionCookieOf(t, login(h, testToken))
 	w := do(h, req{method: "GET", path: "/api/settings", cookie: cookie})
-	want := `{"compactDefault":false,"smallModel":{},"titleJobs":false,"commitJobs":false,"jobTokensPerDay":200000}`
+	want := `{"compactDefault":false,"smallModel":{},"titleJobs":false,"commitJobs":false,"jobTokensPerDay":200000,"agentInstructions":true,"projectInstructions":{},"checkpointsOff":{}}`
 	if w.Code != 200 || strings.TrimSpace(w.Body.String()) != want {
 		t.Fatalf("%d %s", w.Code, w.Body)
 	}

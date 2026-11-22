@@ -80,6 +80,7 @@ func newRig(t *testing.T, env ...string) *rig {
 	t.Cleanup(func() { _ = st.Close() })
 	r := &rig{t: t, db: st.DB, project: "p1", dir: t.TempDir(), rec: &recorder{}, data: t.TempDir()}
 	r.set = settings.New(settings.Config{DB: st.DB})
+	_, _ = r.set.Save(json.RawMessage(`{"agentInstructions":false}`)) // tests of other things keep their messages; instructions tests turn it on
 	r.env = append(env, "FAKE_STATE="+t.TempDir())
 	if _, err := st.DB.Exec(`INSERT INTO projects (id, name, path, position, created_at) VALUES ('p1', 'p', ?, 0, 0)`, r.dir); err != nil {
 		t.Fatal(err)

@@ -131,7 +131,7 @@ when it changes on disk. Files on an SSH host have no Preview.
 - HTML shows in a sandboxed frame. Scripts do not run, and the page cannot reach Mooring. Its
   links and style files do not load, and pictures load only when they are inline (`data:`), so a page that depends on them looks plainer.
 
-PDF files do not have a preview yet.
+A PDF (a name ending in `.pdf`, up to 50 MB) opens in the tab in the browser's own PDF viewer, with an "Open in a new tab" link above it. It has no Source switch and is not editable. If the file does not start like a PDF, the tab says so and offers "Open as text". A larger PDF says it is too big; open it with another program.
 
 ### Unsaved changes
 

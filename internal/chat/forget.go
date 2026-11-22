@@ -22,6 +22,7 @@ func (c *Chat) closeSession() {
 // when it can and Mooring made the session. It runs in the background on the chat's
 // account; a failure is only logged.
 func (m *Manager) forgetSession(c *Chat) {
+	m.dropCheckpoints(c)
 	c.mu.Lock()
 	sid, agent, account := c.sessionID, c.spec.Agent.ID, c.spec.Account.ID
 	can := c.caps.Delete && !c.spec.AgentMade

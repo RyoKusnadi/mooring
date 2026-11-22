@@ -126,6 +126,7 @@ func (a *agent) dispatch(m msg) {
 	}
 	_ = json.Unmarshal(m.Params, &p)
 	a.logDirs(m.Method, m.Params)
+	a.logSystemPrompt(m.Method, m.Params)
 	switch m.Method {
 	case "initialize":
 		a.reply(m.ID, initializeResult())
@@ -263,16 +264,8 @@ func (a *agent) prompt(id json.RawMessage, sid, text string, blocks []block, can
 		stop = a.demoTurn(sid)
 	case text == "long":
 		stop = a.long(sid, cancel)
-	case strings.HasPrefix(text, "readfile "):
-		res := a.call("fs/read_text_file", map[string]any{"sessionId": sid, "path": strings.TrimPrefix(text, "readfile ")})
-		if len(res.Error) > 0 {
-			a.chunk(sid, "error:"+string(res.Error))
-		} else {
-			a.chunk(sid, "read:"+string(res.Result))
-		}
-	case strings.HasPrefix(text, "readlimit "):
-		res := a.call("fs/read_text_file", map[string]any{"sessionId": sid, "path": strings.TrimPrefix(text, "readlimit "), "line": 2, "limit": json.Number("9223372036854775807")})
-		a.chunk(sid, "read:"+string(res.Result)+string(res.Error))
+	case strings.HasPrefix(text, "readfile "), strings.HasPrefix(text, "readlimit "), strings.HasPrefix(text, "WRITEFILE "):
+		a.fileTurn(sid, text)
 	case text == "hangup":
 		a.send(map[string]any{"jsonrpc": "2.0", "id": 900, "method": "session/request_permission", "params": map[string]any{
 			"sessionId": sid, "toolCall": map[string]any{"toolCallId": "t9", "title": "x", "kind": "execute"},

@@ -67,6 +67,11 @@ type Info struct {
 	Messages  int       `json:"messages"`
 	LastLine  string    `json:"lastLine"`           // the end of the newest message of the user or the agent, scrubbed
 	FromChat  string    `json:"fromChat,omitempty"` // the chat whose summary this one started from
+	// Instructed: Mooring's instructions went to the agent when this chat last started.
+	Instructed bool `json:"instructed"`
+	// GroupID and GroupTitle: the group of chats working on one task, if any.
+	GroupID    string `json:"groupId,omitempty"`
+	GroupTitle string `json:"groupTitle,omitempty"`
 	// FinishedAt is when the last reply to the user ended (not a job, not one the
 	// user stopped); SeenAt when the user last looked. Unseen: finished after that.
 	FinishedAt int64 `json:"finishedAt"`
@@ -86,30 +91,35 @@ type Chat struct {
 	spec       Spec
 	created    int64
 	fromChat   string
+	// instructions is the text sent as the agent's systemPrompt, fixed when the chat
+	// was made; "" means none. Never published or logged.
+	instructions string
+	groupID      string // see Info.GroupID; changed with the manager's lock held
 
 	// pubMu keeps "build the info, publish it" one step, so two updates
 	// cannot reach the browser in the wrong order. It is taken before mu.
 	pubMu sync.Mutex
 	hub   *events.Hub // per-chat message stream
 
-	mu        sync.Mutex // lock order: pubMu, mu, hub
-	title     string
-	state     string
-	errInfo   *ErrInfo
-	updated   int64
-	sessionID string
-	caps      caps
-	mode      string
-	modes     []Choice
-	model     string
-	modelCfg  string // config option id that holds the model; "" when the agent uses set_model
-	models    []Choice
-	usage     *Usage
-	commands  []Command
-	removed   bool
-	turnJob   string // the job of the running turn; "" for the user's own words
-	finished  int64  // see Info.FinishedAt
-	seen      int64  // see Info.SeenAt
+	mu         sync.Mutex // lock order: pubMu, mu, hub
+	title      string
+	state      string
+	errInfo    *ErrInfo
+	updated    int64
+	sessionID  string
+	caps       caps
+	mode       string
+	modes      []Choice
+	model      string
+	modelCfg   string // config option id that holds the model; "" when the agent uses set_model
+	models     []Choice
+	usage      *Usage
+	commands   []Command
+	removed    bool
+	instructed bool   // the last start sent the instructions
+	turnJob    string // the job of the running turn; "" for the user's own words
+	finished   int64  // see Info.FinishedAt
+	seen       int64  // see Info.SeenAt
 
 	// Token saving: raw usage per turn, whether the agent named the chat, how many
 	// terminal/* calls it made, and outputs not yet shown on a tool message.
@@ -171,7 +181,7 @@ func (c *Chat) infoLocked() Info {
 		ID: c.id, ProjectID: c.projectID, Agent: c.spec.Agent.ID, Title: c.title, State: c.state,
 		Error: c.errInfo, Attention: len(c.perms) > 0 || c.limited, LimitOnly: c.limited && len(c.perms) == 0, Mode: c.mode, Modes: c.modes, Model: c.model,
 		Models: c.models, Usage: c.usage, Caps: c.caps, Commands: c.commands, Spec: c.spec.redacted(), SwitchTo: c.switchToLocked(),
-		Messages: c.count(), LastLine: c.lastLineLocked(), FromChat: c.fromChat, CreatedAt: c.created, UpdatedAt: c.updated,
+		Messages: c.count(), LastLine: c.lastLineLocked(), FromChat: c.fromChat, Instructed: c.instructed, GroupID: c.groupID, GroupTitle: c.m.groupTitle(c.groupID), CreatedAt: c.created, UpdatedAt: c.updated,
 		FinishedAt: c.finished, SeenAt: c.seen, Unseen: c.finished > c.seen,
 	}
 }

@@ -15,6 +15,8 @@ export const dataDir = '.e2e-data'
 export default defineConfig({
   testDir: 'e2e',
   reporter: 'line',
+  // Playwright's default is half the cores: one worker on the 3-core macOS runner.
+  workers: process.env.CI ? 2 : undefined,
   use: {
     baseURL: `http://127.0.0.1:${port}`,
     channel: 'chrome',

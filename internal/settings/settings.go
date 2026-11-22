@@ -25,6 +25,10 @@ const (
 	DefaultJobTokens = 200_000
 	maxSmallModels   = 16
 	maxModelID       = 200
+	// MaxProjectInstructions is the longest extra text a project may add to the agent instructions.
+	MaxProjectInstructions = 2000
+	maxProjectTexts        = 200
+	maxCheckpointOff       = 1000
 )
 
 var agentID = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
@@ -36,11 +40,20 @@ type Settings struct {
 	TitleJobs       bool              `json:"titleJobs"`
 	CommitJobs      bool              `json:"commitJobs"`
 	JobTokensPerDay int64             `json:"jobTokensPerDay"`
+	// AgentInstructions: new chats get Mooring's instructions. On unless saved off.
+	AgentInstructions bool `json:"agentInstructions"`
+	// ProjectInstructions is extra text per project id, added to the instructions of its new chats.
+	// A save merges it key by key; an empty text removes that project's entry.
+	ProjectInstructions map[string]string `json:"projectInstructions"`
+	// CheckpointsOff holds the ids of projects whose agent turns are not checkpointed.
+	// A project that is absent has checkpoints on. The map is replaced as a whole.
+	CheckpointsOff map[string]bool `json:"checkpointsOff"`
 }
 
 // Defaults are the settings of a fresh install.
 func Defaults() Settings {
-	return Settings{SmallModel: map[string]string{}, JobTokensPerDay: DefaultJobTokens}
+	return Settings{SmallModel: map[string]string{}, JobTokensPerDay: DefaultJobTokens, AgentInstructions: true,
+		ProjectInstructions: map[string]string{}, CheckpointsOff: map[string]bool{}}
 }
 
 // Publisher receives settings.changed.
@@ -96,6 +109,12 @@ func (s *Service) Get() Settings {
 	if out.SmallModel == nil {
 		out.SmallModel = map[string]string{}
 	}
+	if out.ProjectInstructions == nil {
+		out.ProjectInstructions = map[string]string{}
+	}
+	if out.CheckpointsOff == nil {
+		out.CheckpointsOff = map[string]bool{}
+	}
 	return out
 }
 
@@ -111,6 +130,12 @@ func assign(s *Settings, key string, raw json.RawMessage) error {
 		return json.Unmarshal(raw, &s.CommitJobs)
 	case "jobTokensPerDay":
 		return json.Unmarshal(raw, &s.JobTokensPerDay)
+	case "agentInstructions":
+		return json.Unmarshal(raw, &s.AgentInstructions)
+	case "projectInstructions":
+		return json.Unmarshal(raw, &s.ProjectInstructions)
+	case "checkpointsOff":
+		return json.Unmarshal(raw, &s.CheckpointsOff)
 	}
 	return nil
 }
@@ -127,12 +152,16 @@ func (s *Service) Save(patch json.RawMessage) (Settings, error) {
 	next := s.Get()
 	for k, raw := range fields {
 		switch k {
-		case "compactDefault", "smallModel", "titleJobs", "commitJobs", "jobTokensPerDay":
+		case "compactDefault", "smallModel", "titleJobs", "commitJobs", "jobTokensPerDay", "agentInstructions", "projectInstructions",
+			"checkpointsOff":
 		default:
 			return Settings{}, apiErr("BAD_REQUEST", "There is no setting called %q.", k)
 		}
 		if k == "smallModel" {
 			next.SmallModel = nil // replaced as a whole, not merged
+		}
+		if k == "checkpointsOff" {
+			next.CheckpointsOff = nil
 		}
 		if err := assign(&next, k, raw); err != nil {
 			return Settings{}, apiErr("BAD_REQUEST", "The value of %q is not valid.", k)
@@ -147,7 +176,9 @@ func (s *Service) Save(patch json.RawMessage) (Settings, error) {
 	}
 	defer func() { _ = tx.Rollback() }()
 	for k, v := range map[string]any{"compactDefault": next.CompactDefault, "smallModel": next.SmallModel,
-		"titleJobs": next.TitleJobs, "commitJobs": next.CommitJobs, "jobTokensPerDay": next.JobTokensPerDay} {
+		"titleJobs": next.TitleJobs, "commitJobs": next.CommitJobs, "jobTokensPerDay": next.JobTokensPerDay,
+		"agentInstructions": next.AgentInstructions, "projectInstructions": next.ProjectInstructions,
+		"checkpointsOff": next.CheckpointsOff} {
 		raw, _ := json.Marshal(v)
 		if _, err := tx.Exec(`INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`, k, string(raw)); err != nil {
 			return Settings{}, s.fail(err)
@@ -180,6 +211,34 @@ func (s *Service) check(n *Settings) error {
 		}
 		if strings.TrimSpace(model) == "" || utf8.RuneCountInString(model) > maxModelID || strings.IndexFunc(model, unicode.IsControl) >= 0 {
 			return apiErr("BAD_REQUEST", "The small model of %s needs a model id of 1 to %d characters.", agent, maxModelID)
+		}
+	}
+	if len(n.ProjectInstructions) > maxProjectTexts {
+		return apiErr("BAD_REQUEST", "At most %d projects can have extra instructions.", maxProjectTexts)
+	}
+	for id, text := range n.ProjectInstructions {
+		text = strings.TrimSpace(text)
+		if text == "" {
+			delete(n.ProjectInstructions, id)
+			continue
+		}
+		if id == "" || len(id) > 64 {
+			return apiErr("BAD_REQUEST", "A project id for extra instructions needs 1 to 64 characters.")
+		}
+		if utf8.RuneCountInString(text) > MaxProjectInstructions {
+			return apiErr("BAD_REQUEST", "Extra instructions for a project can have at most %d characters.", MaxProjectInstructions)
+		}
+		n.ProjectInstructions[id] = text
+	}
+	if n.CheckpointsOff == nil {
+		n.CheckpointsOff = map[string]bool{}
+	}
+	if len(n.CheckpointsOff) > maxCheckpointOff {
+		return apiErr("BAD_REQUEST", "Too many projects are listed in checkpointsOff.")
+	}
+	for id := range n.CheckpointsOff {
+		if id == "" || len(id) > 128 {
+			return apiErr("BAD_REQUEST", "A project id in checkpointsOff is not valid.")
 		}
 	}
 	if n.JobTokensPerDay < MinJobTokens || n.JobTokensPerDay > MaxJobTokens {

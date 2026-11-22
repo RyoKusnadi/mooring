@@ -38,6 +38,8 @@ daily limit is a whole number from 1,000 to 100,000,000."
 
 - "Allow notifications" turns on browser notifications. The page says whether they are on in this
   browser, blocked, or not supported. The notification names the project only.
+- Once they are on, "Send a test notification" shows one straight away. If none appears, check this
+  browser in your system's notification settings, and turn off Do Not Disturb or Focus.
 - "A terminal bell counts as needing you" is on by default. It is saved in this browser.
 - A phone gets no notifications while Mooring is closed.
 

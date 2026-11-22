@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { bellCounts, makeNotifier, notifyText, setBellCounts, type Needing } from './notify'
+import { bellCounts, makeNotifier, notifyText, sendTest, setBellCounts, TEST_TEXT, type Needing } from './notify'
 
 const term = (key: string, project = 'Alpha'): Needing => ({ key, kind: 'terminal', project })
 
@@ -63,5 +63,26 @@ describe('bell switch', () => {
     expect(bellCounts(store)).toBe(false)
     setBellCounts(true, store)
     expect(bellCounts(store)).toBe(true)
+  })
+})
+
+describe('sendTest', () => {
+  it('shows one notification with the test text when allowed', () => {
+    const make = vi.fn()
+    expect(sendTest({ allowed: () => true, make })).toBe(true)
+    expect(make).toHaveBeenCalledWith('Mooring', { body: TEST_TEXT, tag: 'mooring-test' })
+  })
+
+  it('shows nothing when notifications are not allowed', () => {
+    const make = vi.fn()
+    expect(sendTest({ allowed: () => false, make })).toBe(false)
+    expect(make).not.toHaveBeenCalled()
+  })
+
+  it('answers false when the browser refuses to make one', () => {
+    const make = vi.fn(() => {
+      throw new TypeError('Illegal constructor')
+    })
+    expect(sendTest({ allowed: () => true, make })).toBe(false)
   })
 })

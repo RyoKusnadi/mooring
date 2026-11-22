@@ -259,7 +259,7 @@ func TestStartFromChatWithContext(t *testing.T) {
 
 func TestCompactDefaultSetting(t *testing.T) {
 	r := newRig(t)
-	if _, err := r.db.Exec(`INSERT INTO settings (key, value) VALUES ('compactDefault', 'true')`); err != nil {
+	if _, err := r.db.Exec(`INSERT OR REPLACE INTO settings (key, value) VALUES ('compactDefault', 'true')`); err != nil {
 		t.Fatal(err)
 	}
 	for id, spec := range map[string]map[string]any{"d1": nil, "d2": {"filters": []string{}}} {

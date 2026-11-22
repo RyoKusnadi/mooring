@@ -56,8 +56,11 @@ type Service struct {
 
 	mu    sync.Mutex
 	chats Chats
-	terms Terminals
-	locks map[string]*sync.Mutex
+	// cpOn and chatInfo are set by SetCheckpointGate and SetChatLookup.
+	cpOn     func(projectID string) bool
+	chatInfo func(projectID, chatID string) (dir, title string, ok bool)
+	terms    Terminals
+	locks    map[string]*sync.Mutex
 
 	lc logCache
 

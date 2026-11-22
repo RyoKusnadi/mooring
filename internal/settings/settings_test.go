@@ -111,3 +111,26 @@ func TestGetEndpoint(t *testing.T) {
 		t.Fatalf("%d %s", rec.Code, rec.Body)
 	}
 }
+
+func TestInstructionSettings(t *testing.T) {
+	s, _, _ := newService(t)
+	if g := s.Get(); !g.AgentInstructions || len(g.ProjectInstructions) != 0 {
+		t.Fatalf("defaults: %+v", g)
+	}
+	if _, err := save(s, `{"agentInstructions":false,"projectInstructions":{"a":" one ","b":"two"}}`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := save(s, `{"projectInstructions":{"b":""}}`); err != nil { // merges key by key; empty removes
+		t.Fatal(err)
+	}
+	g := s.Get()
+	if g.AgentInstructions || len(g.ProjectInstructions) != 1 || g.ProjectInstructions["a"] != "one" {
+		t.Fatalf("saved: %+v", g)
+	}
+	if _, err := save(s, `{"projectInstructions":{"a":"`+strings.Repeat("x", MaxProjectInstructions+1)+`"}}`); err == nil {
+		t.Fatal("a text over the cap was saved")
+	}
+	if s.Get().ProjectInstructions["a"] != "one" {
+		t.Fatal("a refused save changed the text")
+	}
+}

@@ -24,6 +24,17 @@ func (a *agent) logDirs(method string, raw json.RawMessage) {
 	}
 }
 
+// logSystemPrompt writes the systemPrompt a session request carries to FAKE_CALLS as
+// "<method> systemPrompt <json>", the value as it arrived, so a test can compare bytes.
+func (a *agent) logSystemPrompt(method string, raw json.RawMessage) {
+	var p struct {
+		SystemPrompt json.RawMessage `json:"systemPrompt"`
+	}
+	if json.Unmarshal(raw, &p) == nil && len(p.SystemPrompt) > 0 {
+		a.logCall(method + " systemPrompt " + string(p.SystemPrompt))
+	}
+}
+
 // initializeResult is the fake's `initialize` reply. FAKE_LOAD and FAKE_RESUME
 // advertise those, FAKE_CLOSE keeps naming one session method, and FAKE_CAPS is a
 // comma list of: list, close, delete, fork, systemPrompt, additionalDirectories

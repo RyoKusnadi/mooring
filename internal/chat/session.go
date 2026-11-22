@@ -70,6 +70,9 @@ func (c *Chat) handshake(ctx context.Context, r *run) error {
 	if dirs := c.extraDirs(cp); dirs != nil {
 		params["additionalDirectories"] = dirs
 	}
+	if sp := c.systemPrompt(cp); sp != nil {
+		params["systemPrompt"] = sp
+	}
 	var res sessionResult
 	opened := false
 	if saved != "" {

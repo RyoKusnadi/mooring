@@ -134,3 +134,27 @@ func TestRawRefusesASymlinkedFolderLeavingTheProject(t *testing.T) {
 		t.Fatalf("got %d, want 403", w.Code)
 	}
 }
+
+func TestRawServesAPdfCheckedByItsHeader(t *testing.T) {
+	r := newRig(t, nil)
+	r.write("doc.pdf", "%PDF-1.4\n%fake body\n")
+	r.write("fake.pdf", "<html><script>alert(1)</script></html>")
+	r.write("pic.pdf", tinyPNG)
+	w := r.raw("p1", "doc.pdf", "same-origin")
+	if w.Code != 200 || w.Header().Get("Content-Type") != "application/pdf" {
+		t.Fatalf("got %d %v", w.Code, w.Header())
+	}
+	if csp := w.Header().Get("Content-Security-Policy"); !strings.Contains(csp, "sandbox") {
+		t.Fatalf("csp %q", csp)
+	}
+	for _, p := range []string{"fake.pdf", "pic.pdf"} {
+		if w := r.raw("p1", p, ""); w.Code != 415 {
+			t.Fatalf("%s: got %d, want 415", p, w.Code)
+		}
+	}
+	// A PNG named .png that happens to hold the PDF marker stays a PNG.
+	r.write("odd.png", tinyPNG+"%PDF-")
+	if w := r.raw("p1", "odd.png", ""); w.Code != 200 || w.Header().Get("Content-Type") != "image/png" {
+		t.Fatalf("odd.png: %d %v", w.Code, w.Header())
+	}
+}

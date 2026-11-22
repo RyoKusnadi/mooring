@@ -13,7 +13,7 @@
   import FileBars from './FileBars.svelte'
   import FileBlame from './FileBlame.svelte'
   import { baseName, formatBytes } from './lib/paths'
-  import { isImagePath } from './lib/imagetype'
+  import { isImagePath, isPdfPath } from './lib/imagetype'
   import { previewKind, rememberPreview, wasPreview } from './lib/previewtype'
   import { ssh } from './lib/sshstore.svelte'
   import { tabHint } from './lib/tabhint.svelte'
@@ -99,7 +99,10 @@
   const kind = untrack(() => (!remote ? previewKind(path) : null))
   let preview = $state(untrack(() => wasPreview(id)))
   let previewText = $state('')
-  const previewing = $derived(!!kind && preview && doc.status === 'ready' && !doc.progress)
+  // A name ending in .pdf shows in the PDF frame, unless the user chose to see its text.
+  let asText = $state(false)
+  const pdf = $derived(!remote && !asText && isPdfPath(path) && (doc.status === 'binary' || doc.status === 'toolarge' || doc.status === 'ready'))
+  const previewing = $derived(pdf || (!!kind && preview && doc.status === 'ready' && !doc.progress))
   $effect(() => {
     rememberPreview(id, preview)
   })
@@ -147,6 +150,10 @@
 
   {#if doc.status === 'loading'}
     <p class="note" role="status">Opening {baseName(path)}…</p>
+  {:else if pdf}
+    {#await import('./PdfView.svelte') then m}
+      <m.default projectId={app.currentId} {path} size={doc.size} onText={doc.status === 'ready' ? () => (asText = true) : undefined} />
+    {/await}
   {:else if (doc.status === 'binary' || doc.status === 'toolarge') && !remote && isImagePath(path)}
     {#await import('./ImageView.svelte') then m}
       <m.default projectId={app.currentId} {path} size={doc.size} />

@@ -37,6 +37,10 @@ var pinned = []string{
 // with :(literal).
 type looseKey struct{}
 
+// envKey carries extra environment for one git run (a []string of KEY=value),
+// such as the temporary index a checkpoint is built in.
+type envKey struct{}
+
 // runError is a git run that did not succeed.
 type runError struct {
 	args     []string
@@ -141,6 +145,9 @@ func (s *Service) runX(ctx context.Context, dir string, write bool, stdin []byte
 	cmd.Env = s.env(write)
 	if v, ok := ctx.Value(sshKey{}).(string); ok {
 		cmd.Env = append(cmd.Env, "GIT_SSH_COMMAND="+v)
+	}
+	if v, ok := ctx.Value(envKey{}).([]string); ok {
+		cmd.Env = append(cmd.Env, v...)
 	}
 	if ctx.Value(looseKey{}) != nil {
 		cmd.Env = append(cmd.Env, "GIT_LITERAL_PATHSPECS=0")

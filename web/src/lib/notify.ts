@@ -84,3 +84,30 @@ export const browserNotifier = () =>
       }
     },
   })
+
+/** The body of the test notification Settings sends, so the user can see that notifications reach them. */
+export const TEST_TEXT = 'Notifications from Mooring look like this.'
+
+interface TestDeps {
+  allowed: () => boolean
+  make: (title: string, options: NotificationOptions) => unknown
+}
+
+const browserTest: TestDeps = {
+  allowed: () => permission() === 'granted',
+  make: (title, options) => new Notification(title, options),
+}
+
+/**
+ * Shows one notification now, even while this tab is in front. False when notifications are not allowed
+ * or the browser refused to make one (some phone browsers only allow them from a service worker).
+ */
+export function sendTest(d: TestDeps = browserTest): boolean {
+  if (!d.allowed()) return false
+  try {
+    d.make('Mooring', { body: TEST_TEXT, tag: 'mooring-test' })
+    return true
+  } catch {
+    return false
+  }
+}

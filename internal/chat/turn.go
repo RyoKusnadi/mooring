@@ -25,12 +25,14 @@ func (c *Chat) runTurn(ctx context.Context, r *run, turn int, sid string, blocks
 		StopReason string          `json:"stopReason"`
 		Usage      json.RawMessage `json:"usage"`
 	}
+	c.checkpoint(false)
 	var once sync.Once
 	markSent := func() { once.Do(func() { close(sent) }) }
 	err := r.rpc.CallThen(ctx, "session/prompt", map[string]any{
 		"sessionId": sid, "prompt": blocks,
 	}, &res, markSent)
 	markSent()
+	c.checkpoint(true)
 	c.mu.Lock()
 	if c.cur != r || c.turn != turn {
 		c.mu.Unlock()

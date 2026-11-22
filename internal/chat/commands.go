@@ -29,6 +29,7 @@ type args struct {
 	FromChat    string       `json:"fromChat"`
 	From        string       `json:"from"`   // chat.relay: the chat with the reply
 	MsgIdx      int          `json:"msgIdx"` // chat.relay: the reply's message id
+	IDs         []string     `json:"ids"`    // chat.group: the chats of the group
 	Context     string       `json:"context"`
 	WithChanges bool         `json:"withChanges"`
 	Folder      string       `json:"folder"`
@@ -56,6 +57,10 @@ func (m *Manager) Run(cmd events.Command) (any, error) {
 		return m.runStart(cmd.Name, a)
 	case "chat.remove":
 		return m.remove(a.ID)
+	case "chat.group":
+		return m.group(a.IDs, a.Title)
+	case "chat.ungroup":
+		return m.ungroup(a.ID)
 	}
 	c, err := m.must(a.ID)
 	if err != nil {
@@ -184,6 +189,7 @@ func (m *Manager) create(a args, projectDir, dir string, spec Spec) (Info, error
 	if err != nil {
 		return Info{}, apiErr("INTERNAL", "The chat could not be created.")
 	}
+	c.instructions = m.instructionsFor(a.ProjectID)
 	c.title, c.fromChat = shorten(a.Title, 120), a.FromChat
 	c.sessionID, c.spec.Imported = a.SessionID, a.SessionID != "" // only chat.import sets both
 	m.mu.Lock()
@@ -278,22 +284,4 @@ func (m *Manager) claimAs(c *Chat, mover bool) error {
 	c.publishInfo("chat.changed")
 	go c.boot()
 	return nil
-}
-
-func (m *Manager) remove(id string) (any, error) {
-	m.mu.Lock()
-	c := m.chats[id]
-	delete(m.chats, id)
-	m.mu.Unlock()
-	if c == nil {
-		return map[string]any{}, nil
-	}
-	c.discard()
-	if _, err := m.db.Exec(`DELETE FROM chats WHERE id = ?`, id); err != nil {
-		m.log.Error("chat: delete failed", "chat", id, "err", err)
-		return nil, apiErr("INTERNAL", "The chat could not be deleted.")
-	}
-	m.forgetSession(c)
-	m.pub.Publish("chat.removed", map[string]string{"id": id, "projectId": c.projectID})
-	return map[string]any{}, nil
 }

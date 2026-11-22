@@ -138,7 +138,7 @@ func (s *Server) mountEvents(srv *server, cfg Config) error {
 	}
 	s.settings = settings.New(settings.Config{DB: cfg.Store.DB, Pub: hub, KnownAgent: func(id string) bool { return known[id] }, Log: cfg.Logger})
 	s.chats, err = chat.New(chat.Config{
-		DB: cfg.Store.DB, Pub: hub, Dir: svc.Dir, Catalog: defs, Worktrees: s.git, Tools: s.tools, Accounts: s.accounts,
+		DB: cfg.Store.DB, Pub: hub, Dir: svc.Dir, Catalog: defs, Worktrees: s.git, Checkpoints: s.git, Tools: s.tools, Accounts: s.accounts,
 		DataDir: cfg.DataDir, Settings: s.settings, Staged: s.git.Staged, Uncommitted: s.git.Uncommitted,
 		Log: cfg.Logger, Context: ctx, Now: cfg.Now,
 	})
@@ -149,6 +149,8 @@ func (s *Server) mountEvents(srv *server, cfg Config) error {
 	s.accounts.SetChats(s.chats)
 	s.accounts.SetTerminals(s.terms)
 	s.git.SetChats(chatFolders{s.chats})
+	s.git.SetChatLookup(s.chats.ChatFolder)
+	s.git.SetCheckpointGate(func(projectID string) bool { return !s.settings.Get().CheckpointsOff[projectID] })
 	s.git.SetTerminals(s.terms)
 	s.chatSocket = s.chats.Handler()
 	s.chatOutputs = s.chats.OutputHandler()

@@ -2,7 +2,7 @@
   // Notifications section of Settings: system notifications for chats and terminals that need you,
   // and whether a terminal bell counts. Both are kept in this browser only.
   import { tick } from 'svelte'
-  import { askPermission, bellCounts, permission, setBellCounts, type Permission } from './lib/notify'
+  import { askPermission, bellCounts, permission, sendTest, setBellCounts, type Permission } from './lib/notify'
 
   let perm = $state<Permission>(permission())
   let bell = $state(bellCounts())
@@ -16,6 +16,15 @@
     await tick()
     ;(result ?? button)?.focus()
   }
+
+  // null until the first click. Clearing first makes a screen reader read the same answer again.
+  let shown = $state<boolean | null>(null)
+  async function test() {
+    const ok = sendTest()
+    shown = null
+    await tick()
+    shown = ok
+  }
 </script>
 
 <p class="help lead">
@@ -24,6 +33,14 @@
 
 {#if perm === 'granted'}
   <p class="status" role="status" tabindex="-1" bind:this={result}>Notifications are on in this browser.</p>
+  <button type="button" class="btn" onclick={test}>Send a test notification</button>
+  <p class="help answer" role="status" aria-live="polite">
+    {#if shown === true}
+      A notification titled "Mooring" should show now. If you see nothing, check this browser in your system's notification settings, and turn off Do Not Disturb or Focus.
+    {:else if shown === false}
+      This browser did not show it. Check that notifications are allowed for this site, then try again.
+    {/if}
+  </p>
 {:else if perm === 'denied'}
   <p class="help blocked" role="status" tabindex="-1" bind:this={result}>This browser blocks notifications for Mooring. Allow them in the site settings next to the address, then come back.</p>
 {:else if perm === 'unsupported'}
@@ -55,6 +72,12 @@
   .status {
     margin: 0 0 var(--s-3);
     color: var(--success);
+  }
+  .answer:empty {
+    display: none;
+  }
+  .answer {
+    margin: 0 0 var(--s-3);
   }
   .blocked {
     margin: 0 0 var(--s-3);

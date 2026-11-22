@@ -165,7 +165,8 @@
     {#if !commit}
       <div class="acts">
         {#if choosable}<DiffPickBar count={pick.size} {staged} {busy} {note} onapply={() => apply(pick.chosen)} onclear={() => pick.clear()} />{/if}
-        <button type="button" class="btn" disabled={busy || loading} onclick={toggle}>{staged ? 'Unstage file' : 'Stage file'}</button>
+        <!-- A conflicted file is settled by the buttons under it in the list, not by staging. -->
+        {#if change?.kind !== 'conflicted'}<button type="button" class="btn" disabled={busy || loading} onclick={toggle}>{staged ? 'Unstage file' : 'Stage file'}</button>{/if}
         <button type="button" class="btn" disabled={deleted} aria-describedby={deleted ? 'open-why' : undefined} onclick={() => actions.openPlaceFile(folder, path)}>Open in editor</button>
       </div>
       {#if deleted}<p class="sub why" id="open-why">This file is deleted, so there is nothing to open.</p>{/if}

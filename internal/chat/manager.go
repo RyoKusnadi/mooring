@@ -61,6 +61,8 @@ type Config struct {
 	// Worktrees makes the git worktree of a chat started with folder.worktree.
 	// It returns the folder relative to the project. Errors should be *ledger.Error.
 	Worktrees Worktrees
+	// Checkpoints saves the folder before and after each turn; nil means no checkpoints.
+	Checkpoints Checkpoints
 	// Tools resolves the tool servers of a chat; nil means a chat can use none.
 	Tools ToolServers
 	// Accounts knows the logins of the agents; nil means every chat uses the agent's own login.
@@ -100,6 +102,10 @@ type Manager struct {
 	chats  map[string]*Chat
 	closed bool
 
+	groupOp     sync.Mutex // one group change at a time
+	groupMu     sync.Mutex // guards groupTitles; never held with another lock
+	groupTitles map[string]string
+
 	jobMu   sync.Mutex
 	jobBusy map[string]bool // projects with a small job running
 	jobsWG  sync.WaitGroup  // turns and title jobs in the background
@@ -107,7 +113,7 @@ type Manager struct {
 
 // New loads the saved chats. They are all stopped until the browser resumes them.
 func New(cfg Config) (*Manager, error) {
-	m := &Manager{Config: cfg, log: cfg.Log, pub: cfg.Pub, db: cfg.DB, now: cfg.Now, chats: map[string]*Chat{}, catalog: map[string]AgentDef{}}
+	m := &Manager{Config: cfg, log: cfg.Log, pub: cfg.Pub, db: cfg.DB, now: cfg.Now, chats: map[string]*Chat{}, groupTitles: map[string]string{}, catalog: map[string]AgentDef{}}
 	if m.log == nil {
 		m.log = slog.New(slog.DiscardHandler)
 	}
@@ -130,6 +136,9 @@ func New(cfg Config) (*Manager, error) {
 	for _, d := range defs {
 		m.catalog[d.ID] = d
 		m.order = append(m.order, d.ID)
+	}
+	if err := m.loadGroups(); err != nil {
+		return nil, err
 	}
 	if err := m.loadChats(); err != nil {
 		return nil, err

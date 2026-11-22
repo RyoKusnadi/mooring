@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -10,9 +11,9 @@ const flushAfter = 500 * time.Millisecond
 
 func (m *Manager) insertRow(c *Chat, info Info) error {
 	caps, _ := json.Marshal(info.Caps)
-	_, err := m.db.Exec(`INSERT INTO chats (id, project_id, agent, title, session_id, spec, caps, mode, model, usage, from_chat, created_at, updated_at)
-		VALUES (?, ?, ?, ?, '', ?, ?, '', '', '', ?, ?, ?)`,
-		c.id, c.projectID, info.Agent, info.Title, c.spec.marshal(), string(caps), c.fromChat, info.CreatedAt, info.UpdatedAt)
+	_, err := m.db.Exec(`INSERT INTO chats (id, project_id, agent, title, session_id, spec, caps, mode, model, usage, from_chat, instructions, created_at, updated_at)
+		VALUES (?, ?, ?, ?, '', ?, ?, '', '', '', ?, ?, ?, ?)`,
+		c.id, c.projectID, info.Agent, info.Title, c.spec.marshal(), string(caps), c.fromChat, c.instructions, info.CreatedAt, info.UpdatedAt)
 	if err != nil {
 		return fmt.Errorf("save chat: %w", err)
 	}
@@ -39,17 +40,18 @@ func (m *Manager) saveRow(info Info, session string) {
 // loadChats reads every saved chat (without messages). They start stopped.
 func (m *Manager) loadChats() error {
 	rows, err := m.db.Query(`SELECT c.id, c.project_id, c.title, c.session_id, c.spec, c.caps, c.mode, c.model, c.usage, c.from_chat,
-		c.created_at, c.updated_at, c.finished_at, c.seen_at, (SELECT COUNT(*) FROM chat_messages WHERE chat_id = c.id) FROM chats c`)
+		c.created_at, c.updated_at, c.finished_at, c.seen_at, c.instructions, c.group_id, (SELECT COUNT(*) FROM chat_messages WHERE chat_id = c.id) FROM chats c`)
 	if err != nil {
 		return fmt.Errorf("list chats: %w", err)
 	}
 	defer func() { _ = rows.Close() }()
 	var withMessages []*Chat
 	for rows.Next() {
-		var id, project, title, session, spec, capsJSON, mode, model, usage, from string
+		var id, project, title, session, spec, capsJSON, mode, model, usage, from, instructions string
+		var group sql.NullString
 		var created, updated, finished, seen int64
 		var count int
-		if err := rows.Scan(&id, &project, &title, &session, &spec, &capsJSON, &mode, &model, &usage, &from, &created, &updated, &finished, &seen, &count); err != nil {
+		if err := rows.Scan(&id, &project, &title, &session, &spec, &capsJSON, &mode, &model, &usage, &from, &created, &updated, &finished, &seen, &instructions, &group, &count); err != nil {
 			return fmt.Errorf("read chat row: %w", err)
 		}
 		c, err := newChat(m, id, project, "", "", Spec{})
@@ -69,6 +71,7 @@ func (m *Manager) loadChats() error {
 		}
 		c.title, c.sessionID, c.mode, c.model, c.created, c.updated = title, session, mode, model, created, updated
 		c.fromChat, c.finished, c.seen = from, finished, seen
+		c.instructions, c.groupID = instructions, group.String
 		c.loaded, c.savedCount = count == 0, count
 		m.chats[id] = c
 		if count > 0 {

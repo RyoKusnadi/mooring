@@ -13,9 +13,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# `make check` split into jobs that run side by side. The browser tests take most of the time,
+# so they are spread over several runners: the "main" Playwright project in three shards, and
+# the chat and SSH projects on a runner of their own (they run after "main" only to keep out of
+# its way on one server; here each runner has its own server).
 jobs:
   check:
-    name: make check (${{ matrix.os }})
+    name: ${{ matrix.part }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     # Linux has had little hands-on use, so a failure there is reported but does not block a merge yet.
     continue-on-error: ${{ matrix.os == 'ubuntu-latest' }}
@@ -24,6 +28,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
+        part: [code, e2e 1/3, e2e 2/3, e2e 3/3, e2e chat and ssh]
     steps:
       - uses: actions/checkout@v4
 
@@ -31,25 +36,30 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
       - uses: pnpm/action-setup@v4
         with:
           version: 12.6.0
 
-      # Installs golangci-lint v2 only; `make check` runs it.
-      - uses: golangci/golangci-lint-action@v8
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      # Installs golangci-lint v2 only; `make check-go` runs it.
+      - if: matrix.part == 'code'
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           install-only: true
 
-      - name: Point make at golangci-lint
-        run: echo "GOLANGCI=$(command -v golangci-lint)" >> "$GITHUB_ENV"
+      - name: Go, web and size checks
+        if: matrix.part == 'code'
+        run: make check-go cross check-web build check-size GOLANGCI="$(command -v golangci-lint)"
 
       # The browser tests use the Google Chrome that the runner image already has.
       - name: Check that Chrome is installed
+        if: matrix.part != 'code'
         run: |
           if [ "$RUNNER_OS" = "macOS" ]; then
             test -d "/Applications/Google Chrome.app"
@@ -57,14 +67,30 @@ jobs:
             google-chrome --version
           fi
 
-      - run: make check
+      - name: Build for the browser tests
+        if: matrix.part != 'code'
+        run: make build-e2e
+
+      - name: Browser tests, main project
+        if: startsWith(matrix.part, 'e2e ') && matrix.part != 'e2e chat and ssh'
+        working-directory: web
+        run: pnpm exec playwright test --project main --shard "${PART#e2e }"
+        env:
+          PART: ${{ matrix.part }}
+
+      - name: Browser tests, chat and SSH
+        if: matrix.part == 'e2e chat and ssh'
+        working-directory: web
+        run: |
+          pnpm exec playwright test --project chat --no-deps
+          pnpm exec playwright test --project ssh --no-deps
 
       # On a failure, keep what Playwright saw (error context, traces) for a week.
       - name: Keep browser test results
-        if: failure()
+        if: failure() && matrix.part != 'code'
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-results-${{ matrix.os }}
+          name: playwright-results-${{ matrix.os }}-${{ strategy.job-index }}
           path: web/test-results
           retention-days: 7
           if-no-files-found: ignore

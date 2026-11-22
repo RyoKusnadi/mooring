@@ -115,6 +115,8 @@ Files on an SSH host have no Blame button. On a phone the author is left out to 
 
 ### Preview
 
+![A Markdown file shown as Preview: headings, a table, a list and a quote.](images/files-preview.png)
+
 Markdown (`.md`), CSV and TSV, and HTML files have a Source and Preview switch in the bar above
 the file. Source is the editor and is where a file opens. A tab remembers its choice while it is
 open. The editor tools (Format, Ask the agent) are hidden in Preview, and the file cannot be

@@ -35,6 +35,8 @@ To stage only some lines:
 
 A diff over 2 MB is not shown: "This diff is over 2 MB, too large to show here. Open a terminal and run git diff for this file."
 
+![A changed PNG with its Before and After versions side by side.](images/git-image-diff.png)
+
 A changed picture (PNG, JPEG, GIF, WebP, AVIF, BMP, ICO or SVG) shows both versions side by side,
 "Before" and "After", one above the other on a phone. A version that is not there, such as the
 "Before" of a new file, says "Not in this version". Other binary files and pictures that cannot
@@ -89,6 +91,8 @@ user.email with git config on the computer running Mooring, then commit again."
 The line under the branch name reads "N ahead, M behind UPSTREAM", or "No upstream".
 
 ## Resolve conflicts
+
+![The Changes list during a merge: a banner with Abort merge and Finish merge, and two conflicted files with Keep current branch, Keep incoming and Mark resolved buttons.](images/git-conflicts.png)
 
 When a merge, rebase, cherry-pick, revert or patch apply stops on conflicts, the Changes view shows a banner such as "Merge in progress" with Abort and Finish (Continue, for a rebase). Finish stays off while any file still conflicts. A conflicted file has three buttons under its name:
 

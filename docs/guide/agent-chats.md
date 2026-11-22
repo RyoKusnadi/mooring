@@ -108,6 +108,8 @@ Notifications and click "Allow notifications". The notification names the projec
 
 ## Status board
 
+![The status board in the sidebar: a chat waiting for permission with Allow and Reject buttons, and a chat that is still running.](images/agent-chats-board.png)
+
 The "Board" switch in the sidebar, next to "Files" and "Changes", lists every chat in every project
 in four groups. Groups with no chats are not shown.
 
@@ -165,6 +167,8 @@ chat, if it still exists. If that chat was deleted, the label says so and is not
 no other chat, the panel says so and has a "New chat" button.
 
 ## Search chat history
+
+![The Chat history dialog with the word "farewell" searched and the matching chat shown with the word marked.](images/agent-chats-history.png)
 
 To find a chat by what was said in it, click "History" next to "Chats" in the sidebar, press Alt+Y,
 or pick "Search chat history" in the command palette. The "Chat history" dialog searches every saved

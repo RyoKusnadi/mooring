@@ -35,6 +35,30 @@ servers. You start everything from the browser. It is for one user on one machin
 
 <table>
   <tr>
+    <td width="33%"><a href="docs/guide/agent-chats.md#status-board"><img src="docs/guide/images/agent-chats-board.png" alt="The status board: a chat waiting for permission with Allow and Reject buttons, and a chat still running"></a></td>
+    <td width="33%"><a href="docs/guide/agent-chats.md#search-chat-history"><img src="docs/guide/images/agent-chats-history.png" alt="The chat history dialog with a search word marked in the matching chat"></a></td>
+    <td width="33%"><a href="docs/guide/git.md#resolve-conflicts"><img src="docs/guide/images/git-conflicts.png" alt="A merge in progress, with Abort and Finish buttons and conflicted files that each have Keep and Mark resolved buttons"></a></td>
+  </tr>
+  <tr>
+    <td>The board lists chats of every project by what they need. Answer a permission prompt in place.</td>
+    <td>Search what was said in any saved chat, in every project.</td>
+    <td>A merge that stops on conflicts: keep one side per file or edit it, then finish or abort.</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td width="50%"><a href="docs/guide/git.md"><img src="docs/guide/images/git-image-diff.png" alt="A changed PNG shown as Before and After side by side"></a></td>
+    <td width="50%"><a href="docs/guide/projects-and-files.md#preview"><img src="docs/guide/images/files-preview.png" alt="A Markdown file in Preview with headings, a table and a list"></a></td>
+  </tr>
+  <tr>
+    <td>A changed image shows Before and After.</td>
+    <td>Markdown, CSV and HTML files have a Preview next to the source.</td>
+  </tr>
+</table>
+
+<table>
+  <tr>
     <td width="25%"><img src="docs/guide/images/getting-started-phone-drawer.png" alt="The project drawer on a 390 px wide screen"></td>
     <td>At 900 px wide or less, the sidebar becomes a drawer and one pane shows at a time. A button
     in the header switches panes, and the command palette is one tap away. A narrow desktop window
@@ -46,12 +70,12 @@ servers. You start everything from the browser. It is for one user on one machin
 
 | Area | What you can do | Guide |
 | --- | --- | --- |
-| Projects and files | Add a folder, clone a repository or make one. Browse, edit, rename, move, upload, download, find by name or text. | [Projects and files](docs/guide/projects-and-files.md) |
-| Terminals | Shells in tabs and split panes. A bell in a terminal marks its tab. A terminal keeps running when you close the page. | [Terminals](docs/guide/terminals.md) |
-| Agent chats | Talk to Claude, Gemini, Codex, Grok, Cursor or Antigravity. Allow or reject each command. Use several accounts and add tool servers. | [Agent chats](docs/guide/agent-chats.md) |
-| Git | Stage whole files or single lines, commit, switch branches, push, fetch, pull, stash and use worktrees. | [Git](docs/guide/git.md) |
+| Projects and files | Add a folder, clone a repository or make one. Browse, edit, rename, move, upload, download, find by name or text, and replace across files. Preview Markdown, CSV and HTML. | [Projects and files](docs/guide/projects-and-files.md) |
+| Terminals | Shells in tabs and split panes. A bell in a terminal marks its tab. Links in the output open, and you can search the scrollback. A terminal keeps running when you close the page. | [Terminals](docs/guide/terminals.md) |
+| Agent chats | Talk to Claude, Gemini, Codex, Grok, Cursor or Antigravity. Allow or reject each command. A status board and history search. Ask a second opinion, reply to another chat, bring in an agent's own session. Use several accounts and add tool servers. | [Agent chats](docs/guide/agent-chats.md) |
+| Git | Stage whole files or single lines, commit, switch branches, push, fetch, pull, stash and use worktrees. See blame and changed images before and after, and resolve merge conflicts. | [Git](docs/guide/git.md) |
 | SSH | Open a terminal and browse files on a saved host. Remember its password in a secret store. | [SSH](docs/guide/ssh.md) |
-| Language servers | Errors, hover text, completions and go to definition in the editor. Install a server from a bar above the file. | [Language servers](docs/guide/language-servers.md) |
+| Language servers | Errors, hover text, completions and go to definition in the editor, a Problems list, find references and rename. Install a server from a bar above the file. | [Language servers](docs/guide/language-servers.md) |
 | Settings and keys | Theme, text size, Alt shortcuts, the command palette, sign-in with a password. | [Settings and shortcuts](docs/guide/settings-and-shortcuts.md) |
 
 ## Why Mooring

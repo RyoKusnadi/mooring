@@ -16,19 +16,18 @@ concurrency:
 # `make check` split into jobs that run side by side. The browser tests take most of the time,
 # so they are spread over several runners: the "main" Playwright project in three shards, and
 # the chat and SSH projects on a runner of their own (they run after "main" only to keep out of
-# its way on one server; here each runner has its own server).
+# its way on one server; here each runner has its own server). The language server test runs
+# there too: it needs a server where no other test has allowed gopls yet.
 jobs:
   check:
     name: ${{ matrix.part }} (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    # Linux has had little hands-on use, so a failure there is reported but does not block a merge yet.
-    continue-on-error: ${{ matrix.os == 'ubuntu-latest' }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         os: [macos-latest, ubuntu-latest]
-        part: [code, e2e 1/3, e2e 2/3, e2e 3/3, e2e chat and ssh]
+        part: [code, e2e 1/3, e2e 2/3, e2e 3/3, e2e lsp chat and ssh]
     steps:
       - uses: actions/checkout@v4
 
@@ -72,16 +71,17 @@ jobs:
         run: make build-e2e
 
       - name: Browser tests, main project
-        if: startsWith(matrix.part, 'e2e ') && matrix.part != 'e2e chat and ssh'
+        if: startsWith(matrix.part, 'e2e ') && matrix.part != 'e2e lsp chat and ssh'
         working-directory: web
         run: pnpm exec playwright test --project main --shard "${PART#e2e }"
         env:
           PART: ${{ matrix.part }}
 
-      - name: Browser tests, chat and SSH
-        if: matrix.part == 'e2e chat and ssh'
+      - name: Browser tests, language servers, chat and SSH
+        if: matrix.part == 'e2e lsp chat and ssh'
         working-directory: web
         run: |
+          pnpm exec playwright test --project lsp --no-deps
           pnpm exec playwright test --project chat --no-deps
           pnpm exec playwright test --project ssh --no-deps
 

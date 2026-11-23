@@ -1,5 +1,5 @@
-// What the next message of a chat carries along: lines from the editor and saved command
-// outputs. Kept here, not in the composer,
+// What the next message of a chat carries along: lines from the editor, saved command
+// outputs and uploaded images. Kept here, not in the composer,
 // so a selection sent from a file tab waits for a chat tab that is not shown yet.
 import { actions } from './actions'
 import { chats } from './chatstore.svelte'
@@ -12,6 +12,7 @@ export const MAX_ATTACH_BYTES = 64 * 1024
 export type Attachment =
   | { kind: 'selection'; path: string; from: number; to: number; text: string }
   | { kind: 'output'; outputId: string; lines: number }
+  | { kind: 'image'; imageId: string; name: string; size: number }
 
 class AttachStore {
   pending = $state<Record<string, Attachment[]>>({})
@@ -105,12 +106,20 @@ class AttachStore {
 
 function same(a: Attachment, b: Attachment): boolean {
   if (a.kind === 'output' && b.kind === 'output') return a.outputId === b.outputId
+  if (a.kind === 'image' && b.kind === 'image') return a.imageId === b.imageId
   return a.kind === 'selection' && b.kind === 'selection' && a.path === b.path && a.from === b.from && a.to === b.to
 }
 
-/** What `chat.prompt` takes: the text of a selection is sent, an output goes by id. */
+/** What `chat.prompt` takes: the text of a selection is sent, an output or an image goes by id. */
 export function wire(list: Attachment[]): unknown[] {
-  return list.map((a) => (a.kind === 'output' ? { kind: 'output', outputId: a.outputId } : a))
+  return list.map((a) => {
+    if (a.kind === 'output') return { kind: 'output', outputId: a.outputId }
+    if (a.kind === 'image') return { kind: 'image', imageId: a.imageId, name: a.name }
+    return a
+  })
 }
+
+/** How many of the attachments are images. */
+export const imageCount = (list: { kind: string }[]) => list.filter((a) => a.kind === 'image').length
 
 export const attach = new AttachStore()

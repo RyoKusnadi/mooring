@@ -212,7 +212,7 @@
   }
   label {
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .mono {
     font-family: var(--font-mono);

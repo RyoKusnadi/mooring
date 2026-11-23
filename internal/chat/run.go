@@ -173,4 +173,5 @@ func (c *Chat) discard() {
 	c.removed = true
 	c.mu.Unlock()
 	c.stopAgent(nil, StateStopped, nil)
+	c.m.removeImages(c.id)
 }

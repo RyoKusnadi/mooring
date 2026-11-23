@@ -83,7 +83,7 @@
   {#if dropping}
     <div class="confirm" role="group" aria-label="Confirm drop stash">
       <p>Drop “{title(dropping)}”? Its changes are gone for good. There is no undo.</p>
-      <button type="button" class="btn danger small" disabled={busy} onclick={drop}>Drop stash</button>
+      <button type="button" class="btn danger solid small" disabled={busy} onclick={drop}>Drop stash</button>
       <button type="button" class="btn small" bind:this={keep} onclick={() => ((dropping = null), opener?.focus())}>Keep it</button>
     </div>
   {/if}
@@ -115,14 +115,15 @@
   }
   h3 {
     margin: 0;
-    font-size: var(--fs-m);
+    font-size: var(--fs-s);
+    font-weight: var(--fw-semibold);
   }
   .count {
     color: var(--muted);
-    font-weight: 400;
+    font-weight: var(--fw-regular);
   }
   .small {
-    min-height: calc(var(--control-h) - 4px);
+    min-height: var(--control-h-s);
     padding: 0 var(--s-1);
     font-size: var(--fs-s);
   }
@@ -133,7 +134,7 @@
     margin: var(--s-1) var(--s-2);
     padding: var(--s-2);
     border: 1px solid var(--border-strong);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--raised);
     font-size: var(--fs-s);
   }

@@ -166,7 +166,7 @@
     gap: var(--s-3);
     padding: var(--s-2) var(--s-3);
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--surface);
   }
   .info {
@@ -174,7 +174,7 @@
     min-width: 0;
   }
   .name {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .why {
     color: var(--muted);
@@ -192,7 +192,7 @@
   }
   .opts summary {
     min-height: var(--control-h);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     line-height: var(--control-h);
   }
   .opts > :global(*:not(summary)) {
@@ -208,7 +208,7 @@
     display: flex;
     align-items: center;
     gap: var(--s-2);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     cursor: pointer;
   }
   .tools {
@@ -224,7 +224,7 @@
   }
   legend {
     padding: 0;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .tname {
     overflow-wrap: anywhere;
@@ -233,9 +233,6 @@
     min-height: var(--control-h);
   }
   .check input {
-    width: 16px;
-    height: 16px;
     margin: 0;
-    accent-color: var(--accent);
   }
 </style>

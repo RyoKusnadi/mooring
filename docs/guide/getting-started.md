@@ -5,8 +5,8 @@
 Run `mooring` in a terminal. It prints `Mooring is running at http://127.0.0.1:7340` and a
 sign-in link. To start it at every login instead, see "Start at login" in the top-level README.
 
-Mooring listens on 127.0.0.1 only. If you pass another address with `-addr`, it refuses with
-"remote access is not built yet".
+Mooring listens on 127.0.0.1 by default. It refuses any other `-addr` unless you also give it a
+TLS certificate and key and a sign-in password. See "Open Mooring from another device" below.
 
 ## Sign in
 
@@ -50,6 +50,37 @@ To do the same in a terminal, run `mooring password`. It asks for a username, th
 twice, and does not echo it. It does not ask for the old password. `mooring password -remove`
 deletes the password. Use these if you forgot it. Run them in a terminal on the computer Mooring
 runs on.
+
+## Open Mooring from another device
+
+Mooring serves other devices only over HTTPS, and only with a password set. It refuses a
+non-local `-addr` without both. To set this up:
+
+1. Get a certificate and key (PEM files). Either run `tailscale cert <machine>.<tailnet>.ts.net`,
+   which gives a certificate that browsers trust, or use `mkcert`. With mkcert, install its root CA
+   on the other device too, or that device's browser shows a certificate warning. Keep the key
+   file readable by you only.
+2. Run `mooring password` and set a username and password.
+3. Start Mooring with the address and the two files. The address can be `0.0.0.0:7443` or the
+   Tailscale IP:
+
+   ```sh
+   mooring -addr 0.0.0.0:7443 -tls-cert machine.crt -tls-key machine.key
+   ```
+
+4. On the other device, open the https address Mooring prints. Use a name that is in the
+   certificate. Any other name gets a 403. Sign in with the username and password. The login token
+   also works but is long to type.
+
+To start it this way at every login, give the same flags to `mooring autostart on`.
+
+On this computer, `mooring open` still works. Before it hands over the sign-in link, it checks
+that the running server presents the certificate file it was started with, so a certificate you
+made yourself is accepted.
+
+Sign-in failures are counted per client address, 5 per minute, so a wrong guess from another
+device does not lock you out here. Mooring ignores `X-Forwarded-For`, so behind a reverse proxy all
+clients count as one address.
 
 ## Sign out, and sign out other browsers
 

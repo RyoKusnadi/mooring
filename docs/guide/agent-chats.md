@@ -9,7 +9,7 @@ agent, and Mooring starts it.
 | Agent | Mooring runs | Needs on PATH | Sign in |
 | --- | --- | --- | --- |
 | Claude | `npx -y` with the Claude ACP adapter | `npx` | `claude auth login` |
-| Gemini | `gemini --acp` | `gemini` | |
+| Gemini | `gemini --acp` | `gemini` | A paid Gemini API key or Code Assist Enterprise. Otherwise use Antigravity. |
 | Codex | `npx -y @agentclientprotocol/codex-acp` | `npx` and `codex` | |
 | Grok | `grok agent stdio` | `grok` | `grok login`, or set `XAI_API_KEY` |
 | Cursor | `agent acp` | `agent` | |
@@ -27,7 +27,7 @@ the moment you ran it, so run it again after you install a new tool. See
    first where the agent supports it.
 3. Click "Start chat".
 
-![The Start a chat picker: Claude and Gemini can start, Codex, Grok, Cursor and Antigravity say Not installed with Install buttons.](images/agent-chats-picker.png)
+![The Start a chat picker: Claude, Gemini, Grok and Antigravity can start; Codex and Cursor say Not installed with Install buttons.](images/agent-chats-picker.png)
 
 If the agent is missing, the picker says "Not installed. Mooring looks for the `X` command and did
 not find it. Install NAME, then check again." Click "Install NAME" to open a terminal, install it,
@@ -149,22 +149,27 @@ state: Starting, Replying, Not signed in or Stopped.
 ## Send a reply to another chat
 
 You can pass one reply of an agent to another chat of the same project, for example to ask Grok
-about what Gemini wrote. Nothing is sent unless you press the button. If the chat you picked started answering in the meantime,
+about what Claude wrote. Nothing is sent unless you press the button. If the chat you picked started answering in the meantime,
 the panel shows the error and sends nothing.
 
 1. When a turn has ended, click "Send to another chat" on the row under it, next to "Changed N files"
    if there is one. It sends the last reply of that turn. The button is not there while the agent is
    still working on the turn.
-2. Pick a chat. Each line shows the agent, then the chat title. A chat that is answering, starting,
-   stopped or not signed in is greyed out and says why in brackets. Only an idle chat can be picked.
+2. Pick a chat. Each line shows the agent, then the chat title. A chat that is replying, starting or
+   not signed in is greyed out and says why in brackets. An idle chat can be picked. So can a
+   stopped chat: its line says "(stopped) Starts again when you send". If the agent cannot reopen
+   its earlier session, the line says "Starts a new session" instead.
 3. Optional: type in "Add a note (optional)".
-4. Click "Send". The line "Sent to ..." appears with "Open that chat". "Cancel" or Escape closes the
+4. Click "Send". For a stopped chat the button says "Starting the chat…" while Mooring starts it
+   again, then sends the reply as one message. If the chat cannot start, the panel says why and
+   nothing is sent; open the chat and resume it. The line "Sent to ..." appears with "Open that chat". "Cancel" or Escape closes the
    panel without sending.
 
 The other chat gets a message from you: your note, then the reply quoted with the agent and the chat
 title. Above it, "From <agent> · <chat title>" names where it came from. Click the title to open that
 chat, if it still exists. If that chat was deleted, the label says so and is not a link. A reply longer than 64 KB is cut, and the message says so. If the project has
-no other chat, the panel says so and has a "New chat" button.
+no other chat, the panel says so and has a "New chat" button. If no other chat can take a reply
+right now, the panel says so.
 
 ## Work with other chats in a group
 
@@ -224,8 +229,9 @@ To add an account:
 
 Each row has Sign in, Rename, Make default and Remove. Tags show "Default for new projects", "The
 agent's own login", "Folder managed by Mooring" and "Your folder". Usage shows "N% used" per
-window, "Limit reached, ..." or "Usage: unknown." Usage comes from what the agent reports while you
-chat.
+window, "Limit reached, ..." or "Usage: unknown." When the agent names a window but gives no
+percentage (Claude often does), the row says "within limit", "near limit" or "limit reached"
+instead. Usage comes from what the agent reports while you chat.
 
 Once the agent has reported usage, the chat header shows the fullest window of the chat's account,
 for example "5 hours: 62% used, resets at 14:00". Hover it to see the account and every

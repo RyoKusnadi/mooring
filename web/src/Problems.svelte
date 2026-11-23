@@ -86,7 +86,7 @@
     align-items: center;
     gap: var(--s-1);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .s1 {
     color: var(--danger);

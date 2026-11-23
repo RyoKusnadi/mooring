@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import type { Account } from './accountapi'
 import { accounts } from './accountstore.svelte'
-import { limited, percentText, resetText } from './accountfmt'
+import { limited, resetText, usedText } from './accountfmt'
 
 const usage = { source: 'unknown' as const, windows: [], limitHit: 0, limitResetsAt: 0, updatedAt: 0 }
 const acc = (o: Partial<Account> = {}): Account => ({ id: 'a1', agent: 'claude', name: 'Work', dir: '/x', managed: true, isDefault: false, login: 'unknown', usage, ...o })
@@ -91,9 +91,13 @@ describe('agents', () => {
 })
 
 describe('words', () => {
-  it('shows unknown for a missing percent, never a number', () => {
-    expect(percentText({ name: 'five_hour', usedPercent: null, resetsAt: 0, status: '' })).toBe('unknown')
-    expect(percentText({ name: 'five_hour', usedPercent: 41.6, resetsAt: 0, status: '' })).toBe('42%')
+  it('shows the status for a missing percent, never a number', () => {
+    const w = (usedPercent: number | null, status: string) => ({ name: 'five_hour', usedPercent, resetsAt: 0, status })
+    expect(usedText(w(41.6, 'allowed'))).toBe('42% used')
+    expect(usedText(w(null, 'allowed'))).toBe('within limit')
+    expect(usedText(w(null, 'allowed_warning'))).toBe('near limit')
+    expect(usedText(w(null, 'rejected'))).toBe('limit reached')
+    expect(usedText(w(null, ''))).toBe('usage not reported')
   })
   it('says when the reset time is not known', () => {
     expect(resetText(0)).toBe('reset time unknown')

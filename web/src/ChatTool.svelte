@@ -126,7 +126,7 @@
     padding: var(--s-2) var(--s-3);
     overflow: auto;
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-m);
     background: var(--surface);
     font: var(--fs-code) / var(--lh-code) var(--font-mono);
     white-space: pre-wrap;

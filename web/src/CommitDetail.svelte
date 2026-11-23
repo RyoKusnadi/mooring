@@ -103,7 +103,7 @@
     margin: 0;
     padding: var(--s-2) var(--s-3);
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--surface);
     font: var(--fs-s) / 1.5 var(--font-mono);
     white-space: pre-wrap;
@@ -138,7 +138,7 @@
     border: 1px solid var(--border-strong);
     border-radius: var(--r-s);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     text-align: center;
   }
   .path {

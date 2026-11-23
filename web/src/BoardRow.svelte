@@ -63,12 +63,12 @@
   li {
     display: grid;
     gap: var(--s-1);
-    padding: 2px 0 var(--s-1);
+    padding: var(--s-0) 0 var(--s-1);
     border-radius: var(--r-s);
   }
   .open {
     display: grid;
-    gap: 1px;
+    gap: var(--s-0);
     width: 100%;
     min-height: var(--control-h);
     padding: var(--s-1) var(--s-2);

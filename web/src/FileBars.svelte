@@ -47,7 +47,7 @@
   <div class="bar" role="alert">
     <span>Close {baseName(path)} without saving?</span>
     <button type="button" class="btn primary" onclick={saveAndClose}>Save and close</button>
-    <button type="button" class="btn danger" onclick={() => actions.closeTab(id, true)}>Discard changes</button>
+    <button type="button" class="btn danger solid" onclick={() => actions.closeTab(id, true)}>Discard changes</button>
     <button type="button" class="btn" bind:this={keepButton} onclick={() => dismiss(() => (files.closing = ''))}>Keep editing</button>
   </div>
 {/if}
@@ -72,7 +72,7 @@
     border-bottom: 1px solid var(--border);
     background: var(--attention-bg);
     color: var(--attention);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .bar span {
     flex: 1 1 24ch;

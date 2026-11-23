@@ -24,7 +24,7 @@ mkdir -p "$data/fakebin" "$data/fakestate"
 (cd .. && go test -c -o "web/$data/fakebin/fakeagent" ./internal/chat)
 cat > "$data/fakebin/gemini" <<WRAP
 #!/bin/sh
-export MOORING_FAKE_AGENT=1 FAKE_RESUME=1 FAKE_STREAM_TOOL=1 FAKE_CAPS=additionalDirectories,delete FAKE_STATE="$PWD/$data/fakestate"
+export MOORING_FAKE_AGENT=1 FAKE_RESUME=1 FAKE_STREAM_TOOL=1 FAKE_CAPS=additionalDirectories,delete,image FAKE_STATE="$PWD/$data/fakestate"
 exec "$PWD/$data/fakebin/fakeagent" "\$@"
 WRAP
 chmod +x "$data/fakebin/gemini"
@@ -36,6 +36,10 @@ export MOORING_FAKE_AGENT=1 FAKE_RESUME=1 FAKE_STREAM_TOOL=1 FAKE_CAPS=list,addi
 exec "$PWD/$data/fakebin/fakeagent" "\$@"
 WRAP
 chmod +x "$data/fakebin/grok"
+# For the docs pictures (MOORING_E2E_AGY=1): the gemini stand-in also behind "agy", so the chats show Antigravity.
+if [ "${MOORING_E2E_AGY:-}" = 1 ]; then
+  cp "$data/fakebin/gemini" "$data/fakebin/agy"
+fi
 (cd .. && go test -c -o "web/$data/fakebin/fakelsp" ./internal/lsp)
 for name in gopls typescript-language-server; do
   cat > "$data/fakebin/$name" <<WRAP

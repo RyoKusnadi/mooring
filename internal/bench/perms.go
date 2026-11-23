@@ -12,11 +12,12 @@ import (
 // otherwise. It returns "" when the agent offered no fitting option.
 func choosePermission(dir string, p chat.OpenPermission) (optionID string, allowed bool) {
 	allowed = true
+	dir = realPath(dir)
 	for _, path := range p.Paths {
 		if !filepath.IsAbs(path) {
 			path = filepath.Join(dir, path)
 		}
-		rel, err := filepath.Rel(dir, filepath.Clean(path))
+		rel, err := filepath.Rel(dir, realPath(path))
 		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 			allowed = false
 		}
@@ -33,4 +34,23 @@ func choosePermission(dir string, p chat.OpenPermission) (optionID string, allow
 		}
 	}
 	return "", allowed
+}
+
+// realPath resolves links in the part of path that exists, so one folder named
+// two ways (on macOS /var is /private/var) compares equal. A file the agent is
+// about to create does not exist yet; its missing tail is kept as written.
+func realPath(path string) string {
+	path = filepath.Clean(path)
+	tail := ""
+	for {
+		if real, err := filepath.EvalSymlinks(path); err == nil {
+			return filepath.Join(real, tail)
+		}
+		parent := filepath.Dir(path)
+		if parent == path {
+			return filepath.Join(path, tail)
+		}
+		tail = filepath.Join(filepath.Base(path), tail)
+		path = parent
+	}
 }

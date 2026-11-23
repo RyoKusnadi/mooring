@@ -53,11 +53,34 @@ func isWrite(method string) bool {
 	return true
 }
 
+// hostAllowed reports whether a request addressed to host is for this server:
+// a loopback name, or one of names (from the TLS certificate).
+func hostAllowed(host string, names map[string]bool) bool {
+	if IsLoopbackHost(host) {
+		return true
+	}
+	name := host
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		name = h
+	}
+	name = strings.ToLower(strings.TrimSuffix(strings.Trim(name, "[]"), "."))
+	if names[name] {
+		return true
+	}
+	// A wildcard name covers exactly one more label: *.example.com covers a.example.com.
+	_, rest, ok := strings.Cut(name, ".")
+	return ok && strings.Contains(rest, ".") && names["*."+rest]
+}
+
 // guard rejects requests addressed to an unexpected host name (DNS rebinding)
 // and writes sent from another website (cross-site request forgery).
-func guard(next http.Handler) http.Handler {
+func guard(hosts []string, next http.Handler) http.Handler {
+	names := map[string]bool{}
+	for _, h := range hosts {
+		names[strings.ToLower(strings.TrimSuffix(h, "."))] = true
+	}
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !IsLoopbackHost(r.Host) {
+		if !hostAllowed(r.Host, names) {
 			writeError(w, http.StatusForbidden, "host_not_allowed")
 			return
 		}
@@ -70,6 +93,10 @@ func guard(next http.Handler) http.Handler {
 		h.Set("Referrer-Policy", "no-referrer")
 		h.Set("Content-Security-Policy",
 			"default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; base-uri 'none'")
+		// Not for loopback: HSTS on "localhost" would force https on every local port.
+		if r.TLS != nil && !IsLoopbackHost(r.Host) {
+			h.Set("Strict-Transport-Security", "max-age=31536000")
+		}
 		next.ServeHTTP(w, r)
 	})
 }

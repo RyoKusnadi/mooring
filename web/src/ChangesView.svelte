@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Skeleton from './Skeleton.svelte'
   // Changes as a full pane view: the files on the left with the commit box under them, the diff of the
   // selected file on the right. On a phone the list and the diff are two steps.
   import { tick, untrack } from 'svelte'
@@ -11,6 +12,7 @@
   import CommitBox from './CommitBox.svelte'
   import DiffLazy from './DiffLazy.svelte'
   import StashSection from './StashSection.svelte'
+  import { changesPick } from './lib/changespick.svelte'
   import { stagedOf, unstagedOf } from './lib/gitapi'
   import { git } from './lib/gitstore.svelte'
   import { app } from './lib/state.svelte'
@@ -80,6 +82,15 @@
     void git.folder
     untrack(() => ((sel = null), (diffPick = null), (commitOpen = false)))
   })
+  // The sidebar's list asks for one file's diff.
+  $effect(() => {
+    void changesPick.n
+    const want = untrack(() => changesPick.take())
+    if (!want) return
+    scope = 'now'
+    sel = want
+    step = 'diff'
+  })
 </script>
 
 <svelte:window onfocus={() => git.refresh()} />
@@ -91,7 +102,7 @@
     {#if scope === 'turn'}
       <ChangesTurn chat={turnChat} />
     {:else if !status}
-      {#if !git.readError}<p class="hint" role="status">Reading changes…</p>{/if}
+      {#if !git.readError}<div class="hint" role="status"><Skeleton rows={3} label="Reading changes" /></div>{/if}
     {:else if !status.repo}
       <div class="empty">
         <p>This folder is not a git repository. To start one, open a terminal here and run <code>git init</code>.</p>
@@ -185,7 +196,7 @@
   }
   .empty {
     max-width: 560px;
-    margin: var(--s-6, 32px) auto var(--s-3);
+    margin: var(--s-6) auto var(--s-3);
     padding: 0 var(--s-3);
     color: var(--muted);
     font-size: var(--fs-s);

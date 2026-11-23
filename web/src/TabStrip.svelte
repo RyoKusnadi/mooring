@@ -119,11 +119,13 @@
         aria-controls={'panel-' + group.tabs[0].id}
         tabindex={tab.id === group.active ? 0 : -1}
         title={tab.preview ? 'Preview. Double-click or edit the file to keep it open.' : undefined}
+        aria-describedby={tab.preview ? 'preview-note-' + tab.id : undefined}
         onclick={() => actions.focusTab(tab.id)}
         ondblclick={() => actions.keepTab(tab.id)}
         oncontextmenu={(e) => onContext(e, tab.id)}
         onkeydown={(e) => menuKey(e, tab.id)}
       ><TabMarks id={tab.id} host={tab.host} pinned={tab.pinned} /><Icon name={tabIcon(tab.kind)} /><span class="name">{label(tab)}</span></button>
+      {#if tab.preview}<span id={'preview-note-' + tab.id} hidden>Preview tab. Edit the file or double-click the tab to keep it open.</span>{/if}
       <button type="button" class="close" aria-label={`Close ${label(tab)}`} tabindex={tab.id === group.active ? 0 : -1} onclick={() => actions.closeTab(tab.id)}><Icon name="x" /></button>
     </div>
   {/each}
@@ -179,7 +181,7 @@
   .end-mark {
     position: static;
     flex: none;
-    margin: 4px 0;
+    margin: var(--s-1) 0;
   }
   .tab button {
     min-height: 100%;
@@ -216,8 +218,8 @@
     display: grid;
     flex: none;
     place-items: center;
-    width: 24px;
-    height: 24px;
+    width: var(--s-5);
+    height: var(--s-5);
     min-height: 0;
     margin-right: var(--s-1);
     border-radius: var(--r-s);
@@ -230,7 +232,7 @@
     opacity: 1;
   }
   .tab .close:hover {
-    background: var(--border);
+    background: var(--pressed);
     color: var(--fg);
   }
   /* A touch screen: the close button is on the active tab only, so no hidden tap target sits on the others. */

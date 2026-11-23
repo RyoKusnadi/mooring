@@ -7,9 +7,9 @@ export function titleFor(n: number): string {
 
 /** A small teal square with an M; with attention an amber dot sits in the corner. Colours match the light tokens. */
 export function faviconFor(n: number): string {
-  const dot = n > 0 ? '<circle cx="24" cy="8" r="7" fill="#8a5a00" stroke="#f9fbf9" stroke-width="2"/>' : ''
+  const dot = n > 0 ? '<circle cx="24" cy="8" r="7" fill="#8a5a00" stroke="#fafafa" stroke-width="2"/>' : ''
   const svg =
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#1d6b66"/>' +
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#0b6b63"/>' +
     '<path d="M8 23V10l8 8 8-8v13" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>' +
     dot +
     '</svg>'

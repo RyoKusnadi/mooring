@@ -107,7 +107,7 @@
     padding: var(--s-2) var(--s-3);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
   }
   dt {
     color: var(--muted);

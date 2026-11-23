@@ -82,7 +82,7 @@
   h2 {
     margin: 0;
     font-size: var(--fs-l);
-    line-height: 1.25;
+    line-height: var(--lh-l);
   }
   .modes {
     display: flex;
@@ -100,7 +100,7 @@
     background: transparent;
     color: var(--muted);
     font: inherit;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     transition: background-color var(--ease);
   }
   .modes button:hover {

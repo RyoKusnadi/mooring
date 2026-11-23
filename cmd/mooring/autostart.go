@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/ryokusnadi/mooring/internal/autostart"
-	"github.com/ryokusnadi/mooring/internal/server"
 )
 
 // realAutostartEnv reads the machine. Tests pass their own.
@@ -66,6 +65,8 @@ func runAutostart(args []string, envFn func() (autostart.Env, error), stdout, st
 	dataDir := flags.String("data", "", "data folder (default: the user config folder)")
 	shell := flags.String("shell", "", "program to run in terminals")
 	secretsPass := flags.String("secrets-passphrase-file", "", "file with the passphrase that protects remembered SSH passwords")
+	tlsCert := flags.String("tls-cert", "", "certificate file (PEM) to serve HTTPS")
+	tlsKey := flags.String("tls-key", "", "private key file (PEM) for -tls-cert")
 	if err := flags.Parse(args[1:]); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return nil
@@ -75,8 +76,19 @@ func runAutostart(args []string, envFn func() (autostart.Env, error), stdout, st
 	if flags.NArg() > 0 {
 		return fmt.Errorf("unknown argument %q", flags.Arg(0))
 	}
-	if action == "on" && !server.IsLoopbackHost(*addr) {
-		return fmt.Errorf("-addr %s is not a local address; remote access is not built yet", *addr)
+	if action == "on" {
+		// Fail here, not at the next login where nobody reads the error.
+		t, err := loadTLS(*tlsCert, *tlsKey)
+		if err != nil {
+			return err
+		}
+		dir, err := resolveDataDir(*dataDir)
+		if err != nil {
+			return err
+		}
+		if err := checkExposure(*addr, dir, t); err != nil {
+			return err
+		}
 	}
 	env, err := envFn()
 	if err != nil {
@@ -98,6 +110,15 @@ func runAutostart(args []string, envFn func() (autostart.Env, error), stdout, st
 	}
 	if opts.SecretsPass, err = absOrEmpty(*secretsPass); err != nil {
 		return err
+	}
+	if *tlsCert != "" {
+		// Files, not programs: a bare name is in this folder, not on PATH.
+		if opts.TLSCert, err = filepath.Abs(*tlsCert); err != nil {
+			return err
+		}
+		if opts.TLSKey, err = filepath.Abs(*tlsKey); err != nil {
+			return err
+		}
 	}
 	return autostart.On(env, opts, stdout)
 }

@@ -10,6 +10,8 @@ export interface TermInfo {
   rows: number
   exited: boolean
   code: number
+  /** A remote shell ended because its connection did. */
+  lost?: boolean
   /** The SSH connection a remote shell runs on. */
   ssh?: string
   /** Something in the terminal needs the user: a notification escape or a bell. */
@@ -77,6 +79,7 @@ class Terms {
     else if (kind === 'terminal.exited' && this.list[d.id]) {
       this.list[d.id].exited = true
       this.list[d.id].code = d.code ?? 0
+      this.list[d.id].lost = !!d.lost
     } else if (kind === 'terminal.attention' && this.list[d.id]) {
       const a = data as { on?: boolean; bell?: boolean }
       this.list[d.id].attention = !!a.on

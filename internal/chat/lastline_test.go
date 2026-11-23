@@ -24,6 +24,24 @@ func TestLastLineOf(t *testing.T) {
 	}
 }
 
+func TestLastLineDropsMarkdown(t *testing.T) {
+	cases := map[string]string{
+		"I added `sub(a, b)` to `calc.py`.":             "I added sub(a, b) to calc.py.",
+		"**Next step:** wait for the tests.":            "Next step: wait for the tests.",
+		"Done.\n\n- See [the guide](https://x.test/g).": "See the guide.",
+		"## Summary":                      "Summary",
+		"Fixed it.\n\n```go\nx := 1\n```": "Fixed it.",
+		"Fixed it.\n\n---":                "Fixed it.",
+		"| a | b |\n|---|---|":            "| a | b |",
+		"a * b and snake_case stay":       "a * b and snake_case stay",
+	}
+	for in, want := range cases {
+		if got := lastLineOf([]Message{{Kind: KindAgent, Text: in}}); got != want {
+			t.Errorf("lastLineOf(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
 func TestShortenCutsByRunes(t *testing.T) {
 	got := shorten(strings.Repeat("é", 10), 3)
 	if got != "ééé..." {

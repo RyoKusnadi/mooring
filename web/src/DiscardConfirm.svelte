@@ -20,7 +20,7 @@
       Discard {label}? {note} A copy goes to the trash first, so you can get it back from there.
     {/if}
   </p>
-  <button type="button" class="btn danger small" disabled={busy} onclick={onrun}>{forever ? 'Discard for good' : 'Discard'}</button>
+  <button type="button" class="btn danger solid small" disabled={busy} onclick={onrun}>{forever ? 'Discard for good' : 'Discard'}</button>
   <button type="button" class="btn small" bind:this={keep} onclick={onkeep}>Keep changes</button>
 </div>
 
@@ -32,7 +32,7 @@
     margin: var(--s-3) var(--s-2) var(--s-2);
     padding: var(--s-2);
     border: 1px solid var(--danger);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--raised);
     font-size: var(--fs-s);
   }
@@ -45,7 +45,7 @@
     color: var(--danger);
   }
   .small {
-    min-height: calc(var(--control-h) - 4px);
+    min-height: var(--control-h-s);
     padding: 0 var(--s-1);
     font-size: var(--fs-s);
   }

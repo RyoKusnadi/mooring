@@ -69,31 +69,7 @@
     color: var(--fg);
   }
   .menu {
-    display: grid;
     min-width: 160px;
-    padding: var(--s-1);
-    border: 1px solid var(--border);
-    border-radius: var(--r-m);
-    background: var(--raised);
-    box-shadow: var(--shadow-menu);
-    color: var(--fg);
-  }
-  .menu button {
-    min-height: var(--control-h);
-    padding: 0 var(--s-2);
-    border: 0;
-    border-radius: var(--r-s);
-    background: transparent;
-    color: var(--fg);
-    font: inherit;
-    text-align: left;
-    white-space: nowrap;
-  }
-  .menu button:hover {
-    background: var(--hover);
-  }
-  .menu .danger {
-    color: var(--danger);
   }
   @media (pointer: coarse) {
     .more {

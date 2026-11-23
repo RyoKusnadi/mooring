@@ -95,33 +95,5 @@
   .menu {
     position: fixed;
     z-index: 20;
-    display: grid;
-    min-width: 200px;
-    padding: var(--s-1);
-    border: 1px solid var(--border);
-    border-radius: var(--r-m);
-    background: var(--raised);
-    box-shadow: var(--shadow-menu);
-  }
-  button {
-    display: flex;
-    align-items: center;
-    min-height: var(--control-h);
-    padding: 0 var(--s-2);
-    border: 0;
-    border-radius: var(--r-s);
-    background: transparent;
-    color: var(--fg);
-    font: inherit;
-    text-align: left;
-    white-space: nowrap;
-  }
-  button:hover {
-    background: var(--hover);
-  }
-  @media (pointer: coarse) {
-    button {
-      min-height: 44px;
-    }
   }
 </style>

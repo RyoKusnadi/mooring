@@ -43,8 +43,9 @@ A host row also shows its state, "Password remembered" when one is saved, and "A
 on". When a connection is open it adds "Forwards" and "Disconnect". "Edit" opens the form again.
 "Remove" asks "Remove NAME? Open connections stay until closed."
 
-If the connection to the host ends, its terminal says "The connection to the host ended". Click
-"Reconnect".
+If the connection to the host ends, its terminal says "The connection to the host ended." Click
+"Reconnect". If you end the remote shell yourself (`exit`), it says "The shell exited.", or "The
+shell exited with code N." when the code is not 0; "Reconnect" opens a new shell.
 
 ## Port forwards
 

@@ -38,12 +38,19 @@ type Config struct {
 	LSPMemoryMB int           // a language server over this many MiB is restarted; 0 means 2048
 
 	ListenAddr string // host:port Mooring listens on; tool server sign-in sends the browser back here
+	// BaseURL is how a browser reaches Mooring ("https://name:port" under TLS);
+	// "" means http://ListenAddr.
+	BaseURL string
+	// Hosts are the extra host names a request may be addressed to (the names in
+	// the TLS certificate). Loopback names are always allowed.
+	Hosts []string
 
 	Secrets secrets.Store // remembered SSH passwords; nil remembers nothing
 }
 
 type server struct {
 	auth   *auth
+	limit  *limiter // failed logins per client address
 	static fs.FS
 	log    *slog.Logger
 	// listenAddr is where this server really listens (from Config, never from a request).
@@ -68,7 +75,7 @@ func New(cfg Config) (*Server, error) {
 	if cfg.DataDir != "" {
 		tokenPath = filepath.Join(cfg.DataDir, tokenFileName)
 	}
-	s := &server{auth: newAuth(cfg.Token, tokenPath, cfg.Now), static: cfg.Static, log: cfg.Logger, listenAddr: cfg.ListenAddr,
+	s := &server{auth: newAuth(cfg.Token, tokenPath, cfg.Now), limit: newLimiter(cfg.Now), static: cfg.Static, log: cfg.Logger, listenAddr: cfg.ListenAddr,
 		dataDir: cfg.DataDir, slots: make(chan struct{}, hashSlots), socks: newSockets()}
 	s.auth.onRotate = s.socks.closeAll
 
@@ -82,6 +89,8 @@ func New(cfg Config) (*Server, error) {
 	mux.Handle("GET /api/terminals/{id}", s.requireSession(srv.terminals))
 	mux.Handle("GET /api/chats/{id}", s.requireSession(srv.chatSocket))
 	mux.Handle("GET /api/chats/{id}/outputs/{outputId}", s.requireSession(srv.chatOutputs))
+	mux.Handle("POST /api/chats/{id}/images", s.requireSession(srv.chats.ImageUploadHandler()))
+	mux.Handle("GET /api/chats/{id}/images/{imageId}", s.requireSession(srv.chats.ImageHandler()))
 	mux.Handle("GET /api/chats/search", s.requireSession(srv.chatSearch))
 	mux.Handle("GET /api/lsp/{id}", s.requireSession(srv.lspSocket))
 	srv.files.Mount(mux, s.requireSession)
@@ -104,7 +113,7 @@ func New(cfg Config) (*Server, error) {
 		writeError(w, http.StatusNotFound, "not_found")
 	})
 	mux.HandleFunc("/", s.handleStatic)
-	srv.Handler = guard(mux)
+	srv.Handler = guard(cfg.Hosts, mux)
 	return srv, nil
 }
 
@@ -124,7 +133,8 @@ func (s *server) sessionID(r *http.Request) string {
 }
 
 func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
-	if wait := s.auth.retryAfter(); wait > 0 {
+	key := clientKey(r)
+	if wait := s.limit.retryAfter(key); wait > 0 {
 		w.Header().Set("Retry-After", strconv.Itoa(int(math.Ceil(wait.Seconds()))))
 		writeError(w, http.StatusTooManyRequests, "too_many_attempts")
 		return
@@ -143,9 +153,9 @@ func (s *server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	var err error
 	byPassword := body.Token == ""
 	if byPassword {
-		id, ok, err = s.passwordLogin(r.Context(), body.Username, body.Password)
+		id, ok, err = s.passwordLogin(r.Context(), key, body.Username, body.Password)
 	} else {
-		id, ok, err = s.auth.login(strings.TrimSpace(body.Token))
+		id, ok, err = s.tokenLogin(key, strings.TrimSpace(body.Token))
 	}
 	var blocked blockedError
 	if errors.As(err, &blocked) {

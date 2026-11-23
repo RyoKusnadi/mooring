@@ -123,7 +123,7 @@ func deriveKeys(token string) keys {
 	}
 }
 
-// auth holds the keys, the failed-login counter and the used sign-in codes.
+// auth holds the keys and the used sign-in codes.
 // Sessions are not stored: each cookie carries a signed expiry.
 type auth struct {
 	now   func() time.Time
@@ -137,8 +137,7 @@ type auth struct {
 	mu        sync.Mutex
 	keys      keys
 	lastCheck time.Time
-	stamp     os.FileInfo // the token file as last read: identity, modification time, size
-	failures  []time.Time
+	stamp     os.FileInfo          // the token file as last read: identity, modification time, size
 	used      map[string]time.Time // sign-in codes already redeemed, until they expire
 }
 
@@ -192,53 +191,6 @@ func (a *auth) refresh() {
 	}
 }
 
-// retryAfter reports how long logins stay blocked after too many failures.
-// Zero means a login may be tried now.
-func (a *auth) retryAfter() time.Duration {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.dropOldFailures()
-	if len(a.failures) < maxFailures {
-		return 0
-	}
-	return a.failures[0].Add(failureWindow).Sub(a.now())
-}
-
-func (a *auth) dropOldFailures() {
-	cutoff := a.now().Add(-failureWindow)
-	kept := a.failures[:0]
-	for _, t := range a.failures {
-		if t.After(cutoff) {
-			kept = append(kept, t)
-		}
-	}
-	a.failures = kept
-}
-
-// reserve counts an attempt before it is checked, so requests that arrive at
-// the same time cannot all slip under the limit. When logins are blocked it
-// counts nothing and returns the wait. release takes the attempt back after a success.
-func (a *auth) reserve() (release func(), wait time.Duration) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	a.dropOldFailures()
-	if len(a.failures) >= maxFailures {
-		return nil, a.failures[0].Add(failureWindow).Sub(a.now())
-	}
-	at := a.now()
-	a.failures = append(a.failures, at)
-	return func() {
-		a.mu.Lock()
-		defer a.mu.Unlock()
-		for i := len(a.failures) - 1; i >= 0; i-- {
-			if a.failures[i].Equal(at) {
-				a.failures = append(a.failures[:i], a.failures[i+1:]...)
-				return
-			}
-		}
-	}, 0
-}
-
 // rotate switches to a new token at once, so every cookie and link made from
 // the old one stops working. The caller has already written the token file.
 func (a *auth) rotate(token string) {
@@ -251,12 +203,6 @@ func (a *auth) rotate(token string) {
 	}
 }
 
-func (a *auth) fail() {
-	a.mu.Lock()
-	a.failures = append(a.failures, a.now())
-	a.mu.Unlock()
-}
-
 // login checks the token and, when it matches, returns a signed session cookie value.
 func (a *auth) login(token string) (string, bool, error) {
 	got := sha256.Sum256([]byte(token))
@@ -266,7 +212,6 @@ func (a *auth) login(token string) (string, bool, error) {
 	a.mu.Unlock()
 	// Comparing digests keeps the comparison constant-time for any input length.
 	if subtle.ConstantTimeCompare(got[:], k.hash[:]) != 1 {
-		a.fail()
 		return "", false, nil
 	}
 	value, err := a.newSession()

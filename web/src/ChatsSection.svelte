@@ -1,9 +1,11 @@
 <script lang="ts">
   import AttentionMark from './AttentionMark.svelte'
+  import Icon from './Icon.svelte'
   import { actions } from './lib/actions'
   import { chats, type ChatInfo } from './lib/chatstore.svelte'
   import { chatRows } from './lib/chatgroups'
   import { attentionLabel } from './lib/chatfmt'
+  import { split } from './lib/sidebarsplit.svelte'
   import { app } from './lib/state.svelte'
   import { deleteQuestion } from './lib/chatfolders'
   import { relativeTime } from './lib/historyapi'
@@ -43,10 +45,18 @@
 {#if app.ready && app.current}
   <section aria-label={`Chats in ${app.current.name}`}>
     <div class="head">
-      <h2>Chats</h2>
-      <button type="button" class="btn small" aria-label="Search chat history" title="Search every chat in every project" onclick={actions.openChatHistory}>History</button>
+      <h2>
+        <button type="button" class="fold" aria-expanded={split.open} onclick={() => split.setOpen(!split.open)}>
+          <span class="chev" class:open={split.open}><Icon name="chevronRight" /></span>
+          Chats{#if chats.known && all.length > 0}<span class="n">{all.length}</span>{/if}
+          {#if !split.open && all.some((c) => c.attention)}<AttentionMark label="A chat needs you" />{/if}
+        </button>
+      </h2>
+      <button type="button" class="btn ghost small" aria-label="Search chat history" title="Search every chat in every project" onclick={actions.openChatHistory}>History</button>
     </div>
-    {#if !chats.known}
+    {#if !split.open}
+      <!-- Closed: the header is all there is. -->
+    {:else if !chats.known}
       <p class="hint" role="status">Loading chats…</p>
     {:else if all.length === 0}
       <p class="hint">No chats in this project yet. Start one from the + menu in a pane.</p>
@@ -61,7 +71,7 @@
         <li>
       {#if confirming === c.id}
         <span class="ask">{deleteQuestion(chats.list[c.id], agentName(c.agent))}</span>
-        <button type="button" class="btn danger small" onclick={() => (actions.deleteChat(c.id), (confirming = ''))}>Delete</button>
+        <button type="button" class="btn danger solid small" onclick={() => (actions.deleteChat(c.id), (confirming = ''))}>Delete</button>
         <button type="button" class="btn small" onclick={() => (confirming = '')} {@attach (n: HTMLButtonElement) => n.focus()}>Keep</button>
       {:else if renaming === c.id}
         <input class="input rename" aria-label="Chat title" maxlength="120" bind:value={draft} onblur={saveRename} onkeydown={(e) => (e.key === 'Enter' ? saveRename() : e.key === 'Escape' && ((renaming = ''), e.stopPropagation()))} {@attach (n: HTMLInputElement) => (n.focus(), n.select())} />
@@ -106,20 +116,47 @@
     flex: 1 1 auto;
     flex-direction: column;
     min-height: 0;
-    border-top: 1px solid var(--border);
   }
   .head {
     display: flex;
+    flex: none;
     align-items: center;
     justify-content: space-between;
-    padding-right: var(--s-2);
+    padding: var(--s-1) var(--s-2) 0 var(--s-2);
   }
   h2 {
     margin: 0;
-    padding: var(--s-3) var(--s-3) var(--s-1);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
+  }
+  .fold {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--s-1);
+    min-height: var(--control-h);
+    padding: 0 var(--s-1);
+    border: 0;
+    border-radius: var(--r-s);
+    background: none;
     color: var(--muted);
+    font: inherit;
+    font-weight: var(--fw-semibold);
+  }
+  .fold:hover {
+    background: var(--hover);
+    color: var(--fg);
+  }
+  .chev {
+    display: inline-flex;
+  }
+  .chev :global(svg) {
+    transition: transform var(--ease);
+  }
+  .chev.open :global(svg) {
+    transform: rotate(90deg);
+  }
+  .n {
+    font-weight: var(--fw-regular);
   }
   .hint {
     margin: 0;
@@ -190,7 +227,7 @@
     white-space: nowrap;
     color: var(--muted);
     font-size: var(--fs-xs);
-    line-height: 14px;
+    line-height: var(--lh-xs);
   }
   .last {
     overflow: hidden;
@@ -244,7 +281,7 @@
     padding: 0 var(--s-2);
   }
   .small {
-    min-height: calc(var(--control-h) - 4px);
+    min-height: var(--control-h-s);
     padding: 0 var(--s-2);
   }
   @media (pointer: coarse) {

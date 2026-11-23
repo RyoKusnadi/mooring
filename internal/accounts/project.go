@@ -131,27 +131,41 @@ func (s *Service) Snapshot() (map[string]any, error) {
 	for _, r := range rows {
 		out = append(out, s.view(r, defaults))
 	}
-	projects := map[string]map[string]string{}
-	pr, err := s.DB.Query(`SELECT id FROM projects`)
+	ids, err := s.projectIDs()
 	if err != nil {
-		return nil, fmt.Errorf("list projects: %w", err)
+		return nil, err
 	}
-	defer func() { _ = pr.Close() }()
-	for pr.Next() {
-		var id string
-		if err := pr.Scan(&id); err != nil {
-			return nil, fmt.Errorf("read project: %w", err)
-		}
+	// Effective queries again, so it runs after the rows are closed: holding a
+	// connection while asking for another deadlocks once the pool is used up.
+	projects := map[string]map[string]string{}
+	for _, id := range ids {
 		m := map[string]string{}
 		for agent := range s.Adapters {
 			m[agent] = s.Effective(id, agent)
 		}
 		projects[id] = m
 	}
-	if err := pr.Err(); err != nil {
+	return map[string]any{"accounts": out, "projects": projects}, nil
+}
+
+func (s *Service) projectIDs() ([]string, error) {
+	rows, err := s.DB.Query(`SELECT id FROM projects`)
+	if err != nil {
 		return nil, fmt.Errorf("list projects: %w", err)
 	}
-	return map[string]any{"accounts": out, "projects": projects}, nil
+	defer func() { _ = rows.Close() }()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("read project: %w", err)
+		}
+		ids = append(ids, id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("list projects: %w", err)
+	}
+	return ids, nil
 }
 
 // Mount registers GET /api/accounts. wrap adds the session check.

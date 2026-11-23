@@ -104,7 +104,7 @@
   }
   label {
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   textarea {
     min-height: 64px;
@@ -115,7 +115,7 @@
     display: flex;
     align-items: center;
     gap: var(--s-2);
-    font-weight: 400;
+    font-weight: var(--fw-regular);
   }
   .check input {
     width: 16px;
@@ -151,7 +151,7 @@
     padding: var(--s-2);
     overflow: auto;
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--raised);
     color: var(--fg);
     font: var(--fs-s) / 1.4 var(--font-mono);

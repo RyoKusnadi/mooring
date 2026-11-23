@@ -31,7 +31,10 @@
   }
   h2 {
     margin: 0;
-    font-size: var(--fs-l);
+    font-size: var(--fs-xl);
+    line-height: var(--lh-xl);
+    font-weight: var(--fw-semibold);
+    text-wrap: balance;
   }
   p {
     margin: 0;

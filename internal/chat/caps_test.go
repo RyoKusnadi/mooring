@@ -23,7 +23,7 @@ func TestCapsReadsEveryKey(t *testing.T) {
 		"promptCapabilities":{"image":true,"audio":true,"embeddedContext":true},
 		"mcpCapabilities":{"http":true,"sse":true,"acp":true},
 		"sessionCapabilities":{"list":{},"close":{},"delete":{},"fork":{},"resume":{},"systemPrompt":{},"additionalDirectories":{}}}}`)
-	want := caps{Load: true, Resume: true, Image: true, EmbeddedContext: true, MCPHTTP: true, MCPSSE: true, Audio: true, MCPACP: true,
+	want := caps{Initialized: true, Load: true, Resume: true, Image: true, EmbeddedContext: true, MCPHTTP: true, MCPSSE: true, Audio: true, MCPACP: true,
 		List: true, Close: true, Delete: true, Fork: true, SystemPrompt: true, AdditionalDirectories: true,
 		AuthMethods: []string{"claude-ai-login", "console-login"}}
 	if !reflect.DeepEqual(got, want) {
@@ -33,7 +33,7 @@ func TestCapsReadsEveryKey(t *testing.T) {
 
 func TestCapsMissingMeansFalseAndUnknownKeysAreIgnored(t *testing.T) {
 	got := capsOf(t, `{"agentCapabilities":{"sessionCapabilities":{"status":{},"title":{},"fork":null,"close":false}}}`)
-	if want := (caps{AuthMethods: []string{}}); !reflect.DeepEqual(got, want) {
+	if want := (caps{Initialized: true, AuthMethods: []string{}}); !reflect.DeepEqual(got, want) {
 		t.Fatalf("got %+v", got)
 	}
 	if got := capsOf(t, `{}`); got.Resume || got.AuthMethods == nil {

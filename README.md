@@ -87,8 +87,9 @@ servers. You start everything from the browser. It is for one user on one machin
 ## Why Mooring
 
 Mooring is not tied to one agent. It runs the same agent you use in a terminal (Claude, Gemini,
-Codex, Grok, Cursor or Antigravity) through ACP and adds a workspace around it. What you get over
-a terminal window:
+Codex, Grok, Cursor or Antigravity) through ACP and adds a workspace around it. Gemini CLI needs a
+paid Gemini API key or Gemini Code Assist Enterprise since 18 June 2026; with another Google account,
+use Antigravity. What you get over a terminal window:
 
 - **Six agents in one window.** Chats with different agents run side by side in tabs. You can use
   several accounts of one provider, each with its own limits.
@@ -114,7 +115,7 @@ Agents do not message each other. There are two ways to make them work together.
   of the chat. The agent writes it, or Mooring cuts it from the messages if the agent cannot. It
   opens in a new chat tab where you can edit it (16 KB at most). The picker offers "Start with" the
   same agent and says "Pick another below to switch", so you can pass the work from Claude to
-  Gemini. The new agent reads the summary before your first message.
+  Antigravity. The new agent reads the summary before your first message.
 - **Share the project.** Parallel chats work in the same project folder, or each in its own git
   worktree ("Work in its own worktree" in the picker) so they do not touch each other's files. Tool
   servers you enable are offered to every chat. You review all their changes in one Changes view.
@@ -173,12 +174,12 @@ the details, including how to sign out other browsers.
 3. **Start a chat.** Press Alt+A, or click + in a pane and choose "Chat". Pick an agent. One that is not installed
    shows an Install button, and Claude asks you to run `claude auth login` first.
 
-   <img src="docs/guide/images/agent-chats-picker.png" width="700" alt="The Start a chat tab listing Claude with a sign-in command and Gemini as ready, and Codex, Grok, Cursor and Antigravity marked Not installed with Install buttons.">
+   <img src="docs/guide/images/agent-chats-picker.png" width="700" alt="The Start a chat tab: Claude, Gemini, Grok and Antigravity can start, and Codex and Cursor are marked Not installed with Install buttons.">
 
 4. **Answer the agent.** When it wants to run a command, the chat shows "Needs permission" with the
    command, and the tab, the project and the status bar get a mark. Click Allow or Reject.
 
-   <img src="docs/guide/images/agent-chats-permission.png" width="700" alt="A Gemini chat with a Needs permission bar for npm test in /Users/demo/work/demo-app, Allow and Reject buttons, and '1 chat needs permission' in the status bar.">
+   <img src="docs/guide/images/agent-chats-permission.png" width="700" alt="An Antigravity chat with a Needs permission bar for npm test in /Users/demo/work/demo-app, Allow and Reject buttons, and '1 chat needs permission' in the status bar.">
 
 The [getting started page](docs/guide/getting-started.md) covers each step in more detail.
 
@@ -238,7 +239,7 @@ mooring autostart status  # on or off, the file, the command, running or not
 mooring autostart off     # stops the job and deletes the file; your data stays
 ```
 
-`on` takes the same `-addr`, `-data`, `-shell` and `-secrets-passphrase-file` flags as the server and
+`on` takes the same `-addr`, `-data`, `-shell`, `-secrets-passphrase-file`, `-tls-cert` and `-tls-key` flags as the server and
 keeps your current `PATH` and `SHELL`, so agents and language servers are found. On macOS the job is
 `~/Library/LaunchAgents/local.mooring.plist`; on Linux it is a systemd user unit, which starts at login,
 not at boot. Output goes to `<data folder>/logs/autostart.log`.
@@ -262,7 +263,9 @@ Flags of the server:
 
 | Flag | Default | Meaning |
 | --- | --- | --- |
-| `-addr host:port` | `127.0.0.1:7340` | Where it listens. Only local addresses are accepted. |
+| `-addr host:port` | `127.0.0.1:7340` | Where it listens. A non-local address is refused unless `-tls-cert` and `-tls-key` are set and a password is set (`mooring password`). See [Open Mooring from another device](docs/guide/getting-started.md#open-mooring-from-another-device). |
+| `-tls-cert path` | none | PEM certificate. Give it with `-tls-key`. Serves HTTPS. Mooring accepts the host names and IPs listed in the certificate. |
+| `-tls-key path` | none | PEM private key for `-tls-cert`. Keep it readable by you only. |
 | `-data folder` | the user config folder | Where the token, database and logs go. |
 | `-shell program` | `$SHELL` | The program terminals run, as a login shell. |
 | `-lsp-idle duration` | `10m` | Stop a language server after this long with no editor connected. |
@@ -274,7 +277,8 @@ Other flags:
 
 - `open`: `-addr` (default: read from the data folder, else `127.0.0.1:7340`) and `-data`.
 - `token`: `-new` and `-data`. `password`: `-remove` and `-data`.
-- `autostart on`: `-addr`, `-data`, `-shell` and `-secrets-passphrase-file`, as for the server.
+- `autostart on`: `-addr`, `-data`, `-shell`, `-secrets-passphrase-file`, `-tls-cert` and `-tls-key`,
+  as for the server.
   `off` and `status` take the same flags.
 - `bench`: `-agent` (default `claude`), `-account`, `-tasks` (default `all`), `-modes` (default
   `off,on`), `-budget-tokens`, `-dry` with `-stand-in`, `-data`, `-bench-dir` (default `bench`) and

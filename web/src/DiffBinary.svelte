@@ -85,7 +85,7 @@
   figcaption {
     color: var(--muted);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   /* A checkerboard shows through transparent pixels. */
   .stage {
@@ -96,7 +96,7 @@
     min-height: 120px;
     padding: var(--s-2);
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background-color: var(--raised);
     background-image: conic-gradient(var(--surface) 25%, transparent 0 50%, var(--surface) 0 75%, transparent 0);
     background-size: 16px 16px;

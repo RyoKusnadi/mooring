@@ -95,7 +95,6 @@
   }
   .item[aria-current='true'] {
     background: var(--selected);
-    box-shadow: inset 2px 0 var(--accent);
     color: var(--fg);
   }
   h3 {

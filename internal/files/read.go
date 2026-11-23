@@ -213,6 +213,14 @@ type WriteResult struct {
 	Size    int64  `json:"size"`
 }
 
+// WriteReal saves data at a resolved path under the same lock as Write, without a
+// version check: an agent's write has no base version. Open editors learn of it
+// from the watcher.
+func (s *Service) WriteReal(real string, data []byte) error {
+	defer s.lock(real)()
+	return WriteAtomic(real, data)
+}
+
 // Write saves data as the new content of a file whose current version is base
 // ("" for a file that must not exist yet).
 func (s *Service) Write(projectID, rel, base string, data []byte) (*WriteResult, error) {

@@ -40,21 +40,20 @@
     flex-wrap: wrap;
     align-items: baseline;
     gap: 0 var(--s-3);
-    min-height: var(--control-h);
+    min-height: var(--row-h);
     padding: var(--s-1) var(--s-2);
     border-radius: var(--r-s);
     cursor: pointer;
   }
   li[aria-selected='true'] {
     background: var(--selected);
-    box-shadow: inset 2px 0 var(--accent);
   }
   .none {
     color: var(--muted);
     cursor: default;
   }
   .base {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .dir,
   .where {
@@ -81,7 +80,7 @@
   mark {
     background: var(--attention-bg);
     color: var(--attention);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     outline: 1px solid var(--attention);
   }
 </style>

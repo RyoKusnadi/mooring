@@ -15,6 +15,7 @@ type Shell struct {
 	sess *gossh.Session
 	in   io.WriteCloser
 	out  io.Reader
+	lost bool // set by Wait: the channel closed without an exit status
 }
 
 // OpenShell starts a login shell with a PTY on the connection, in the host's
@@ -88,20 +89,33 @@ func quote(s string) string { return "'" + strings.ReplaceAll(s, "'", `'\''`) + 
 func (s *Shell) Read(p []byte) (int, error)  { return s.out.Read(p) }
 func (s *Shell) Write(p []byte) (int, error) { return s.in.Write(p) }
 
-// Wait returns the shell's exit status, or 255 when the channel closed without
-// one (the connection ended).
+// Wait returns the shell's exit status, 128+signal when a signal ended it, or
+// 255 with Lost set when the channel closed without a status (the connection ended).
 func (s *Shell) Wait() int {
 	err := s.sess.Wait()
 	if err == nil {
 		return 0
 	}
 	if ee, ok := err.(*gossh.ExitError); ok {
-		if ee.Signal() != "" {
+		if sig := ee.Signal(); sig != "" {
+			if n, ok := signalNumbers[sig]; ok {
+				return 128 + n
+			}
 			return 255
 		}
 		return ee.ExitStatus()
 	}
+	s.lost = true
 	return 255
+}
+
+// Lost reports whether the shell ended because its connection did. Call it after Wait.
+func (s *Shell) Lost() bool { return s.lost }
+
+// signalNumbers maps the names SSH sends (RFC 4254 6.10) to the Linux numbers.
+var signalNumbers = map[string]int{
+	"HUP": 1, "INT": 2, "QUIT": 3, "ILL": 4, "ABRT": 6, "FPE": 8, "KILL": 9,
+	"USR1": 10, "SEGV": 11, "USR2": 12, "PIPE": 13, "ALRM": 14, "TERM": 15,
 }
 
 func (s *Shell) Resize(cols, rows uint16) error { return s.sess.WindowChange(int(rows), int(cols)) }

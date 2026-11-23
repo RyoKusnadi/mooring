@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Skeleton from './Skeleton.svelte'
   // The status board: every chat in every project, grouped by what it needs from the user.
   import BoardRow from './BoardRow.svelte'
   import { actions } from './lib/actions'
@@ -60,7 +61,7 @@
 <div id="board" class="board" aria-label="Status board" role="region" onfocusin={track}>
   <p class="sr" role="status">{said}</p>
   {#if !chats.known}
-    <p class="hint" role="status">Loading chats…</p>
+    <div class="hint" role="status"><Skeleton rows={3} label="Loading chats" /></div>
   {:else if groups.length === 0}
     <p class="hint">No chats yet. Start one with New chat in a pane, and it shows here with what it needs from you.</p>
   {:else}
@@ -93,10 +94,10 @@
     padding: var(--s-3) var(--s-3) var(--s-1);
     color: var(--muted);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .n {
-    font-weight: 400;
+    font-weight: var(--fw-regular);
   }
   ul {
     margin: 0;

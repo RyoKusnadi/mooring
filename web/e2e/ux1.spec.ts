@@ -20,12 +20,12 @@ test('ux stage 1: tree order, blank tab, commit hint, unsaved edits, Alt in a te
   await openProject(page, repo)
   writeFileSync(join(repo, 'notes.txt'), 'two\n')
 
-  // The tree hides .git and puts dot folders after the others.
+  // The tree hides .git and sorts dot folders with the other folders, by name.
   await expect(tree(page).getByRole('button', { name: 'zdir', exact: true })).toBeVisible()
   await expect(tree(page).getByRole('button', { name: '.git', exact: true })).toHaveCount(0)
   const names = await tree(page).locator('button.open, [role="treeitem"]').allInnerTexts()
   const flat = names.join('|')
-  expect(flat.indexOf('zdir')).toBeLessThan(flat.indexOf('.hidden'))
+  expect(flat.indexOf('.hidden')).toBeLessThan(flat.indexOf('zdir'))
 
   // An empty pane says one short thing and offers three buttons; no worktree picker without worktrees.
   const panel = page.getByRole('tabpanel')
@@ -66,7 +66,7 @@ test('ux stage 1: tree order, blank tab, commit hint, unsaved edits, Alt in a te
   await expect(page.getByText('Write a message to commit.')).toBeVisible()
 
   // Alt+letter works while typing in a box (the commit message).
-  await page.getByLabel('Commit message').click()
+  await page.locator('section[aria-label^="Changes in"]').getByLabel('Commit message').click()
   await page.keyboard.press('Alt+O')
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('Escape')

@@ -138,7 +138,7 @@
   }
   .line.bad {
     color: var(--danger);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .warn {
     color: var(--muted);

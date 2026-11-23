@@ -123,7 +123,7 @@
     padding: var(--s-2) var(--s-3);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-m);
     font-family: var(--font-mono);
     font-size: var(--fs-s);
     white-space: pre-wrap;

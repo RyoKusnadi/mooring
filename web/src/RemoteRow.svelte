@@ -90,7 +90,7 @@
       <p>
         {#if notEmpty}{entry.name} has files in it. Delete the folder and everything inside?{:else}Delete {entry.name}? The host has no trash, so this cannot be undone.{/if}
       </p>
-      <button type="button" class="btn danger" disabled={busy} onclick={remove} onkeydown={esc}>{notEmpty ? 'Delete everything' : 'Delete'}</button>
+      <button type="button" class="btn danger solid" disabled={busy} onclick={remove} onkeydown={esc}>{notEmpty ? 'Delete everything' : 'Delete'}</button>
       <button type="button" class="btn" data-keep onclick={leave} onkeydown={esc}>Keep</button>
       {#if error}<p class="error" role="alert">{error}</p>{/if}
     </div>

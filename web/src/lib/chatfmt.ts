@@ -151,3 +151,12 @@ export function composerWhy(state: string): string {
   if (state === 'stopped') return 'The agent stopped. Start a new chat to keep going.'
   return ''
 }
+
+/** The line under the box about what the box does now: an upload, a wait, a start, a reply or a stop. */
+export function composerHint(state: string, agent: string, uploading: number, waiting: boolean): string {
+  if (uploading) return `Uploading ${uploading === 1 ? 'an image' : uploading + ' images'}…`
+  if (waiting) return 'Waiting to send. The message goes out when Mooring reconnects.'
+  if (state === 'starting') return `Starting ${agent}…`
+  if (state === 'running') return `${agent} is replying. A message you send now goes out when the reply ends. Queued messages stay if the page reloads, but their images and other attachments do not.`
+  return state === 'idle' || state === 'needs_login' ? '' : `${agent} is not running. Resume the chat to send a message.`
+}

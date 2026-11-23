@@ -167,7 +167,7 @@ func TestRemoteShellResizeAndAgentForwardOff(t *testing.T) {
 	}
 }
 
-func TestConnectionCloseGivesExit255(t *testing.T) {
+func TestConnectionCloseIsLost(t *testing.T) {
 	te := newTermEnv(t, envOpts{})
 	te.mustConnect("c1", te.saveHost("password", ""))
 	if _, err := te.terms.OpenSSH("p1", "c1", "t1", 80, 24); err != nil {
@@ -179,7 +179,7 @@ func TestConnectionCloseGivesExit255(t *testing.T) {
 	wait(t, "exit", func() bool {
 		for _, i := range te.terms.Snapshot()["p1"] {
 			if i.ID == "t1" && i.Exited {
-				return i.Code == 255
+				return i.Code == 255 && i.Lost
 			}
 		}
 		return false
@@ -195,7 +195,7 @@ func TestConnectionCloseGivesExit255(t *testing.T) {
 	}
 }
 
-func TestDisconnectClosesShellWithExit255(t *testing.T) {
+func TestDisconnectClosesShellAsLost(t *testing.T) {
 	te := newTermEnv(t, envOpts{})
 	te.mustConnect("c1", te.saveHost("password", ""))
 	if _, err := te.terms.OpenSSH("p1", "c1", "t1", 80, 24); err != nil {
@@ -207,7 +207,7 @@ func TestDisconnectClosesShellWithExit255(t *testing.T) {
 	wait(t, "exit", func() bool {
 		for _, i := range te.terms.Snapshot()["p1"] {
 			if i.ID == "t1" && i.Exited {
-				return i.Code == 255
+				return i.Code == 255 && i.Lost
 			}
 		}
 		return false
@@ -229,7 +229,22 @@ func TestShellExitCodeAndNoSFTP(t *testing.T) {
 	wait(t, "exit 3", func() bool {
 		for _, i := range te.terms.Snapshot()["p1"] {
 			if i.ID == "t1" && i.Exited {
-				return i.Code == 3
+				return i.Code == 3 && !i.Lost
+			}
+		}
+		return false
+	})
+	// A signal ends it with 128+signal, and the connection is still there.
+	if _, err := te.terms.OpenSSH("p1", "c1", "t2", 80, 24); err != nil {
+		t.Fatal(err)
+	}
+	s2, _ := te.dial("t2", "", 0)
+	s2.until("fake$")
+	s2.send("kill TERM\n")
+	wait(t, "kill TERM", func() bool {
+		for _, i := range te.terms.Snapshot()["p1"] {
+			if i.ID == "t2" && i.Exited {
+				return i.Code == 143 && !i.Lost
 			}
 		}
 		return false

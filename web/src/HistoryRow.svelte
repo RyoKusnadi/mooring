@@ -40,10 +40,9 @@
     align-items: stretch;
     gap: var(--s-2);
     width: 100%;
-    min-height: 32px;
+    min-height: var(--control-h);
     padding: 0 var(--s-3);
     border: 0;
-    border-left: 3px solid transparent;
     border-radius: 0;
     background: none;
     color: var(--fg);
@@ -55,7 +54,6 @@
   }
   .row.current {
     background: var(--selected);
-    border-left-color: var(--accent);
   }
   .main {
     display: flex;
@@ -106,18 +104,17 @@
   }
   /* Four kinds told apart by fill, edge style and a word for screen readers, not by colour. */
   .ref.head {
-    border-color: var(--accent);
-    background: var(--accent);
-    color: var(--on-accent);
-    font-weight: 600;
+    border-color: var(--fg);
+    background: var(--selected);
+    color: var(--fg);
+    font-weight: var(--fw-semibold);
   }
   .ref.remote {
     border-style: dashed;
     color: var(--muted);
   }
   .ref.tag {
-    border-left-width: 4px;
-    font-style: italic;
+    background: var(--hover);
   }
   .ref.more {
     border-style: dotted;

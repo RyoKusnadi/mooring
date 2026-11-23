@@ -71,7 +71,7 @@
   }
   legend {
     padding: 0;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   fieldset label {
     display: flex;

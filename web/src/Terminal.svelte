@@ -3,6 +3,7 @@
   import { actions, paletteKey } from './lib/actions'
   import { isMac, showKey } from './lib/keys'
   import { emptyUi, terms } from './lib/termstore.svelte'
+  import { endText } from './lib/termend'
   import type { TermView } from './lib/termview'
   import TermKeys from './TermKeys.svelte'
   import TermFind from './TermFind.svelte'
@@ -111,7 +112,7 @@
     {/if}
     {#if ended}
       <div class="ended" role="status">
-        <span>{info?.ssh ? 'The connection to the host ended' : 'The shell exited'}{info?.code ? ` with code ${info.code}` : ''}.</span>
+        <span>{endText(info)}</span>
         <button type="button" class="btn primary" bind:this={restart} onclick={() => actions.restartTerminal(id)}>{info?.ssh ? 'Reconnect' : 'Start a new terminal'}</button>
       </div>
     {/if}
@@ -170,22 +171,19 @@
   }
   .strip {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    min-height: var(--s-5);
-    gap: var(--s-3);
-    padding: 0 var(--s-4);
-    overflow: hidden;
+    min-height: var(--status-h);
+    gap: var(--s-1) var(--s-3);
+    padding: var(--s-1) var(--s-4);
     background: var(--surface);
     border-top: 1px solid var(--border);
   }
   .strip p {
-    flex: 1;
+    flex: 1 1 32ch;
     margin: 0;
-    overflow: hidden;
     color: var(--muted);
     font-size: var(--fs-s);
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   @media (pointer: coarse) {
     .strip .hint {
@@ -198,7 +196,7 @@
   }
   .strip .small {
     flex: none;
-    min-height: 1.75rem;
+    min-height: var(--control-h-s);
     padding-block: 0;
   }
   @media (pointer: coarse) {

@@ -88,6 +88,12 @@ class TermView {
     this.term.onBinary((d) => this.conn.sendInput(Uint8Array.from(d, (c) => c.charCodeAt(0))))
     this.term.attachCustomKeyEventHandler((e) => !isShortcut(e))
     terms.views.set(id, this)
+    // xterm measures a cell once. If Geist Mono is not loaded yet it measures the fallback font, so measure again after.
+    const family = this.term.options.fontFamily ?? ''
+    void document.fonts?.load(`${this.term.options.fontSize}px ${family}`).then(() => {
+      this.term.options.fontFamily = `${family}, monospace`
+      if (this.opened) this.scheduleFit()
+    })
   }
 
   /** Applies the theme and the text size, then refits so the shell learns the new columns. */

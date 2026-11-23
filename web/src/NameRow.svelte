@@ -61,7 +61,7 @@
 
 <style>
   .name {
-    padding: 2px var(--s-1) 2px calc(var(--s-1) + var(--depth, 0) * var(--s-3));
+    padding: 2px var(--s-1) 2px calc(var(--s-1) + var(--depth, 0) * var(--s-4));
   }
   .error {
     margin-top: var(--s-1);

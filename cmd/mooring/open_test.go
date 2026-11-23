@@ -63,7 +63,7 @@ func TestOpenUsesTheAddressFileAndTheLinkSignsIn(t *testing.T) {
 		t.Fatal(err)
 	}
 	addr := liveServer(t, dir, token)
-	if err := writeAddress(dir, addr); err != nil {
+	if err := writeAddress(dir, addr, "", ""); err != nil {
 		t.Fatal(err)
 	}
 	f := &fakeOpen{}
@@ -96,7 +96,7 @@ func TestOpenWithNoServerSaysSo(t *testing.T) {
 	}
 	addr := l.Addr().String()
 	_ = l.Close()
-	if err := writeAddress(dir, addr); err != nil {
+	if err := writeAddress(dir, addr, "", ""); err != nil {
 		t.Fatal(err)
 	}
 	f := &fakeOpen{}
@@ -114,7 +114,7 @@ func TestOpenAddrFlagBeatsTheAddressFile(t *testing.T) {
 	dir := t.TempDir()
 	token, _ := server.LoadOrCreateToken(dir)
 	addr := liveServer(t, dir, token)
-	if err := writeAddress(dir, "127.0.0.1:1"); err != nil {
+	if err := writeAddress(dir, "127.0.0.1:1", "", ""); err != nil {
 		t.Fatal(err)
 	}
 	f := &fakeOpen{}
@@ -151,7 +151,7 @@ func TestOpenRefusesANonLocalAddress(t *testing.T) {
 func TestStartMessagePrintsALinkOnlyToATerminal(t *testing.T) {
 	o := serveOpts{token: "tok"}
 	var plain bytes.Buffer
-	if err := startMessage(&plain, o, "127.0.0.1:7340", time.Now()); err != nil {
+	if err := startMessage(&plain, o, "http://127.0.0.1:7340", time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if strings.Contains(plain.String(), "code=") || !strings.Contains(plain.String(), "Run `mooring open` to sign in") {
@@ -159,7 +159,7 @@ func TestStartMessagePrintsALinkOnlyToATerminal(t *testing.T) {
 	}
 	o.tty = true
 	var term bytes.Buffer
-	if err := startMessage(&term, o, "127.0.0.1:7340", time.Now()); err != nil {
+	if err := startMessage(&term, o, "http://127.0.0.1:7340", time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(term.String(), "http://127.0.0.1:7340/login?code=v1.") {
@@ -198,7 +198,7 @@ func TestOpenRefusesAnotherProgramAtTheAddress(t *testing.T) {
 	}))
 	defer imposter.Close()
 	addr := strings.TrimPrefix(imposter.URL, "http://")
-	if err := writeAddress(dir, addr); err != nil {
+	if err := writeAddress(dir, addr, "", ""); err != nil {
 		t.Fatal(err)
 	}
 	f := &fakeOpen{}
@@ -220,7 +220,7 @@ func TestWriteAddressReplacesAnOpenFileMode(t *testing.T) {
 	if err := os.WriteFile(path, []byte("127.0.0.1:1\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := writeAddress(dir, "127.0.0.1:2"); err != nil {
+	if err := writeAddress(dir, "127.0.0.1:2", "", ""); err != nil {
 		t.Fatal(err)
 	}
 	info, err := os.Stat(path)

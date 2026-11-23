@@ -111,6 +111,14 @@ class FileStore {
     this.toggle(project, path)
   }
 
+  /** Closes every open folder of a project. The row holding the tab stop moves up to its top folder. */
+  collapseAll(project: string) {
+    const prefix = project + ':'
+    for (const k of Object.keys(this.open)) if (k.startsWith(prefix)) delete this.open[k]
+    this.cursor = this.cursor.split('/')[0]
+    this.target = ''
+  }
+
   /** Folders that are open and loaded, for the watch lease. The project folder is always first. */
   openDirs(project: string): string[] {
     const out = ['']

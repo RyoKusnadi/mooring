@@ -83,3 +83,19 @@ func (a *agent) long(sid string, cancel chan struct{}) string {
 	}
 	return "end_turn"
 }
+
+// hold keeps a reply open until it is cancelled, so a test can act on a running
+// chat without racing the reply's end on a slow machine.
+func (a *agent) hold(sid string, cancel chan struct{}) string {
+	limit := time.After(2 * time.Minute)
+	for {
+		select {
+		case <-cancel:
+			return "cancelled"
+		case <-limit:
+			return "end_turn"
+		case <-time.After(200 * time.Millisecond):
+			a.chunk(sid, "tick ")
+		}
+	}
+}

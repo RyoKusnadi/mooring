@@ -76,7 +76,7 @@
     <p>Remove this worktree? The folder goes to the trash. Its branch and commits stay. Mooring checks where terminals were opened, so close any terminal you moved into this folder.</p>
     {#if git.worktree?.unpushed}<p class="warn">Branch {git.worktree.branch} keeps its {git.worktree.unpushed} {git.worktree.unpushed === 1 ? 'commit' : 'commits'} that {git.worktree.unpushed === 1 ? 'is' : 'are'} not on a remote.</p>{/if}
     {#if git.failure?.source === 'worktree'}<p class="error" role="alert">{git.failure.message}</p>{/if}
-    <button type="button" class="btn danger small" disabled={git.busy !== ''} onclick={remove}>Remove folder</button>
+    <button type="button" class="btn danger solid small" disabled={git.busy !== ''} onclick={remove}>Remove folder</button>
     <button type="button" class="btn small" onclick={() => (removing = false)}>Keep it</button>
   </div>
 {/if}
@@ -102,14 +102,14 @@
   }
   label {
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   select {
     text-overflow: ellipsis;
   }
   .small {
     flex: none;
-    min-height: var(--control-h);
+    min-height: var(--control-h-s);
     padding: 0 var(--s-2);
     font-size: var(--fs-s);
   }
@@ -129,7 +129,7 @@
     min-height: var(--control-h);
     padding: 0 var(--s-2);
     border: 1px solid var(--border-strong);
-    border-radius: var(--r-s);
+    border-radius: var(--r-m);
     background: var(--raised);
     color: var(--fg);
     font: inherit;
@@ -140,10 +140,10 @@
   }
   .bname code {
     overflow-wrap: anywhere;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .change {
-    color: var(--accent);
+    color: var(--muted);
     font-size: var(--fs-s);
   }
   .sync {
@@ -167,7 +167,7 @@
     margin: var(--s-1) var(--s-3);
     padding: var(--s-2);
     border: 1px solid var(--danger);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--raised);
     font-size: var(--fs-s);
   }
@@ -177,7 +177,7 @@
   }
   .warn {
     color: var(--fg);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .link {
     padding: 0;

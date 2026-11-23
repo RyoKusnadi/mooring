@@ -102,14 +102,10 @@
     gap: var(--s-2);
     width: min(420px, 92vw);
     padding: var(--s-2);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--r-s);
-    background: var(--raised);
-    box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
     font-size: var(--fs-s);
   }
   label {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   ul {
     max-height: 260px;
@@ -124,7 +120,7 @@
     align-items: baseline;
     gap: 0 var(--s-2);
     width: 100%;
-    min-height: var(--control-h);
+    min-height: var(--row-h);
     padding: 2px var(--s-2);
     border: 0;
     border-radius: var(--r-s);
@@ -132,20 +128,18 @@
     color: var(--fg);
     font: inherit;
     text-align: left;
-    box-shadow: inset 2px 0 0 transparent;
   }
   .pick:hover:not(:disabled) {
     background: var(--hover);
   }
   .pick.on:not(:disabled) {
     background: var(--selected);
-    box-shadow: inset 2px 0 0 var(--accent);
   }
   .pick:disabled {
     cursor: default;
   }
   .pick:disabled code {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   code {
     overflow-wrap: anywhere;

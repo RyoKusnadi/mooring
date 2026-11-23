@@ -25,12 +25,13 @@ import (
 )
 
 const usage = `Usage:
-  mooring [-addr host:port] [-data folder] [-shell program] [-lsp-idle d] [-lsp-memory-mb n] [-secrets-passphrase-file path] [-quiet]   run the server
+  mooring [-addr host:port] [-data folder] [-shell program] [-lsp-idle d] [-lsp-memory-mb n] [-secrets-passphrase-file path] [-tls-cert file -tls-key file] [-quiet]
+                                             run the server; a non-local -addr needs -tls-cert, -tls-key and a password
   mooring open [-addr host:port] [-data folder]   open the browser, signed in (link works once, for 5 minutes)
   mooring token [-new] [-data folder]        print the login token; -new makes a new one and signs every browser out
   mooring password [-remove] [-data folder]  set the sign-in username and password in a terminal; -remove deletes it
   mooring version                            print the version
-  mooring autostart on|off|status [-addr host:port] [-data folder] [-shell program] [-secrets-passphrase-file path]
+  mooring autostart on|off|status [-addr host:port] [-data folder] [-shell program] [-secrets-passphrase-file path] [-tls-cert file -tls-key file]
                                              start Mooring at login (on takes the same flags as the server)
   mooring bench -agent claude [-account id] [-tasks all] [-modes off,on] [-budget-tokens n] [-dry -stand-in program] [-data folder] [-bench-dir folder]
                                              measure token use on a few tasks (asks before a real run)
@@ -73,6 +74,8 @@ func run(args []string, stdout, stderr io.Writer) error {
 	lspMemory := flags.Int("lsp-memory-mb", 2048, "restart a language server that uses more than this many MiB")
 	dataDir := flags.String("data", "", "folder for the token and saved data (default: the user config folder)")
 	secretsPass := flags.String("secrets-passphrase-file", "", "file with the passphrase that protects remembered SSH passwords (readable by you only)")
+	tlsCert := flags.String("tls-cert", "", "certificate file (PEM) to serve HTTPS; needed for a non-local -addr")
+	tlsKey := flags.String("tls-key", "", "private key file (PEM) for -tls-cert")
 	quiet := flags.Bool("quiet", false, "print only warnings and errors to the terminal; the log file is unchanged")
 	newToken := flags.Bool("new", false, "with token: make a new login token; every browser is signed out")
 	fakeAccounts := addTestFlags(flags)
@@ -108,7 +111,7 @@ func run(args []string, stdout, stderr io.Writer) error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	return serve(ctx, serveOpts{addr: *addr, dir: dir, token: token, shell: *shell, lspIdle: *lspIdle, lspMemory: *lspMemory, secretsPass: *secretsPass, fakeAccounts: *fakeAccounts, quiet: *quiet, tty: isTerminal(stdout)}, stdout, stderr)
+	return serve(ctx, serveOpts{addr: *addr, dir: dir, token: token, shell: *shell, lspIdle: *lspIdle, lspMemory: *lspMemory, secretsPass: *secretsPass, tlsCert: *tlsCert, tlsKey: *tlsKey, fakeAccounts: *fakeAccounts, quiet: *quiet, tty: isTerminal(stdout)}, stdout, stderr)
 }
 
 func resolveDataDir(flagValue string) (string, error) {
@@ -132,6 +135,7 @@ type serveOpts struct {
 	lspIdle                 time.Duration
 	lspMemory               int
 	secretsPass             string
+	tlsCert, tlsKey         string
 	fakeAccounts            string
 	quiet                   bool
 	tty                     bool // stdout is a terminal, so a sign-in link may be printed
@@ -149,8 +153,8 @@ func isTerminal(w io.Writer) bool {
 
 // startMessage tells how to sign in. A link carries a sign-in code, so it goes
 // only to a terminal; under autostart stdout is a log file and must not get one.
-func startMessage(stdout io.Writer, o serveOpts, addr string, now time.Time) error {
-	fmt.Fprintf(stdout, "Mooring is running at http://%s\n", addr)
+func startMessage(stdout io.Writer, o serveOpts, base string, now time.Time) error {
+	fmt.Fprintf(stdout, "Mooring is running at %s\n", base)
 	if !o.tty {
 		fmt.Fprintln(stdout, "Run `mooring open` to sign in.")
 		return nil
@@ -159,7 +163,7 @@ func startMessage(stdout io.Writer, o serveOpts, addr string, now time.Time) err
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(stdout, "Sign in: http://%s/login?code=%s\n", addr, code)
+	fmt.Fprintf(stdout, "Sign in: %s/login?code=%s\n", base, code)
 	fmt.Fprintln(stdout, "The link works once, for 5 minutes. `mooring open` makes a new one.")
 	return nil
 }
@@ -167,14 +171,22 @@ func startMessage(stdout io.Writer, o serveOpts, addr string, now time.Time) err
 // serve runs until ctx ends or the server fails.
 func serve(ctx context.Context, o serveOpts, stdout, stderr io.Writer) error {
 	addr, dir, token, shell := o.addr, o.dir, o.token, o.shell
-	// Until TLS exists, traffic to another machine would carry the session
-	// cookie in clear text, so only this machine may connect.
-	if !server.IsLoopbackHost(addr) {
-		return fmt.Errorf("-addr %s is not a local address; remote access is not built yet", addr)
+	tlsSet, err := loadTLS(o.tlsCert, o.tlsKey)
+	if err != nil {
+		return err
+	}
+	if err := checkExposure(addr, dir, tlsSet); err != nil {
+		return err
 	}
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
+	}
+	base := baseURL(listener.Addr().String(), tlsSet)
+	var hosts []string
+	if tlsSet != nil {
+		hosts = tlsSet.names
+		listener = newHandshakeListener(listener, tlsSet.config, 10*time.Second)
 	}
 	logFile, err := logfile.Open(filepath.Join(dir, "logs", "mooring.log"), 10<<20, 3)
 	if err != nil {
@@ -204,7 +216,7 @@ func serve(ctx context.Context, o serveOpts, stdout, stderr io.Writer) error {
 		_ = listener.Close()
 		return err
 	}
-	app, err := server.New(server.Config{Agents: agents, ListenAddr: listener.Addr().String(), Secrets: secretStore, Token: token, Static: webui.FS(), Logger: logger, Store: st, Shell: shell,
+	app, err := server.New(server.Config{Agents: agents, ListenAddr: listener.Addr().String(), BaseURL: base, Hosts: hosts, Secrets: secretStore, Token: token, Static: webui.FS(), Logger: logger, Store: st, Shell: shell,
 		DataDir: dir, LSPIdle: o.lspIdle, LSPMemoryMB: o.lspMemory})
 	if err != nil {
 		_ = listener.Close()
@@ -214,16 +226,18 @@ func serve(ctx context.Context, o serveOpts, stdout, stderr io.Writer) error {
 	srv := &http.Server{
 		Handler:           app,
 		ReadHeaderTimeout: 10 * time.Second,
+		IdleTimeout:       2 * time.Minute,
+		MaxHeaderBytes:    64 << 10,
 	}
 
 	failed := make(chan error, 1)
 	go func() { failed <- srv.Serve(listener) }()
 
-	if err := writeAddress(dir, listener.Addr().String()); err != nil {
+	if err := writeAddress(dir, listener.Addr().String(), base, o.tlsCert); err != nil {
 		logger.Warn("could not write the address file; `mooring open` will use -addr or the default", "err", err)
 	}
 	defer removeAddress(dir)
-	if err := startMessage(stdout, o, listener.Addr().String(), time.Now()); err != nil {
+	if err := startMessage(stdout, o, base, time.Now()); err != nil {
 		logger.Warn("could not make a sign-in link", "err", err)
 	}
 

@@ -51,7 +51,7 @@ func DefaultCatalog() []AgentDef {
 		},
 		{
 			ID: "gemini", Name: "Gemini", Command: "gemini", Args: []string{"--acp"},
-			Needs: []string{"gemini"}, Note: "Google's coding agent.",
+			Needs: []string{"gemini"}, Note: "Google's coding agent. Needs a paid Gemini API key or Code Assist Enterprise. Otherwise use Antigravity.",
 		},
 		{
 			ID: "codex", Name: "Codex", Command: "npx", Args: []string{"-y", "@agentclientprotocol/codex-acp"},

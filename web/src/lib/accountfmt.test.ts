@@ -17,9 +17,9 @@ describe('usageLine', () => {
     expect(usageLine({ ...base, source: 'unknown', windows: [] }, now)).toBeNull()
     expect(usageLine({ ...base, windows: [{ name: 'five_hour', usedPercent: null, resetsAt: 0, status: '' }] }, now)).toBeNull()
   })
-  it('lists a window with no percentage as unknown, never a guess', () => {
+  it('lists a window with no percentage as not reported, never a guess', () => {
     const u = { ...base, windows: [{ name: 'five_hour', usedPercent: 5, resetsAt: 0, status: '' }, { name: 'seven_day', usedPercent: null, resetsAt: 0, status: '' }] }
-    expect(usageLine(u, now)!.all).toContain('7 days: unknown')
+    expect(usageLine(u, now)!.all).toContain('7 days: usage not reported')
   })
   it('skips a window whose reset time has passed', () => {
     const u = { ...base, windows: [{ name: 'five_hour', usedPercent: 98, resetsAt: at(9), status: '' }, { name: 'seven_day', usedPercent: 10, resetsAt: at(23), status: '' }] }

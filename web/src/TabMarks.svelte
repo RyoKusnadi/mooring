@@ -18,6 +18,7 @@
   .dot,
   .mod {
     display: inline-block;
+    flex: none;
     width: 8px;
     height: 8px;
     margin-right: var(--s-2);

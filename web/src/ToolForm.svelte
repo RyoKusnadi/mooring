@@ -87,7 +87,7 @@
   legend {
     padding: 0;
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .check {
     display: flex;
@@ -96,10 +96,7 @@
     min-height: var(--control-h);
   }
   .check input {
-    width: 18px;
-    height: 18px;
     margin: 0;
-    accent-color: var(--accent);
   }
   textarea.input {
     padding: var(--s-1) var(--s-2);

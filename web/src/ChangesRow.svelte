@@ -1,6 +1,7 @@
 <script lang="ts">
   // One file in the Changes list: letter, the name in full, the dimmed folder, then Stage and Discard.
   import Icon from './Icon.svelte'
+  import StatusBadge from './StatusBadge.svelte'
   import { sideLetter, sideWord, type Change } from './lib/gitapi'
   import { baseName } from './lib/paths'
 
@@ -36,7 +37,7 @@
     onkeydown={onkeys}
     onkeyup={(e) => e.key === ' ' && e.preventDefault()}
   >
-    <span class="badge {sideLetter(c, staged)}" aria-hidden="true">{sideLetter(c, staged)}</span>
+    <StatusBadge letter={sideLetter(c, staged)} />
     <span class="text">
       <span class="name">{baseName(c.path)}</span>
       {#if detail}<span class="dir">{detail}</span>{/if}
@@ -61,14 +62,12 @@
     flex-wrap: wrap;
     align-items: center;
     border-radius: var(--r-s);
-    box-shadow: inset 2px 0 0 transparent;
   }
   li:hover {
     background: var(--hover);
   }
   li.picked {
     background: var(--selected);
-    box-shadow: inset 2px 0 0 var(--accent);
   }
   .open {
     display: flex;
@@ -76,7 +75,7 @@
     align-items: center;
     gap: var(--s-1);
     min-width: 0;
-    min-height: var(--control-h);
+    min-height: var(--row-h);
     padding: var(--s-1);
     border: 0;
     background: none;
@@ -96,33 +95,6 @@
   .name {
     max-width: 100%;
     overflow-wrap: anywhere;
-  }
-  .badge {
-    flex: none;
-    width: 18px;
-    height: 18px;
-    border-radius: var(--r-s);
-    background: var(--hover);
-    color: var(--muted);
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 18px;
-    text-align: center;
-  }
-  .badge.M,
-  .badge.T,
-  .badge.R {
-    background: var(--hover);
-    color: var(--fg);
-  }
-  .badge.A {
-    background: var(--diff-add);
-    color: var(--success);
-  }
-  .badge.D,
-  .badge.U {
-    background: var(--diff-del);
-    color: var(--danger);
   }
   .dir {
     flex: 1 1 8ch;
@@ -144,7 +116,7 @@
     padding: 0 var(--s-1) var(--s-1) calc(var(--s-1) + 18px + var(--s-1));
   }
   .small {
-    min-height: calc(var(--control-h) - 4px);
+    min-height: var(--control-h-s);
     padding: 0 var(--s-1);
     font-size: var(--fs-s);
   }

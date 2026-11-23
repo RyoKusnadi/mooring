@@ -141,7 +141,7 @@
   li {
     display: flex;
     align-items: center;
-    min-height: var(--control-h);
+    min-height: var(--row-h);
     padding: var(--s-1) var(--s-2);
     border-radius: var(--r-s);
     overflow-wrap: anywhere;
@@ -149,7 +149,6 @@
   }
   li[aria-selected='true'] {
     background: var(--selected);
-    box-shadow: inset 2px 0 var(--accent);
   }
   .none {
     color: var(--muted);

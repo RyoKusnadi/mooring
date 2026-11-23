@@ -185,17 +185,17 @@ test('Appearance: theme and text size apply at once, are kept per browser, and a
   const dialog = await openSettings(page, 'Appearance')
   await dialog.getByRole('radio', { name: 'Dark' }).check()
   await expect(html).toHaveAttribute('data-theme', 'dark')
-  expect(await bg()).toBe('rgb(15, 20, 19)')
+  expect(await bg()).toBe('rgb(24, 24, 24)')
   await dialog.getByRole('radio', { name: 'Large' }).check()
   await expect(html).toHaveAttribute('data-size', 'large')
-  expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--fs-m').trim())).toBe('15px')
+  expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--fs-m').trim())).toBe('16px')
 
   // theme.js sets both before the app loads: look at the page while the app script is held back.
   await page.route('**/assets/*.js', (r) => r.abort())
   await page.reload()
   await expect(html).toHaveAttribute('data-theme', 'dark')
   await expect(html).toHaveAttribute('data-size', 'large')
-  expect(await bg()).toBe('rgb(15, 20, 19)')
+  expect(await bg()).toBe('rgb(24, 24, 24)')
   await page.unroute('**/assets/*.js')
 
   await page.reload()

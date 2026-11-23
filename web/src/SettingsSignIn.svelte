@@ -172,7 +172,7 @@
   label {
     margin-top: var(--s-1);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .lead {
     margin-bottom: var(--s-4);

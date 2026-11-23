@@ -1,13 +1,18 @@
 <script lang="ts">
-  import { composing } from './lib/keys'
+  import { composing, modLabel } from './lib/keys'
   import { untrack } from 'svelte'
   import ChatChips from './ChatChips.svelte'
+  import ChatImageButton from './ChatImageButton.svelte'
+  import ChatNotes from './ChatNotes.svelte'
   import ChatModes from './ChatModes.svelte'
+  import ChatQueue from './ChatQueue.svelte'
   import { app } from './lib/state.svelte'
-  import { composerWhy } from './lib/chatfmt'
+  import { composerHint, composerWhy } from './lib/chatfmt'
   import { attach, wire, type Attachment } from './lib/attachstore.svelte'
   import { chats, type ChatInfo } from './lib/chatstore.svelte'
   import { loadQueue, saveQueue } from './lib/queuestore'
+  import { ImagePicker } from './lib/imagepick.svelte'
+  import { noImagesNote } from './lib/images'
 
   let { id, info, agent, onSent, onStopped }: { id: string; info: ChatInfo; agent: string; onSent: () => void; onStopped: () => void } = $props()
 
@@ -16,8 +21,14 @@
   let sending = $state(false)
   let box: HTMLTextAreaElement | undefined = $state()
 
+  // Whether the agent takes images is known once it has started (and is saved with the chat).
+  const known = $derived(info.caps?.initialized === true)
+  // Until the agent has started its abilities are unknown: attaching is allowed, and a send the agent cannot take is refused with the reason.
+  const takes = $derived(!known || info.caps?.image === true)
+  const picker = new ImagePicker({ id: () => id, takes: () => takes, done: () => box?.focus() })
+
   // Messages written while the agent replies. Each goes out when the reply ends.
-  // The text is also kept in this browser, so a reload brings it back (without attachments).
+  // The text is also kept in this browser, so a reload brings it back (without attachments or images).
   let queue = $state<{ text: string; chips: Attachment[] }[]>(untrack(() => chats.queued.get(id)) ?? untrack(() => loadQueue(id)).map((text) => ({ text, chips: [] })))
   $effect(() => {
     chats.queued.set(id, queue)
@@ -30,19 +41,8 @@
   const running = $derived(info.state === 'running')
   const ready = $derived(info.state === 'idle')
   const why = $derived(running ? '' : composerWhy(info.state))
-  const hint = $derived(
-    sending && app.status !== 'live'
-      ? 'Waiting to send. The message goes out when Mooring reconnects.'
-      : info.state === 'starting'
-      ? `Starting ${agent}…`
-      : info.state === 'running'
-        ? `${agent} is replying. A message you send now goes out when the reply ends. Queued messages stay if the page reloads, but their attachments do not.`
-        : info.state === 'idle'
-          ? ''
-          : info.state === 'needs_login'
-            ? ''
-            : `${agent} is not running. Resume the chat to send a message.`,
-  )
+  const noteText = $derived(known && !takes ? noImagesNote(agent) : '')
+  const hint = $derived(composerHint(info.state, agent, picker.busy, sending && app.status !== 'live'))
 
   $effect(() => {
     chats.drafts.set(id, text)
@@ -58,6 +58,8 @@
   })
 
   const chips = $derived(attach.list(id))
+  const pasteHint = $derived(ready && takes && !chips.length && !text.trim() ? `You can also paste an image (${modLabel}V) or drop one on the message box.` : '')
+  const note = $derived([hint, noteText || pasteHint].filter(Boolean).join(' '))
 
   // The box grows with the text, up to a few lines.
   $effect(() => {
@@ -95,6 +97,7 @@
     if (await deliver(body, chips)) {
       text = ''
       attach.clear(id)
+      picker.clear()
     }
     box?.focus()
   }
@@ -123,6 +126,7 @@
   function takeBack(i: number) {
     const q = queue[i]
     queue = queue.filter((_, j) => j !== i)
+    for (const c of q.chips) attach.add(id, c)
     text = text.trim() ? text.replace(/\s*$/, '\n\n') + q.text : q.text
     box?.focus()
   }
@@ -155,38 +159,32 @@
 <form class="composer" onsubmit={(e) => (e.preventDefault(), send())}>
   <div class="col">
     <label for={'msg-' + id}>Message to {agent}</label>
-    {#if queue.length}
-      <ul class="queue" aria-label="Queued messages">
-        {#each queue as q, i (i)}
-          <li>
-            <span class="qt">{q.text}</span>
-            <span class="qs">Sends when the reply ends</span>
-            <button type="button" class="btn small" onclick={() => takeBack(i)}>Take back<span class="sr">: {q.text.slice(0, 40)}</span></button>
-          </li>
-        {/each}
-      </ul>
-    {/if}
+    <ChatQueue {queue} onTakeBack={takeBack} />
     {#if why}<p class="why" id={'why-' + id}>{why}</p>{/if}
-    <div class="field">
-      <ChatChips chips={chips} onRemove={(i) => attach.remove(id, i)} />
+    <div class="field" class:invalid={!!picker.error} ondragenter={picker.dragEnter} ondragover={picker.dragOver} ondragleave={picker.dragLeave} ondrop={picker.drop} role="presentation">
+      <ChatChips chips={chips} chatId={id} onRemove={(i) => (attach.remove(id, i), picker.clear())} />
       <textarea
         id={'msg-' + id}
         class="input"
         rows="1"
         placeholder={ready || running ? 'Ask or tell it what to do' : ''}
-        aria-describedby={why ? 'why-' + id : undefined}
+        aria-describedby={[why && 'why-' + id, picker.error && 'err-' + id, note && 'note-' + id].filter(Boolean).join(' ') || undefined}
+        aria-invalid={picker.error ? 'true' : undefined}
+        onpaste={picker.paste}
         bind:value={text}
         bind:this={box}
         onkeydown={keys}
       ></textarea>
       <div class="tools">
+        <span class="attach"><ChatImageButton disabled={!takes} describedby={noteText ? 'note-' + id : undefined} onPick={(f) => picker.add(f)} /></span>
         <ChatModes {id} {info} {agent} />
         <span class="grow"></span>
         {#if running}<button type="button" class="btn" onclick={stop}>Stop reply</button>{/if}
-        <button type="submit" class="btn primary" disabled={(!ready && !running) || !text.trim() || sending}>{running ? 'Send after reply' : 'Send'}</button>
+        <button type="submit" class="btn primary" disabled={(!ready && !running) || !text.trim() || sending || picker.busy > 0}>{running ? 'Send after reply' : 'Send'}</button>
       </div>
+      <div class="drop" aria-hidden="true" class:on={picker.drag}>Drop images to attach</div>
     </div>
-    {#if error}<p class="error" role="alert">{error}</p>{:else if hint}<p class="help" role="status">{hint}</p>{/if}
+    <ChatNotes {id} error={error || picker.error} {note} urgent={picker.refused && !!noteText} />
   </div>
 </form>
 
@@ -208,18 +206,24 @@
   label {
     color: var(--muted);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .field {
+    container-type: inline-size;
+    position: relative;
     display: grid;
     gap: var(--s-1);
     padding: var(--s-1) var(--s-2) var(--s-2);
     border: 1px solid var(--border-strong);
     border-radius: var(--r-m);
-    background: var(--bg);
+    background: var(--raised);
   }
+  /* One 2px ring: the border plus a 1px shadow in the same colour. Forced-colors mode drops the
+     shadow but draws the transparent outline, so the ring stays visible there. */
   .field:focus-within {
-    border-color: var(--accent);
+    border-color: var(--focus-ring);
+    box-shadow: 0 0 0 1px var(--focus-ring);
+    outline: 1px solid transparent;
   }
   textarea {
     min-height: var(--control-h);
@@ -231,6 +235,26 @@
     line-height: 1.5;
     outline: none;
   }
+  .field.invalid {
+    border-color: var(--danger);
+  }
+  .field.invalid:focus-within {
+    border-color: var(--focus-ring);
+  }
+  .drop {
+    position: absolute;
+    inset: -1px;
+    display: none;
+    place-items: center;
+    border: 2px dashed var(--accent);
+    border-radius: var(--r-m);
+    background: var(--selected);
+    font-weight: var(--fw-medium);
+    pointer-events: none;
+  }
+  .drop.on {
+    display: grid;
+  }
   .tools {
     display: flex;
     flex-wrap: wrap;
@@ -240,47 +264,25 @@
   .grow {
     flex: 1;
   }
-  /* A phone: Model and Mode share the first row and the buttons get the next, so nothing shrinks. */
-  @media (max-width: 900px) {
+  /* A narrow box (a phone, or a small split pane): Model and Mode share the first row and the buttons get the next, so nothing shrinks. */
+  @container (max-width: 520px) {
     .tools :global(.pick) {
       flex: 1 1 40%;
       min-width: 120px;
     }
     .grow {
       flex: 1 1 100%;
+      order: 1;
       height: 0;
       margin: calc(var(--s-1) * -1) 0;
     }
+    .attach {
+      order: 2;
+    }
     .tools .btn {
       flex: 1 1 0;
+      order: 3;
       white-space: nowrap;
     }
-  }
-  .queue {
-    display: grid;
-    gap: var(--s-1);
-    margin: 0;
-    padding: 0;
-    list-style: none;
-  }
-  .queue li {
-    display: flex;
-    align-items: center;
-    gap: var(--s-2);
-    padding: var(--s-1) var(--s-2);
-    border: 1px dashed var(--border-strong);
-    border-radius: var(--r-m);
-  }
-  .qt {
-    flex: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .qs {
-    flex: none;
-    color: var(--muted);
-    font-size: var(--fs-s);
   }
 </style>

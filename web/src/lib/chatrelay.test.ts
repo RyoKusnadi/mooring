@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { busyReason, lastReplyId } from './chatrelay'
+import { busyReason, canTake, lastReplyId, startNote } from './chatrelay'
 
 const rows = [
   { id: 0, kind: 'user', text: 'a' },
@@ -21,7 +21,25 @@ describe('lastReplyId', () => {
 describe('busyReason', () => {
   it('is empty for an idle chat', () => expect(busyReason('idle')).toBe(''))
   it('names the state', () => {
-    expect(busyReason('running')).toBe('answering now')
+    expect(busyReason('running')).toBe('replying')
     expect(busyReason('needs_login')).toBe('not signed in')
+  })
+})
+
+describe('stopped chats', () => {
+  it('can take a reply and are not busy', () => {
+    expect(canTake('stopped')).toBe(true)
+    expect(busyReason('stopped')).toBe('')
+    expect(canTake('running')).toBe(false)
+    expect(canTake('starting')).toBe(false)
+    expect(canTake('needs_login')).toBe(false)
+  })
+  it('says what Send does', () => {
+    expect(startNote({ state: 'idle' })).toBe('')
+    expect(startNote({ state: 'stopped', messages: 3, caps: { load: true, resume: false } })).toBe('Starts again when you send')
+    expect(startNote({ state: 'stopped', messages: 3, caps: { load: false, resume: true } })).toBe('Starts again when you send')
+    expect(startNote({ state: 'stopped', messages: 3, caps: { load: false, resume: false } })).toBe('Starts a new session without the earlier messages')
+    expect(startNote({ state: 'stopped', messages: 0, caps: { load: false, resume: false } })).toBe('Starts again when you send')
+    expect(startNote({ state: 'stopped', messages: 3, caps: null })).toBe('Starts again when you send')
   })
 })

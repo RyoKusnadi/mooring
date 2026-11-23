@@ -2,12 +2,13 @@
 // when asked (see Run), so no separate program has to be built.
 //
 // Behaviour follows the prompt text: "hello" streams two chunks and usage,
-// "ask" asks for permission, "long" streams until cancelled, "readfile PATH"
+// "ask" asks for permission, "long" streams for about 10 s or until cancelled,
+// "hold" streams until cancelled (2 minutes at most), "readfile PATH"
 // reads through the client, "SHOWCASE" streams markdown, an edit with a diff and a command (showcase.go), "spawn" starts a grandchild process and reports its
 // pid. Environment: FAKE_LOAD=1 or FAKE_RESUME=1 advertise those, FAKE_STATE
 // names a folder where sessions are kept, FAKE_AUTH=prompt fails every prompt
 // as "not signed in", and FAKE_AUTH=missing also announces it when a session opens.
-// FAKE_CAPS=list,close,delete,fork,systemPrompt,additionalDirectories,mcpAcp,audio advertises those
+// FAKE_CAPS=list,close,delete,fork,systemPrompt,additionalDirectories,mcpAcp,audio,image advertises those
 // (caps.go); FAKE_STREAM_TOOL=1 makes "STREAM" run a command that streams five outputs (stream.go).
 // FAKE_LOAD_FAILONCE names a file: while it exists, a load replays, then fails and removes it.
 // FAKE_CLOSE=close or delete advertises that session method and FAKE_CALLS names a file
@@ -247,6 +248,8 @@ func (a *agent) prompt(id json.RawMessage, sid, text string, blocks []block, can
 		select {}
 	case strings.Contains(text, "BLOCKS"):
 		a.chunk(sid, describeBlocks(blocks))
+	case imageCount(blocks) > 0:
+		a.chunk(sid, fmt.Sprintf("got %d image(s)", imageCount(blocks)))
 	case text == "hello":
 		a.chunk(sid, "Hello ")
 		time.Sleep(20 * time.Millisecond)
@@ -264,7 +267,9 @@ func (a *agent) prompt(id json.RawMessage, sid, text string, blocks []block, can
 		stop = a.demoTurn(sid)
 	case text == "long":
 		stop = a.long(sid, cancel)
-	case strings.HasPrefix(text, "readfile "), strings.HasPrefix(text, "readlimit "), strings.HasPrefix(text, "WRITEFILE "):
+	case text == "hold":
+		stop = a.hold(sid, cancel)
+	case strings.HasPrefix(text, "readfile "), strings.HasPrefix(text, "readlimit "), strings.HasPrefix(text, "WRITEFILE "), strings.HasPrefix(text, "writefile "):
 		a.fileTurn(sid, text)
 	case text == "hangup":
 		a.send(map[string]any{"jsonrpc": "2.0", "id": 900, "method": "session/request_permission", "params": map[string]any{

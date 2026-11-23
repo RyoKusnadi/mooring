@@ -6,7 +6,7 @@ dialog.dlg {
   padding: 0;
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: var(--r-m);
+  border-radius: var(--r-xl);
   background: var(--raised);
   color: var(--fg);
   box-shadow: var(--shadow-dialog);

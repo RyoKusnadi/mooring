@@ -89,7 +89,7 @@
   }
   .small {
     flex: none;
-    min-height: calc(var(--control-h) - 6px);
+    min-height: var(--control-h-s);
     padding: 0 var(--s-2);
     background: var(--raised);
     font: 600 var(--fs-s) var(--font-ui);
@@ -129,7 +129,7 @@
     border-radius: var(--r-s);
     background: var(--raised);
     color: var(--accent);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     line-height: 2ch;
     text-align: center;
   }
@@ -142,7 +142,7 @@
     user-select: none;
   }
   .mark {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     text-align: center;
     user-select: none;
   }
@@ -158,7 +158,6 @@
   }
   .eof .text {
     color: var(--muted);
-    font-style: italic;
   }
   @media (max-width: 900px) {
     .line {

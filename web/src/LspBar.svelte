@@ -143,7 +143,7 @@
   }
   .crash .msg {
     color: var(--danger);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .problem {
     margin: 0;

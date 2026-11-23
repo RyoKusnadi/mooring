@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { attach, MAX_ATTACHMENTS, wire } from './attachstore.svelte'
+import { attach, imageCount, MAX_ATTACHMENTS, wire } from './attachstore.svelte'
 
 const sel = (from: number, text = 'x') => ({ kind: 'selection' as const, path: 'a.go', from, to: from + 1, text })
 
@@ -32,6 +32,22 @@ describe('attachments', () => {
 
   it('sends an output by id and a selection with its text', () => {
     expect(wire([{ kind: 'output', outputId: 'o1', lines: 9 }, sel(1)])).toEqual([{ kind: 'output', outputId: 'o1' }, sel(1)])
+  })
+
+  it('keeps images by id, once, and counts them in the eight', () => {
+    const img = (n: number) => ({ kind: 'image' as const, imageId: 'i' + n, name: `s${n}.png`, size: 1000 })
+    expect(attach.add('c', img(1))).toBe('')
+    expect(attach.add('c', img(1))).toBe('')
+    expect(attach.list('c')).toHaveLength(1)
+    for (let i = 2; i <= MAX_ATTACHMENTS - 1; i++) attach.add('c', img(i))
+    attach.add('c', sel(1))
+    expect(attach.list('c')).toHaveLength(MAX_ATTACHMENTS)
+    expect(attach.add('c', img(99))).toBe('A message takes at most 8 attachments. Remove one first.')
+    expect(imageCount(attach.list('c'))).toBe(MAX_ATTACHMENTS - 1)
+  })
+
+  it('sends an image as an id and a name, never its bytes or size', () => {
+    expect(wire([{ kind: 'image', imageId: 'i1', name: 'a.png', size: 5 }])).toEqual([{ kind: 'image', imageId: 'i1', name: 'a.png' }])
   })
 
   it('collects terminal text for the composer to take once', () => {

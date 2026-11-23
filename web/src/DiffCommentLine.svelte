@@ -98,7 +98,7 @@
     margin: var(--s-1) var(--s-3) var(--s-2) 64px;
     padding: var(--s-2);
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--surface);
     font-family: var(--font-ui, inherit);
     white-space: normal;

@@ -200,7 +200,7 @@
     font-family: var(--font-mono);
   }
   .crumb[aria-current='page'] {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .tools {
     display: flex;

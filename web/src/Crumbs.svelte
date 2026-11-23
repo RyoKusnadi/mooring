@@ -120,7 +120,7 @@
     flex: 0 0 auto;
     max-width: 100%;
     overflow: hidden;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     text-overflow: ellipsis;
   }
   @media (pointer: coarse) {

@@ -65,7 +65,7 @@
   }
   summary {
     min-height: var(--control-h);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     cursor: pointer;
   }
   .import > :global(*:not(summary)) {
@@ -93,7 +93,7 @@
     gap: var(--s-3);
     padding: var(--s-2) var(--s-3);
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--surface);
   }
   .what {

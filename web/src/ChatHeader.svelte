@@ -58,7 +58,7 @@
     align-items: center;
     gap: var(--s-3);
     min-width: 0;
-    min-height: 40px;
+    min-height: var(--bar-h-l);
   }
   .title {
     flex: 1;
@@ -66,8 +66,8 @@
     margin: 0;
     overflow: hidden;
     font-size: var(--fs-l);
-    line-height: 20px;
-    font-weight: 600;
+    line-height: var(--lh-l);
+    font-weight: var(--fw-semibold);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

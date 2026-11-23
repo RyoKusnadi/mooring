@@ -72,7 +72,7 @@
     padding: var(--s-2);
     overflow: auto;
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-m);
     background: var(--bg);
     font: var(--fs-s) / 1.4 var(--font-mono);
     white-space: pre-wrap;

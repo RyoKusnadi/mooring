@@ -77,7 +77,7 @@ test('relay: send Gemini reply to Grok with a note, label in Grok, running chat 
   await panel.locator('.from button').first().click()
   await panel.getByRole('button', { name: 'Send to another chat' }).click()
   const again = panel.getByRole('region', { name: 'Send a reply to another chat' })
-  await expect(again.getByRole('radio', { name: /^Grok.*answering now/ })).toBeDisabled()
+  await expect(again.getByRole('radio', { name: /^Grok.*replying/ })).toBeDisabled()
 
   // Escape closes the panel and focus goes back to the button.
   await page.keyboard.press('Escape')

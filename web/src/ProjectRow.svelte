@@ -158,7 +158,7 @@
       {:else}
         <p>Remove “{project.name}” from the list? Its files stay on disk in <code>{project.path}</code>.</p>
         <div class="confirm">
-          <button type="button" class="btn danger" onclick={remove}>Remove from list</button>
+          <button type="button" class="btn danger solid" onclick={remove}>Remove from list</button>
           <button type="button" class="btn" onclick={() => closeMenu()}>Cancel</button>
         </div>
       {/if}
@@ -171,7 +171,7 @@
     position: relative;
     display: flex;
     align-items: center;
-    min-height: var(--control-h);
+    min-height: var(--row-h);
     border-radius: var(--r-s);
     list-style: none;
     transition: background-color var(--ease);
@@ -181,7 +181,6 @@
   }
   .row.current {
     background: var(--selected);
-    box-shadow: inset 2px 0 var(--accent);
   }
   .row.before::before,
   .row.after::after {
@@ -201,7 +200,7 @@
   .name {
     flex: 1;
     min-width: 0;
-    min-height: var(--control-h);
+    min-height: var(--row-h);
     padding: 0 var(--s-2);
     border: 0;
     background: transparent;
@@ -213,12 +212,12 @@
     white-space: nowrap;
   }
   .current .name {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .more {
     flex: none;
     width: var(--control-h);
-    min-height: var(--control-h);
+    min-height: var(--row-h);
     border: 0;
     border-radius: var(--r-s);
     background: transparent;
@@ -235,34 +234,7 @@
     color: var(--fg);
   }
   .menu {
-    display: grid;
-    min-width: 200px;
     max-width: 260px;
-    padding: var(--s-1);
-    border: 1px solid var(--border);
-    border-radius: var(--r-m);
-    background: var(--raised);
-    box-shadow: var(--shadow-menu);
-    color: var(--fg);
-  }
-  .menu > button {
-    min-height: var(--control-h);
-    padding: 0 var(--s-2);
-    border: 0;
-    border-radius: var(--r-s);
-    background: transparent;
-    color: var(--fg);
-    font: inherit;
-    text-align: left;
-  }
-  .menu > button:hover:not(:disabled) {
-    background: var(--hover);
-  }
-  .menu > button:disabled {
-    color: var(--muted);
-  }
-  .menu > .danger {
-    color: var(--danger);
   }
   .menu p {
     margin: 0;
@@ -277,7 +249,7 @@
     padding: var(--s-2);
   }
   .input {
-    margin: 2px var(--s-1);
+    margin: var(--s-0) var(--s-1);
     width: calc(100% - var(--s-2));
   }
   @media (pointer: coarse) {

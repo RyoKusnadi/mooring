@@ -102,13 +102,12 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--s-3);
-    min-height: var(--control-h);
+    min-height: var(--row-h);
     padding: 0 var(--s-2);
     border-radius: var(--r-s);
   }
   li[aria-selected='true'] {
     background: var(--selected);
-    box-shadow: inset 2px 0 var(--accent);
   }
   .none {
     color: var(--muted);

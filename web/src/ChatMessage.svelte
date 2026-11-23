@@ -1,5 +1,6 @@
 <script lang="ts">
   import ChatChips from './ChatChips.svelte'
+  import ChatImages from './ChatImages.svelte'
   import ChatContext from './ChatContext.svelte'
   import ChatTool from './ChatTool.svelte'
   import Markdown from './Markdown.svelte'
@@ -29,6 +30,7 @@
   const hidden = $derived(banner || (quietErrors && msg?.kind === 'error'))
 
   const info = $derived(chats.list[chatId])
+  const sentImages = $derived(msg?.attachments?.filter((a) => a.kind === 'image' && a.imageId) ?? [])
   const relayFrom = $derived(msg?.relay ? chats.list[msg.relay.chat] : undefined)
   const relayAgent = $derived(msg?.relay ? (chats.agents.find((a) => a.id === msg.relay?.agent)?.name ?? msg.relay.agent) : '')
   // A reply can be sent on once its turn has ended. The button sits on the turn-end row and sends the turn's last reply.
@@ -72,6 +74,7 @@
       {/if}
       {#if msg.attachments?.length}<ChatChips chips={msg.attachments} />{/if}
       <p class="text">{msg.text}</p>
+      {#if sentImages.length}<ChatImages {chatId} images={sentImages} />{/if}
     {:else if msg.kind === 'agent'}
       <p class="who">{agent}</p>
       <Markdown text={msg.text ?? ''} projectId={info?.projectId ?? ''} />
@@ -138,7 +141,7 @@
     margin: 0 0 var(--s-1);
     color: var(--muted);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .acts {
     display: flex;
@@ -196,12 +199,10 @@
     align-items: center;
     gap: var(--s-2);
     margin: 0;
-    padding: 0 var(--s-2);
     min-height: var(--control-h);
-    border-radius: var(--r-s);
   }
   .label {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .label.quiet {
     color: var(--muted);
@@ -223,8 +224,6 @@
   }
   .notice {
     margin: 0;
-    padding-top: var(--s-1);
-    border-top: 1px solid var(--border);
     color: var(--muted);
     font-size: var(--fs-s);
   }

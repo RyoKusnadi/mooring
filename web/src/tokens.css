@@ -1,0 +1,76 @@
+/* Mooring tokens, layer 1: fonts and colour primitives. Values only, no meaning.
+   Layer 2 (app-tokens.css) gives them roles. Components never use a primitive directly. */
+
+/* Geist (UI) and Geist Mono (code): self-hosted variable fonts, weights 400 to 600 used. */
+@font-face {
+  font-family: 'Geist';
+  src: url('./assets/fonts/Geist-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('./assets/fonts/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* grey: neutral, no tint. The 825 to 1000 steps are the dark surfaces. */
+  --grey-0: #ffffff;
+  --grey-50: #fafafa;
+  --grey-100: #f1f1f1;
+  --grey-150: #e7e7e7;
+  --grey-200: #dcdcdc;
+  --grey-250: #d0d0d0;
+  --grey-300: #adadad;
+  --grey-350: #9a9a9a;
+  --grey-400: #858585;
+  --grey-450: #7a7a7a;
+  --grey-500: #767676;
+  --grey-600: #636363;
+  --grey-700: #525252;
+  --grey-800: #3a3a3a;
+  --grey-825: #313131;
+  --grey-850: #2c2c2c;
+  --grey-875: #272727;
+  --grey-900: #1f1f1f;
+  --grey-950: #181818;
+  --grey-1000: #000000;
+
+  /* teal: the one accent */
+  --teal-100: #d3eae7;
+  --teal-300: #7dd8ce;
+  --teal-400: #5cc8bd;
+  --teal-500: #45b0a5;
+  --teal-600: #0b6b63;
+  --teal-700: #085650;
+  --teal-800: #06453f;
+  --teal-850: #18403c;
+  --teal-950: #06201d;
+
+  /* amber: Attention only */
+  --amber-50: #fbf0d5;
+  --amber-400: #e8b04a;
+  --amber-700: #8a5a00;
+  --amber-900: #2b2314;
+
+  /* red: errors and destructive actions */
+  --red-50: #fbe6e3;
+  --red-100: #fbe3e0;
+  --red-300: #ffa8a0;
+  --red-400: #ff8a80;
+  --red-600: #b3261e;
+  --red-700: #8f1d17;
+  --red-900: #3a2020;
+  --red-925: #3c1f1d;
+  --red-950: #2a0a08;
+
+  /* green: done and connected */
+  --green-100: #dcf0df;
+  --green-300: #7fcf92;
+  --green-600: #2b6a3a;
+  --green-900: #17301f;
+}

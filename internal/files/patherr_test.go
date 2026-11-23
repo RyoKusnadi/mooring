@@ -32,7 +32,7 @@ func TestPathErrNamesTheFile(t *testing.T) {
 	}
 }
 
-func TestListDotFoldersLastAndNoGitFolder(t *testing.T) {
+func TestListDotFoldersSortWithFoldersAndNoGitFolder(t *testing.T) {
 	r := newRig(t, nil)
 	for _, n := range []string{".git/HEAD", ".github/x.yml", "zed/a", "app/a", "readme.md", ".env"} {
 		r.write(n, "x")
@@ -45,7 +45,7 @@ func TestListDotFoldersLastAndNoGitFolder(t *testing.T) {
 	for _, e := range res.Entries {
 		got = append(got, e.Name)
 	}
-	want := []string{"app", "zed", ".github", ".env", "readme.md"}
+	want := []string{".github", "app", "zed", ".env", "readme.md"}
 	if len(got) != len(want) {
 		t.Fatalf("got %v, want %v", got, want)
 	}

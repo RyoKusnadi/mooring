@@ -5,7 +5,7 @@ import { dataDir } from '../../playwright.docs.config'
 import { openDemo, scrubLive, shot, signIn, token } from './helpers'
 
 // Takes the pictures for docs/guide/images. Run with `make screenshots`; it is not part of `make check`.
-// Stand-ins (see e2e/serve.sh): "gemini" is the stand-in agent, "fake-mcp" a stand-in tool server.
+// Stand-ins (see e2e/serve.sh): "agy" (Antigravity) is the stand-in agent, "fake-mcp" a stand-in tool server.
 // The prompt word "ask" makes the stand-in agent ask for permission.
 
 const phone = { width: 390, height: 844 }
@@ -45,7 +45,7 @@ test('login page', async ({ page }) => {
 })
 
 test('phone drawer', async ({ browser }) => {
-  const ctx = await browser.newContext({ viewport: phone, colorScheme: 'light', baseURL: 'http://127.0.0.1:' + (process.env.MOORING_E2E_PORT || 7450) })
+  const ctx = await browser.newContext({ viewport: phone, hasTouch: true, isMobile: true, colorScheme: 'light', baseURL: 'http://127.0.0.1:' + (process.env.MOORING_E2E_PORT || 7450) })
   const page = await ctx.newPage()
   await openDemo(page)
   await page.getByRole('button', { name: 'Projects', exact: true }).first().click()
@@ -129,7 +129,7 @@ test('changes view', async ({ page }) => {
 const prompt = 'Run the tests and fix the failing one'
 
 async function say(page: Page, text: string) {
-  await page.getByLabel('Message to Gemini').fill(text)
+  await page.getByLabel('Message to Antigravity').fill(text)
   await page.getByRole('button', { name: 'Send', exact: true }).click()
 }
 
@@ -140,8 +140,8 @@ test('chat picker and permission', async ({ page }) => {
   await expect(panel.getByRole('heading', { name: 'Start a chat' })).toBeVisible()
   await expect(panel.getByText('Not installed.').first()).toBeVisible()
   await shot(page, 'agent-chats-picker')
-  await panel.getByRole('button', { name: 'Start chat with Gemini' }).click()
-  await expect(page.getByLabel('Message to Gemini')).toBeEnabled()
+  await panel.getByRole('button', { name: 'Start chat with Antigravity' }).click()
+  await expect(page.getByLabel('Message to Antigravity')).toBeEnabled()
   await say(page, prompt)
   await expect(panel.getByRole('alert', { name: 'Permission request' })).toBeVisible()
   await shot(page, 'agent-chats-permission')
@@ -165,8 +165,8 @@ for (const scheme of ['light', 'dark'] as const) {
     await page.keyboard.press('Alt+a')
     await page.getByRole('region', { name: 'Pane 2 of 2' }).getByRole('button', { name: 'Close Terminal' }).click()
     const chat = page.getByRole('tabpanel').last()
-    await chat.getByRole('button', { name: 'Start chat with Gemini' }).click()
-    await expect(page.getByLabel('Message to Gemini')).toBeEnabled()
+    await chat.getByRole('button', { name: 'Start chat with Antigravity' }).click()
+    await expect(page.getByLabel('Message to Antigravity')).toBeEnabled()
     await say(page, prompt)
     await chat.getByRole('alert', { name: 'Permission request' }).getByRole('button', { name: 'Allow' }).click()
     await expect(chat.getByText('it passes now.').first()).toBeVisible()
@@ -207,9 +207,9 @@ test('demo recording', async ({ browser }) => {
   await page.waitForTimeout(1200)
   await panel.getByRole('button', { name: 'New chat' }).click()
   await page.waitForTimeout(1500)
-  await panel.getByRole('button', { name: 'Start chat with Gemini' }).click()
-  await expect(page.getByLabel('Message to Gemini')).toBeEnabled()
-  await page.getByLabel('Message to Gemini').pressSequentially(prompt, { delay: 45 })
+  await panel.getByRole('button', { name: 'Start chat with Antigravity' }).click()
+  await expect(page.getByLabel('Message to Antigravity')).toBeEnabled()
+  await page.getByLabel('Message to Antigravity').pressSequentially(prompt, { delay: 45 })
   await page.waitForTimeout(500)
   await page.getByRole('button', { name: 'Send', exact: true }).click()
   const alert = panel.getByRole('alert', { name: 'Permission request' })

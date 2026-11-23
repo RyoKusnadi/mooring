@@ -36,7 +36,7 @@
   legend {
     margin-bottom: var(--s-2);
     padding: 0;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .opt {
     display: flex;

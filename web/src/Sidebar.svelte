@@ -1,21 +1,26 @@
 <script lang="ts">
   import BoardLazy from './BoardLazy.svelte'
   import ChangesSection from './ChangesSection.svelte'
+  import ChatsHandle from './ChatsHandle.svelte'
   import ChatsSection from './ChatsSection.svelte'
   import FilesSection from './FilesSection.svelte'
   import Icon from './Icon.svelte'
   import ProjectRow from './ProjectRow.svelte'
+  import SidebarTabs from './SidebarTabs.svelte'
   import { actions, paletteKey } from './lib/actions'
   import { appearance } from './lib/appearance.svelte'
   import { boardCounts, onBoard } from './lib/board'
-  import { switchLabel } from './lib/boardfmt'
   import { chats } from './lib/chatstore.svelte'
   import { git } from './lib/gitstore.svelte'
+  import { split } from './lib/sidebarsplit.svelte'
   import { app } from './lib/state.svelte'
 
   let { onAdd, onPalette, onNavigate }: { onAdd: () => void; onPalette: () => void; onNavigate: () => void } = $props()
 
   let error = $state('')
+  // The sizes the Chats edge works from: the sidebar, and the Chats block as it stands.
+  let navH = $state(0)
+  let chatsH = $state(0)
   const counts = $derived(boardCounts(onBoard(Object.values(chats.list), app.projects.map((p) => p.id))))
   const badge = $derived(counts.waiting + counts.finished)
   const themeLabel = $derived(appearance.drawn === 'light' ? 'Switch to dark theme' : 'Switch to light theme')
@@ -27,7 +32,7 @@
   }
 </script>
 
-<nav aria-label="Projects">
+<nav aria-label="Projects" bind:clientHeight={navH}>
   <div class="head">
     <span class="name">Mooring</span>
   </div>
@@ -54,15 +59,7 @@
     </ul>
   {/if}
   {#if app.ready && app.current}
-    <div class="switch" role="group" aria-label="Show">
-      <button type="button" aria-pressed={git.view === 'files'} onclick={() => (git.view = 'files')}>Files</button>
-      <button type="button" aria-pressed={git.view === 'changes'} aria-label={git.status?.repo && git.status.files.length > 0 ? `Changes, ${git.status.files.length} files` : undefined} onclick={() => (git.view = 'changes')}>
-        Changes{#if git.status?.repo && git.status.files.length > 0}<span class="n">{git.status.files.length}</span>{/if}
-      </button>
-      <button type="button" aria-pressed={git.view === 'board'} aria-label={switchLabel(counts)} onclick={() => (git.view = 'board')}>
-        Board{#if badge > 0}<span class="n">{badge}</span>{/if}
-      </button>
-    </div>
+    <SidebarTabs {counts} {badge} />
   {/if}
   <!-- Both stay mounted: the file tree keeps its watch and the changes keep reading while the other shows. -->
   <div class="pane" hidden={git.view !== 'files'}><FilesSection {onNavigate} {onAdd} /></div>
@@ -71,7 +68,8 @@
   {#if git.view === 'board'}
     <div class="pane"><BoardLazy {onNavigate} /></div>
   {:else}
-    <div class="chats"><ChatsSection {onNavigate} /></div>
+    {#if split.open}<ChatsHandle height={split.height ?? chatsH} max={Math.max(0, navH - 280)} />{/if}
+    <div class="chats" class:closed={!split.open} class:fixed={split.open && split.height !== null} style:--chats-h={split.open && split.height !== null ? `${split.height}px` : undefined} bind:clientHeight={chatsH}><ChatsSection {onNavigate} /></div>
   {/if}
   {#if error}
     <p class="error" role="alert">{error}</p>
@@ -94,6 +92,7 @@
     padding-left: env(safe-area-inset-left, 0px);
     background: var(--surface);
     border-right: 1px solid var(--border);
+    container: side / inline-size;
   }
   .head {
     display: flex;
@@ -104,7 +103,7 @@
   }
   .name {
     flex: 1;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .heading {
     display: flex;
@@ -115,7 +114,7 @@
   h2 {
     margin: 0;
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--muted);
   }
   /* Never shrinks (it would vanish when the sidebar is full); capped, and scrolls past the cap.
@@ -123,41 +122,10 @@
   ul {
     flex: 0 0 auto;
     max-height: 35%;
-    min-height: calc(var(--control-h) * var(--rows, 1));
+    min-height: calc(var(--row-h) * var(--rows, 1));
     margin: 0;
     padding: 0 var(--s-2);
     overflow-y: auto;
-  }
-  .switch {
-    display: flex;
-    gap: var(--s-1);
-    padding: var(--s-2) var(--s-2) 0;
-  }
-  .switch button {
-    display: inline-flex;
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    gap: var(--s-1);
-    min-width: 0;
-    min-height: var(--control-h);
-    padding: 0 var(--s-1);
-    border: 1px solid transparent;
-    border-radius: var(--r-s);
-    background: none;
-    color: var(--muted);
-    font: inherit;
-    font-weight: 500;
-  }
-  .switch button:hover {
-    background: var(--hover);
-  }
-  .switch button[aria-pressed='true'] {
-    background: var(--selected);
-    color: var(--fg);
-  }
-  .n {
-    font-weight: 400;
   }
   .pane {
     display: flex;
@@ -165,14 +133,21 @@
     flex-direction: column;
     min-height: 120px;
   }
-  /* Never shrinks below its list (capped at 40%): when the sidebar is full it scrolls,
-     instead of the chats sliding under the buttons at the bottom. */
+  /* Never shrinks below its list: when the sidebar is full it scrolls, instead of the chats sliding under
+     the buttons at the bottom. Until the edge above it is dragged, it is as tall as its list, up to 40%. */
   .chats {
     display: flex;
     flex: 0 0 auto;
     flex-direction: column;
     max-height: 40%;
     min-height: 0;
+  }
+  .chats.fixed {
+    height: var(--chats-h);
+    max-height: calc(100% - 280px);
+  }
+  .chats.closed {
+    border-top: 1px solid var(--border);
   }
   .pane[hidden] {
     display: none;
@@ -195,9 +170,9 @@
     bottom: 0;
     display: flex;
     align-items: center;
-    gap: var(--s-1);
+    gap: 0;
     margin-top: auto;
-    padding: var(--s-1) var(--s-2);
+    padding: var(--s-1);
     border-top: 1px solid var(--border);
     background: var(--surface);
   }
@@ -207,7 +182,7 @@
     align-items: center;
     gap: var(--s-2);
     min-width: 0;
-    min-height: 28px;
+    min-height: var(--row-h);
     padding: 0 var(--s-2);
     border: 0;
     border-radius: var(--r-s);
@@ -218,8 +193,13 @@
   }
   .grow {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   kbd {
+    flex: none;
     color: var(--faint);
     font: var(--fs-s) var(--font-ui);
   }
@@ -227,9 +207,21 @@
     background: var(--hover);
     color: var(--fg);
   }
-  @media (pointer: coarse), (max-width: 900px) {
+  /* The shortcut hint goes when the row is too narrow to hold it beside the label, and a touch screen has no use for it. */
+  @container side (max-width: 300px) {
+    kbd {
+      display: none;
+    }
+  }
+  @container side (max-width: 250px) {
     .row {
-      min-height: 44px;
+      gap: var(--s-1);
+      padding: 0 var(--s-1);
+    }
+  }
+  @media (pointer: coarse) {
+    kbd {
+      display: none;
     }
   }
 </style>

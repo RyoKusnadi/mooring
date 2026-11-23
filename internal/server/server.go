@@ -89,6 +89,8 @@ func New(cfg Config) (*Server, error) {
 	mux.Handle("GET /api/terminals/{id}", s.requireSession(srv.terminals))
 	mux.Handle("GET /api/chats/{id}", s.requireSession(srv.chatSocket))
 	mux.Handle("GET /api/chats/{id}/outputs/{outputId}", s.requireSession(srv.chatOutputs))
+	mux.Handle("POST /api/chats/{id}/images", s.requireSession(srv.chats.ImageUploadHandler()))
+	mux.Handle("GET /api/chats/{id}/images/{imageId}", s.requireSession(srv.chats.ImageHandler()))
 	mux.Handle("GET /api/chats/search", s.requireSession(srv.chatSearch))
 	mux.Handle("GET /api/lsp/{id}", s.requireSession(srv.lspSocket))
 	srv.files.Mount(mux, s.requireSession)

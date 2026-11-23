@@ -7,7 +7,7 @@ const underline = (style: string, colour: string) => ({ backgroundImage: 'none !
 const marker = (colour: string, shape?: string) => ({ content: 'none', display: 'block', width: '0.8em', height: '0.8em', margin: '0.25em 0', background: colour, ...(shape ? { clipPath: shape } : {}) })
 
 export const lspTheme = EditorView.theme({
-  '.cm-tooltip': { backgroundColor: 'var(--raised)', color: 'var(--fg)', border: '1px solid var(--border-strong)', borderRadius: 'var(--r-m)', fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-m)', boxShadow: '0 4px 16px rgb(0 0 0 / 0.2)' },
+  '.cm-tooltip': { backgroundColor: 'var(--raised)', color: 'var(--fg)', border: '1px solid var(--border-strong)', borderRadius: 'var(--r-m)', fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-m)', boxShadow: 'var(--shadow-menu)' },
   '.cm-tooltip.cm-tooltip-hover, .cm-lsp-signature-tooltip': { maxWidth: 'min(48ch, 92vw)', overflowX: 'hidden', overflowWrap: 'anywhere' },
   '.cm-lsp-documentation': { padding: 'var(--s-1) var(--s-2)' },
   '.cm-lsp-documentation pre, .cm-lsp-documentation code, .cm-lsp-signature': { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-s)', whiteSpace: 'pre-wrap' },

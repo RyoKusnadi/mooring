@@ -39,6 +39,6 @@
   .n {
     flex: 1;
     min-width: 12ch;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
 </style>

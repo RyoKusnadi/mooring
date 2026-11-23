@@ -108,7 +108,7 @@
     padding: var(--s-1);
     overflow-y: auto;
     border: 1px solid var(--border-strong);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--raised);
   }
   .entry {

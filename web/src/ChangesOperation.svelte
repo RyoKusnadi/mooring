@@ -40,7 +40,7 @@
     margin: var(--s-2);
     padding: var(--s-2);
     border: 1px solid var(--attention);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--attention-bg);
     font-size: var(--fs-s);
   }
@@ -56,12 +56,14 @@
     gap: var(--s-1);
   }
   .small {
-    min-height: calc(var(--control-h) - 4px);
+    min-height: var(--control-h-s);
     padding: 0 var(--s-2);
     font-size: var(--fs-s);
   }
-  .off {
-    opacity: 0.5;
+  .btn.off {
+    border-color: transparent;
+    background: var(--disabled-bg);
+    color: var(--disabled-fg);
     cursor: not-allowed;
   }
   .danger {

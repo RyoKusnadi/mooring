@@ -1,6 +1,9 @@
 package chat
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 // maxRelayReply caps the reply a relay quotes; the rest is cut with a note.
 const maxRelayReply = 64 << 10
@@ -14,7 +17,9 @@ type RelayRef struct {
 }
 
 // Relay sends one finished reply of the agent in chat fromID to this chat, quoted
-// after the user's note. This chat must be idle; nothing is sent on from here.
+// after the user's note. This chat must be idle, or stopped: a stopped chat is started
+// again first (as Resume does) and the reply goes out once its agent is ready.
+// Nothing is sent on from here.
 func (c *Chat) Relay(fromID string, msgIdx int, note string) error {
 	if fromID == c.id {
 		return apiErr("BAD_REQUEST", "Send the reply to another chat.")
@@ -43,6 +48,9 @@ func (c *Chat) Relay(fromID string, msgIdx int, note string) error {
 	if note != "" {
 		text = note + "\n\n" + text
 	}
+	if err := c.wake(); err != nil {
+		return err
+	}
 	_, _, err = c.beginTurn(turnReq{text: text, relay: &RelayRef{Chat: fromID, Agent: agent, Msg: msgIdx}})
 	return err
 }
@@ -64,4 +72,42 @@ func (c *Chat) finishedReply(idx int) (string, error) {
 		return m.Text, nil
 	}
 	return "", apiErr("NOT_FOUND", "That reply is not in the chat.")
+}
+
+// wake starts a stopped chat again and waits until it is idle. A chat in any other
+// state is left as it is; beginTurn then accepts or refuses it.
+func (c *Chat) wake() error {
+	if c.Info().State != StateStopped {
+		return nil
+	}
+	if err := c.load(); err != nil {
+		return apiErr("INTERNAL", "The saved chat could not be read.")
+	}
+	if err := c.m.claim(c); err != nil {
+		return err
+	}
+	deadline := time.NewTimer(startTimeout + 5*time.Second)
+	defer deadline.Stop()
+	tick := time.NewTicker(20 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		in := c.Info()
+		switch in.State {
+		case StateIdle:
+			return nil
+		case StateStopped, StateNeedsLogin:
+			why := "The agent did not start."
+			if in.Error != nil {
+				why = in.Error.Message
+			}
+			return apiErr("NOT_RUNNING", "That chat could not be started again, so nothing was sent. %s Open the chat and resume it.", why)
+		}
+		select {
+		case <-tick.C:
+		case <-deadline.C:
+			return apiErr("NOT_READY", "That chat is still starting, so nothing was sent. Try again in a moment.")
+		case <-c.baseContext().Done():
+			return apiErr("INTERNAL", "The server is shutting down.")
+		}
+	}
 }

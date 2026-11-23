@@ -206,6 +206,7 @@
     border-bottom: 1px solid var(--border);
     background: var(--surface);
   }
+  .head :global(.btn) { min-height: var(--control-h-s); font-size: var(--fs-s); }
   .path {
     flex: 1 1 16ch;
     min-width: 0;

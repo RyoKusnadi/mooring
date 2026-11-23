@@ -8,7 +8,7 @@
 // pid. Environment: FAKE_LOAD=1 or FAKE_RESUME=1 advertise those, FAKE_STATE
 // names a folder where sessions are kept, FAKE_AUTH=prompt fails every prompt
 // as "not signed in", and FAKE_AUTH=missing also announces it when a session opens.
-// FAKE_CAPS=list,close,delete,fork,systemPrompt,additionalDirectories,mcpAcp,audio advertises those
+// FAKE_CAPS=list,close,delete,fork,systemPrompt,additionalDirectories,mcpAcp,audio,image advertises those
 // (caps.go); FAKE_STREAM_TOOL=1 makes "STREAM" run a command that streams five outputs (stream.go).
 // FAKE_LOAD_FAILONCE names a file: while it exists, a load replays, then fails and removes it.
 // FAKE_CLOSE=close or delete advertises that session method and FAKE_CALLS names a file
@@ -248,6 +248,8 @@ func (a *agent) prompt(id json.RawMessage, sid, text string, blocks []block, can
 		select {}
 	case strings.Contains(text, "BLOCKS"):
 		a.chunk(sid, describeBlocks(blocks))
+	case imageCount(blocks) > 0:
+		a.chunk(sid, fmt.Sprintf("got %d image(s)", imageCount(blocks)))
 	case text == "hello":
 		a.chunk(sid, "Hello ")
 		time.Sleep(20 * time.Millisecond)

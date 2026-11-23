@@ -4,7 +4,7 @@
   import { onMount, tick } from 'svelte'
   import { actions } from './lib/actions'
   import { chats, type ChatInfo } from './lib/chatstore.svelte'
-  import { busyReason } from './lib/chatrelay'
+  import { busyReason, canTake, startNote } from './lib/chatrelay'
   import { app } from './lib/state.svelte'
 
   let { chatId, msgId, onclose }: { chatId: string; msgId: number; onclose: (refocus?: boolean) => void } = $props()
@@ -27,10 +27,11 @@
   let panel: HTMLElement | undefined = $state()
   const uid = $props.id()
 
-  // A target that stopped being idle while the panel was open can no longer be sent to.
-  const ready = $derived(!!target && chats.list[target]?.state === 'idle')
-  const lost = $derived(target && !ready ? busyReason(chats.list[target]?.state ?? '') : '')
-  const allBusy = $derived(others.length > 0 && others.every((c) => c.state !== 'idle'))
+  // A target that began answering while the panel was open can no longer be sent to.
+  const ready = $derived(!!target && canTake(chats.list[target]?.state ?? ''))
+  const lost = $derived(target && !ready && !busy ? busyReason(chats.list[target]?.state ?? '') : '')
+  const none = $derived(others.length > 0 && others.every((c) => !canTake(c.state)))
+  let starting = $state(false)
 
   onMount(async () => {
     await tick()
@@ -41,6 +42,7 @@
     const to = chats.list[target]
     if (!to || busy) return
     busy = true
+    starting = to.state === 'stopped'
     error = ''
     try {
       await app.run('chat.relay', { id: target, from: chatId, msgIdx: msgId, text: note.trim() })
@@ -51,6 +53,7 @@
       error = `${agentName(to.agent)}: ${e instanceof Error ? e.message : 'Could not send the reply.'}`
     } finally {
       busy = false
+      starting = false
     }
   }
 </script>
@@ -65,7 +68,7 @@
     </div>
   {:else}
     {#if others.length === 0}
-      <p class="help">There is no other chat in this project. Start one with New chat, then send the reply from here.</p>
+      <p class="help">There is no other chat in this project. Choose New chat to start one, then send the reply from here.</p>
       <div class="row">
         <button type="button" class="btn" onclick={() => (actions.newChat(), onclose(false))}>New chat</button>
         <button type="button" class="btn ghost" onclick={() => onclose()}>Close</button>
@@ -81,7 +84,7 @@
               <input type="radio" name="{uid}-to" value={c.id} bind:group={target} disabled={!!why} />
               <span class="who">{agentName(c.agent)}</span>
               <span class="title">{titleOf(c)}</span>
-              {#if why}<span class="why">({why})</span>{/if}
+              {#if why}<span class="why">({why})</span>{:else if startNote(c)}<span class="why">(stopped) {startNote(c)}</span>{/if}
             </label>
           </li>
         {/each}
@@ -92,12 +95,12 @@
         <textarea id="{uid}-n" class="input note" rows="2" bind:value={note}></textarea>
       {/if}
       <div class="row">
-        <button type="button" class="btn primary" disabled={!ready || busy} onclick={send}>{busy ? 'Sending…' : 'Send'}</button>
+        <button type="button" class="btn primary" disabled={!ready || busy} onclick={send}>{busy ? (starting ? 'Starting the chat…' : 'Sending…') : 'Send'}</button>
         <button type="button" class="btn ghost" onclick={() => onclose()}>Cancel</button>
       </div>
+      {#if !ready && !busy && !lost && !none}<p class="help">Choose a chat to send to.</p>{/if}
       {#if lost}<p class="help" role="status">{agentName(chats.list[target]?.agent ?? '')} is {lost} now. Pick another chat.</p>{/if}
-      {#if allBusy}<p class="help">All other chats are busy right now.</p>{/if}
-      {#if !target}<p class="help">Pick an idle chat. The reply is sent only when you press Send.</p>{/if}
+      {#if none}<p class="help">No other chat can take a reply right now. Each one says why.</p>{/if}
       {#if error}<p class="error" role="alert">{error}</p>{/if}
     {/if}
   {/if}
@@ -111,7 +114,7 @@
     margin-top: var(--s-1);
     padding: var(--s-3);
     border: 1px solid var(--border);
-    border-radius: var(--r-m);
+    border-radius: var(--r-l);
     background: var(--raised);
   }
   fieldset {
@@ -122,15 +125,15 @@
   }
   legend {
     padding: 0;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .done {
     margin: 0;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .field {
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   ul {
     display: grid;
@@ -150,7 +153,7 @@
     color: var(--muted);
   }
   .who {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .note {
     min-height: 60px;

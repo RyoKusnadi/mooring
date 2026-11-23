@@ -22,7 +22,7 @@ export default defineConfig({
     colorScheme: 'light',
   },
   webServer: {
-    command: `MOORING_E2E_PORT=${port} MOORING_E2E_DATA=${dataDir} MOORING_E2E_HOME=${homeDir} sh e2e/serve.sh`,
+    command: `MOORING_E2E_AGY=1 MOORING_E2E_PORT=${port} MOORING_E2E_DATA=${dataDir} MOORING_E2E_HOME=${homeDir} sh e2e/serve.sh`,
     url: `http://127.0.0.1:${port}/api/session`,
     reuseExistingServer: false,
   },

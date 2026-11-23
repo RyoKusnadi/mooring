@@ -1,4 +1,5 @@
-/* Shared controls (DESIGN.md Components). Plain classes so every component gets the same sizes. */
+/* Shared controls (DESIGN.md Components): five button types, icon button, checkbox. Fields are in forms.css. */
+/* Buttons: primary, secondary (default), tertiary (.ghost), danger, warning. */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -11,26 +12,28 @@
   background: var(--raised);
   color: var(--fg);
   font: inherit;
-  font-weight: 500;
-  transition: background-color var(--ease), border-color var(--ease), color var(--ease);
+  font-weight: var(--fw-medium);
+  transition: background-color var(--ease), border-color var(--ease), color var(--ease), transform var(--ease);
 }
 .btn:hover:not(:disabled) {
   background: var(--hover);
 }
 .btn:active:not(:disabled) {
-  background: var(--selected);
+  background: var(--pressed);
+  transform: translateY(1px);
 }
 .btn.primary {
-  background: var(--accent);
   border-color: var(--accent);
+  background: var(--accent);
   color: var(--on-accent);
 }
 .btn.primary:hover:not(:disabled) {
-  background: var(--accent-hover);
   border-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 .btn.primary:active:not(:disabled) {
-  transform: translateY(1px);
+  border-color: var(--accent-pressed);
+  background: var(--accent-pressed);
 }
 .btn.ghost {
   border-color: transparent;
@@ -38,65 +41,95 @@
   color: var(--muted);
 }
 .btn.ghost:hover:not(:disabled) {
+  background: var(--hover);
   color: var(--fg);
 }
-.btn.danger,
-.btn.ghost.danger:hover:not(:disabled) {
+.btn.ghost:active:not(:disabled) {
+  background: var(--pressed);
+}
+.btn.danger {
+  border-color: var(--danger);
   color: var(--danger);
 }
-.btn:disabled {
-  background: var(--surface);
-  border-color: transparent;
-  color: var(--faint);
+.btn.danger:hover:not(:disabled),
+.btn.danger:active:not(:disabled) {
+  background: var(--danger-bg);
 }
-/* A 28px icon-only button; give it an aria-label. */
+/* The confirm step of a destructive action. */
+.btn.danger.solid {
+  background: var(--danger-fill);
+  color: var(--on-danger);
+}
+.btn.danger.solid:hover:not(:disabled),
+.btn.danger.solid:active:not(:disabled) {
+  border-color: var(--danger-fill-hover);
+  background: var(--danger-fill-hover);
+}
+.btn.warning {
+  border-color: var(--attention);
+  color: var(--attention);
+}
+.btn.warning:hover:not(:disabled),
+.btn.warning:active:not(:disabled) {
+  background: var(--attention-bg);
+}
+.btn:disabled,
+.btn.ghost:disabled,
+.btn.primary:disabled,
+.btn.danger.solid:disabled {
+  border-color: transparent;
+  background: var(--disabled-bg);
+  color: var(--disabled-fg);
+  transform: none;
+}
+.btn.small {
+  min-height: var(--control-h-s);
+  padding: 0 var(--s-2);
+  font-size: var(--fs-s);
+  line-height: var(--lh-s);
+}
+/* Icon-only button, 28px on desktop (inside 36px bars and 28px rows), 44px on touch. Give it an aria-label. */
 .icon-btn {
   display: inline-flex;
   flex: none;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: var(--control-h-s);
+  height: var(--control-h-s);
   padding: 0;
   border: 0;
   border-radius: var(--r-m);
   background: none;
   color: var(--muted);
-  transition: background-color var(--ease), color var(--ease);
+  transition: background-color var(--ease), color var(--ease), transform var(--ease);
 }
 .icon-btn:hover:not(:disabled) {
   background: var(--hover);
   color: var(--fg);
 }
+.icon-btn:active:not(:disabled) {
+  background: var(--pressed);
+  transform: scale(0.96);
+}
 .icon-btn.danger:hover:not(:disabled) {
   color: var(--danger);
 }
 .icon-btn:disabled {
-  color: var(--faint);
+  color: var(--disabled-fg);
 }
-@media (pointer: coarse) {
-  .icon-btn {
-    width: 44px;
-    height: 44px;
-  }
-}
-@media (max-width: 900px) {
-  .icon-btn {
-    width: 44px;
-    height: 44px;
-  }
-}
+
 input[type='checkbox'] {
   position: relative;
   flex: none;
   appearance: none;
   width: 16px;
   height: 16px;
-  margin: 0 var(--s-1) 0 0;
+  margin: 0 var(--s-2) 0 0;
   border: 1px solid var(--border-strong);
-  border-radius: 4px;
+  border-radius: var(--r-s);
   background: var(--raised);
   vertical-align: -3px;
+  transition: background-color var(--ease), border-color var(--ease);
 }
 input[type='checkbox']:checked {
   border-color: var(--accent);
@@ -115,10 +148,10 @@ input[type='checkbox']:checked::after {
 }
 input[type='checkbox']:disabled {
   border-color: var(--border);
-  background: var(--surface);
+  background: var(--disabled-bg);
 }
 input[type='checkbox']:disabled:checked {
-  background: var(--faint);
+  background: var(--disabled-fg);
 }
 
 /* Radios and checkboxes draw in the accent colour, not the browser's blue. */
@@ -126,15 +159,9 @@ input[type='radio'],
 input[type='checkbox'] {
   accent-color: var(--accent);
 }
-
-/* A smaller button inside content (chat code blocks, tool lines). Touch keeps 44px. */
-.btn.small {
-  min-height: calc(var(--control-h) - 4px);
-  padding: 0 var(--s-2);
-  font-size: var(--fs-s);
-}
-@media (pointer: coarse) {
-  .btn.small {
-    min-height: 44px;
+@media (max-width: 900px) {
+  .icon-btn {
+    width: 44px;
+    height: 44px;
   }
 }

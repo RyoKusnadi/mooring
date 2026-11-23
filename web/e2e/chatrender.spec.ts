@@ -3,11 +3,19 @@ import { join } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
 import { collectProblems, fixtures, signIn } from './helpers'
 import { openProject } from './githelpers'
+import { stopChats } from './stopchats'
+
+// Each test leaves a running chat; stop them so the shared limit of 20 has room for later specs.
+const used: string[] = []
+test.afterEach(async ({ page }) => {
+  if (used.length) await stopChats(page, used.splice(0))
+})
 
 // The stand-in agent "gemini" (see e2e/serve.sh). "SHOWCASE" answers in markdown with an edit and a command.
 async function startChat(page: Page, name: string) {
   const folder = join(fixtures, name)
   mkdirSync(folder, { recursive: true })
+  used.push(name)
   await openProject(page, folder)
   await page.getByRole('button', { name: 'New tab' }).click()
   await page.getByRole('menuitem', { name: 'Chat' }).click()
@@ -70,7 +78,7 @@ test('a queued message is kept in this browser and comes back after a reload', a
   await box.fill('long')
   await page.getByRole('button', { name: 'Send', exact: true }).click()
   await expect(page.getByRole('button', { name: 'Stop reply' })).toBeVisible()
-  await expect(page.getByText('Queued messages stay if the page reloads, but their attachments do not.')).toBeVisible()
+  await expect(page.getByText('Queued messages stay if the page reloads, but their images and other attachments do not.')).toBeVisible()
   await box.fill('kept across reload')
   await page.getByRole('button', { name: 'Send after reply' }).click()
   await expect(page.getByText('Sends when the reply ends')).toBeVisible()

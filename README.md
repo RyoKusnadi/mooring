@@ -174,12 +174,12 @@ the details, including how to sign out other browsers.
 3. **Start a chat.** Press Alt+A, or click + in a pane and choose "Chat". Pick an agent. One that is not installed
    shows an Install button, and Claude asks you to run `claude auth login` first.
 
-   <img src="docs/guide/images/agent-chats-picker.png" width="700" alt="The Start a chat tab listing Claude with a sign-in command and Gemini as ready, and Codex, Grok, Cursor and Antigravity marked Not installed with Install buttons.">
+   <img src="docs/guide/images/agent-chats-picker.png" width="700" alt="The Start a chat tab: Claude, Gemini, Grok and Antigravity can start, and Codex and Cursor are marked Not installed with Install buttons.">
 
 4. **Answer the agent.** When it wants to run a command, the chat shows "Needs permission" with the
    command, and the tab, the project and the status bar get a mark. Click Allow or Reject.
 
-   <img src="docs/guide/images/agent-chats-permission.png" width="700" alt="A Gemini chat with a Needs permission bar for npm test in /Users/demo/work/demo-app, Allow and Reject buttons, and '1 chat needs permission' in the status bar.">
+   <img src="docs/guide/images/agent-chats-permission.png" width="700" alt="An Antigravity chat with a Needs permission bar for npm test in /Users/demo/work/demo-app, Allow and Reject buttons, and '1 chat needs permission' in the status bar.">
 
 The [getting started page](docs/guide/getting-started.md) covers each step in more detail.
 

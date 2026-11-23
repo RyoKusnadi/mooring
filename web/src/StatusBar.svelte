@@ -48,7 +48,7 @@
     display: flex;
     align-items: center;
     gap: var(--s-4);
-    min-height: 28px;
+    min-height: var(--status-h);
     padding: 0 max(var(--s-3), env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(var(--s-3), env(safe-area-inset-left, 0px));
     overflow: hidden;
     background: var(--surface);
@@ -70,7 +70,7 @@
     font: inherit;
     text-decoration: underline;
     color: var(--attention);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .problems {
     padding: 0;
@@ -84,8 +84,8 @@
     outline-offset: -2px;
   }
   .dot {
-    width: 8px;
-    height: 8px;
+    width: var(--s-2);
+    height: var(--s-2);
     border-radius: 50%;
     background: var(--attention);
   }
@@ -116,7 +116,7 @@
   }
   .loud {
     color: var(--fg);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     overflow: hidden;
     text-overflow: ellipsis;
   }

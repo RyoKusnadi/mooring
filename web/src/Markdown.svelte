@@ -65,7 +65,7 @@
   .md :global(.md-h) {
     margin-top: var(--s-4);
     font-size: var(--fs-read);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     line-height: var(--lh-read);
   }
   .md :global(h3.md-h),
@@ -108,7 +108,6 @@
     border-radius: var(--r-s);
     background: var(--surface);
     font: var(--fs-code) / 1 var(--font-mono);
-    font-size: 0.9em;
   }
   .md :global(.md-link) {
     padding: 0;
@@ -125,7 +124,7 @@
   }
   .md :global(.md-pre) {
     border: 1px solid var(--border);
-    border-radius: var(--r-m);
+    border-radius: var(--r-l);
     background: var(--surface);
     overflow: hidden;
   }
@@ -133,7 +132,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-height: 28px;
+    min-height: var(--row-h);
     padding: 0 var(--s-1) 0 var(--s-3);
     border-bottom: 1px solid var(--border);
     color: var(--muted);
@@ -157,7 +156,7 @@
     max-width: none;
     border-collapse: collapse;
     font-size: var(--fs-m);
-    line-height: 20px;
+    line-height: var(--lh-m);
   }
   .md :global(th),
   .md :global(td) {
@@ -169,7 +168,7 @@
   }
   .md :global(th) {
     background: var(--surface);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .md :global(.tk-kw) {
     color: var(--ansi-5);
@@ -189,7 +188,7 @@
   }
   .md :global(.tk-fn) {
     color: var(--fg);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .md :global(.tk-pr) {
     color: var(--ansi-3);

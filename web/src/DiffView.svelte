@@ -258,7 +258,7 @@
     margin: 0;
     overflow: hidden;
     font-size: var(--fs-m);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     text-overflow: ellipsis;
     white-space: nowrap;
   }

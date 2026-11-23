@@ -10,6 +10,8 @@ import (
 type block struct {
 	Type     string `json:"type"`
 	Text     string `json:"text"`
+	MimeType string `json:"mimeType"`
+	Data     string `json:"data"`
 	Resource struct {
 		URI  string `json:"uri"`
 		Text string `json:"text"`
@@ -73,4 +75,16 @@ func (a *agent) termTurn(sid, text string) int {
 	a.chunk(sid, fmt.Sprintf("term: bytes=%d lines=%d exit=%s signal=%s truncated=%v compacted=%v",
 		len(out.Output), lines, code, exit.Signal, out.Truncated, strings.Contains(out.Output, "[mooring:")))
 	return len(out.Output)
+}
+
+// imageCount is how many image blocks a prompt carries. An image block counts only with a
+// type and some data, so a test sees what the agent really got.
+func imageCount(blocks []block) int {
+	n := 0
+	for _, b := range blocks {
+		if b.Type == "image" && b.MimeType != "" && b.Data != "" {
+			n++
+		}
+	}
+	return n
 }

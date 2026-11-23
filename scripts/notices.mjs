@@ -91,6 +91,15 @@ function webEntries() {
     })
 }
 
+// Fonts bundled from web/src/assets/fonts, licence text kept next to the files.
+function fontEntries() {
+  const file = join(root, 'web', 'src', 'assets', 'fonts', 'OFL.txt')
+  const text = readFileSync(file, 'utf8').trim()
+  return [
+    `Geist and Geist Mono 1.9.2 (variable woff2)\nSource: https://github.com/vercel/geist-font\nLicence: OFL-1.1\n\n--- OFL.txt ---\n${text}`,
+  ]
+}
+
 const rule = '\n\n' + '='.repeat(72) + '\n\n'
 const text = [
   'Third-party notices for Mooring',
@@ -106,6 +115,9 @@ const text = [
   '',
   '#### Web packages bundled into the app',
   rule + webEntries().join(rule),
+  '',
+  '#### Fonts bundled into the app',
+  rule + fontEntries().join(rule),
 ].join('\n') + '\n'
 
 if (process.argv.includes('--check')) {

@@ -71,7 +71,7 @@
   {:else if mode === 'remove'}
     <div class="confirm" role="group" aria-label="Remove {a.name}">
       <span>Remove {a.name}? {a.managed ? 'Its folder moves to the removed folder in Mooring’s data, with the login inside.' : 'Your folder stays as it is.'} Projects using it go back to the default.</span>
-      <button type="button" class="btn danger" disabled={busy} onclick={remove}>Remove</button>
+      <button type="button" class="btn danger solid" disabled={busy} onclick={remove}>Remove</button>
       <button type="button" class="btn" bind:this={keepBtn} data-keep onclick={() => ask('')}>Keep</button>
     </div>
   {:else}
@@ -114,7 +114,7 @@
     padding: 0 var(--s-1);
     border: 1px solid var(--border-strong);
     border-radius: var(--r-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .muted {
     color: var(--muted);

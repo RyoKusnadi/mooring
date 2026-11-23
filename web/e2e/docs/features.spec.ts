@@ -8,7 +8,7 @@ import { imagesDir, openDemo, scrub, shot } from './helpers'
 
 // Pictures of the newer features for README.md and docs/guide. Run on its own (see the README of
 // e2e/docs): `node node_modules/@playwright/test/cli.js test -c playwright.docs.config.ts e2e/docs/features.spec.ts`.
-// Stand-ins: "gemini" and "grok" are stand-in agents; the prompt word "ask" asks for permission and
+// Stand-ins: "agy" (Antigravity) and "grok" are stand-in agents; the prompt word "ask" asks for permission and
 // "long" keeps the agent working. Other prompts are echoed back.
 
 const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd, encoding: 'utf8' })
@@ -35,7 +35,7 @@ async function addProject(page: Page, dir: string) {
   await expect(dialog).toBeHidden()
 }
 
-async function startChat(page: Page, agent: 'Gemini' | 'Grok', text: string) {
+async function startChat(page: Page, agent: 'Antigravity' | 'Grok', text: string) {
   const panel = page.getByRole('tabpanel')
   await panel.getByRole('button', { name: 'New chat' }).click()
   await panel.getByRole('button', { name: `Start chat with ${agent}` }).click()
@@ -47,7 +47,7 @@ async function startChat(page: Page, agent: 'Gemini' | 'Grok', text: string) {
 test('status board', async ({ page }) => {
   await openDemo(page)
   const panel = page.getByRole('tabpanel')
-  await startChat(page, 'Gemini', 'ask')
+  await startChat(page, 'Antigravity', 'ask')
   await expect(panel.getByRole('alert', { name: 'Permission request' })).toBeVisible()
   // A second chat in a new tab starts a long answer, then the tab is left for a terminal while it is still working.
   await page.getByRole('button', { name: 'New tab' }).click()
@@ -73,7 +73,7 @@ test('status board', async ({ page }) => {
 
 test('chat history search', async ({ page }) => {
   await openDemo(page)
-  await startChat(page, 'Gemini', 'Add a farewell to greet.ts and a test for it')
+  await startChat(page, 'Antigravity', 'Add a farewell to greet.ts and a test for it')
   await expect(page.getByRole('tabpanel').getByText('farewell').first()).toBeVisible()
   await page.keyboard.press('Alt+Escape')
   await page.keyboard.press('Alt+y')

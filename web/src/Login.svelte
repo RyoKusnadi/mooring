@@ -85,7 +85,7 @@
       {/if}
       <div class="command">
         <code>mooring open</code>
-        <button type="button" class="copy" onclick={copyCommand}>{copied ? 'Copied' : 'Copy'}</button>
+        <button type="button" class="btn" onclick={copyCommand}>{copied ? 'Copied' : 'Copy'}</button>
         <span class="sr" aria-live="polite">{copied ? 'Copied' : ''}</span>
       </div>
       <details class="alt" bind:open={tokenOpen}>
@@ -94,6 +94,7 @@
           <label for="token">Login token</label>
           <input
             id="token"
+            class="input"
             name="token"
             type="password"
             autocomplete={passwordSet ? 'off' : 'current-password'}
@@ -110,7 +111,7 @@
           {#if error}
             <p id="token-error" class="error" role="alert">{error}</p>
           {/if}
-          <button type="submit" disabled={pending}>{pending ? 'Signing in…' : 'Sign in with token'}</button>
+          <button type="submit" class="btn" class:primary={!passwordSet} disabled={pending}>{pending ? 'Signing in…' : 'Sign in with token'}</button>
         </form>
       </details>
       {#if passwordSet === false}
@@ -137,13 +138,12 @@
     padding: var(--s-5);
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--r-m);
+    border-radius: var(--r-l);
   }
   h1 {
     margin: 0 0 var(--s-3);
     font-size: var(--fs-xl);
-    font-weight: 600;
-    line-height: 1.25;
+    line-height: var(--lh-xl);
   }
   .lead {
     margin: 0;
@@ -156,8 +156,7 @@
     margin: 0;
     padding: var(--s-2) var(--s-3);
     border: 1px solid var(--border-strong);
-    border-radius: var(--r-s);
-    font-size: var(--fs-m);
+    border-radius: var(--r-m);
   }
   .command {
     display: flex;
@@ -167,58 +166,14 @@
     padding: var(--s-1) var(--s-1) var(--s-1) var(--s-3);
     background: var(--raised);
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
-  }
-  .command code {
-    font-family: var(--font-mono);
-  }
-  .copy {
-    margin: 0;
-    background: var(--surface);
-    color: var(--fg);
-    border-color: var(--border);
-  }
-  .copy:hover:not(:disabled) {
-    background: var(--hover);
-  }
-  .sr {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
+    border-radius: var(--r-m);
   }
   .alt summary {
-    list-style: none;
-    gap: var(--s-2);
-  }
-  .alt summary::-webkit-details-marker {
-    display: none;
-  }
-  .alt summary::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-right: 2px solid currentColor;
-    border-bottom: 2px solid currentColor;
-    transform: rotate(-45deg);
-    transition: transform var(--ease);
-  }
-  .alt[open] summary::before {
-    transform: rotate(45deg);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .alt summary::before {
-      transition: none;
-    }
-  }
-  .alt summary {
-    cursor: pointer;
-    color: var(--muted);
-    font-size: var(--fs-s);
-    min-height: var(--control-h);
     display: flex;
     align-items: center;
+    min-height: var(--control-h);
+    color: var(--muted);
+    font-size: var(--fs-s);
   }
   form {
     display: grid;
@@ -226,55 +181,13 @@
   }
   label {
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
-  input {
-    font: inherit;
-    min-height: var(--control-h);
-    padding: 0 var(--s-3);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--r-s);
-    background: var(--raised);
-    color: var(--fg);
-    transition: border-color var(--ease);
-  }
-  input:hover {
-    border-color: var(--fg);
-  }
-  input[aria-invalid='true'] {
-    border-color: var(--danger);
-  }
-  .help {
-    margin: 0;
-    color: var(--muted);
-    font-size: var(--fs-s);
-  }
+  .help,
   .error {
     margin: 0;
-    color: var(--danger);
-    font-size: var(--fs-m);
   }
-  button {
+  form .btn {
     margin-top: var(--s-2);
-    font: inherit;
-    font-weight: 600;
-    min-height: var(--control-h);
-    padding: 0 var(--s-4);
-    border: 1px solid transparent;
-    border-radius: var(--r-s);
-    background: var(--accent);
-    color: var(--on-accent);
-    transition: background-color var(--ease);
-  }
-  button:hover:not(:disabled) {
-    background: var(--accent-hover);
-  }
-  button:active:not(:disabled) {
-    transform: translateY(1px);
-  }
-  button:disabled {
-    background: var(--hover);
-    border-color: var(--border-strong);
-    color: var(--muted);
   }
 </style>

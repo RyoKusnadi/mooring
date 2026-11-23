@@ -185,7 +185,7 @@
     padding: var(--s-2) max(var(--s-4), calc((100% - var(--chat-col)) / 2));
     background: var(--attention-bg);
     color: var(--attention);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .dot {
     flex: none;

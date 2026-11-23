@@ -84,7 +84,7 @@
     border-bottom: 1px solid var(--border);
   }
   header {
-    min-height: var(--control-h);
+    min-height: var(--bar-h);
   }
   h2 {
     flex: 1;
@@ -111,7 +111,7 @@
     border-left: 1px solid var(--border);
   }
   .bar {
-    min-height: var(--control-h);
+    min-height: var(--bar-h);
     background: var(--surface);
   }
   .name {

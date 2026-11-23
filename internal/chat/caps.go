@@ -8,6 +8,8 @@ import (
 // caps are the parts of the protocol the agent supports; the chat screen hides the rest.
 // They are read once from the `initialize` reply.
 type caps struct {
+	// Initialized is true once the agent has answered initialize; before that every ability reads false.
+	Initialized     bool `json:"initialized"`
 	Load            bool `json:"load"`
 	Resume          bool `json:"resume"`
 	Image           bool `json:"image"`
@@ -57,7 +59,8 @@ func (r initResult) caps() caps {
 		return supported(ac.SessionCapabilities[key])
 	}
 	out := caps{
-		Load: ac.LoadSession, Resume: has("resume"), Image: ac.PromptCapabilities.Image,
+		Initialized: true,
+		Load:        ac.LoadSession, Resume: has("resume"), Image: ac.PromptCapabilities.Image,
 		Audio: ac.PromptCapabilities.Audio, EmbeddedContext: ac.PromptCapabilities.EmbeddedContext,
 		MCPHTTP: ac.MCPCapabilities.HTTP, MCPSSE: ac.MCPCapabilities.SSE, MCPACP: ac.MCPCapabilities.ACP,
 		List: has("list"), Close: has("close"), Delete: has("delete"), Fork: has("fork"),

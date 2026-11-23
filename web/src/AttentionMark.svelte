@@ -10,8 +10,8 @@
   .dot {
     display: inline-block;
     flex: none;
-    width: 8px;
-    height: 8px;
+    width: var(--s-2);
+    height: var(--s-2);
     border-radius: 50%;
     background: var(--attention);
   }

@@ -1,6 +1,7 @@
 package chat
 
 import (
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"path/filepath"
@@ -15,6 +16,7 @@ const (
 	maxAttachments  = 8
 	maxAttachBytes  = 64 << 10
 	maxContextBytes = 16 << 10
+	maxImagesTotal  = 20 << 20 // a message with eight large images stays in memory while it is sent
 )
 
 // Attachment is what the browser sends: a selection of a file, or a saved command output.
@@ -25,6 +27,9 @@ type Attachment struct {
 	To       int    `json:"to,omitempty"`
 	Text     string `json:"text,omitempty"`
 	OutputID string `json:"outputId,omitempty"`
+	// ImageID names an image uploaded to this chat (kind "image"); Name is the file name shown.
+	ImageID string `json:"imageId,omitempty"`
+	Name    string `json:"name,omitempty"`
 }
 
 // AttachRef is the chip the user message keeps: what was sent, without the text.
@@ -35,6 +40,9 @@ type AttachRef struct {
 	To       int    `json:"to,omitempty"`
 	OutputID string `json:"outputId,omitempty"`
 	Lines    int    `json:"lines,omitempty"`
+	ImageID  string `json:"imageId,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Size     int    `json:"size,omitempty"` // bytes of an image
 }
 
 // sent is an attachment ready for the agent.
@@ -42,6 +50,13 @@ type sent struct {
 	uri   string
 	label string // "src/a.go, lines 3 to 9" or "command output"
 	text  string
+	image *sentImage // set for an image: the text is empty
+}
+
+// sentImage is an image block of the prompt.
+type sentImage struct {
+	mime string
+	b64  string
 }
 
 // resolveAttachments checks the attachments and reads what they point to.
@@ -51,21 +66,28 @@ func (c *Chat) resolveAttachments(list []Attachment) ([]sent, []AttachRef, error
 	}
 	var out []sent
 	var refs []AttachRef
-	total := 0
+	total, imageBytes := 0, 0
 	for _, a := range list {
 		var s sent
 		var ref AttachRef
 		var err error
 		switch a.Kind {
+		case "image":
+			s, ref, err = c.imageAttachment(a)
 		case "selection":
 			s, ref, err = c.selection(a)
 		case "output":
 			s, ref, err = c.outputAttachment(a)
 		default:
-			err = apiErr("BAD_REQUEST", "An attachment is a selection or an output.")
+			err = apiErr("BAD_REQUEST", "An attachment is a selection, an output or an image.")
 		}
 		if err != nil {
 			return nil, nil, err
+		}
+		if s.image != nil {
+			if imageBytes += ref.Size; imageBytes > maxImagesTotal {
+				return nil, nil, apiErr("BAD_REQUEST", "The images are over %d MB together. Send fewer.", maxImagesTotal>>20)
+			}
 		}
 		if total += len(s.text); total > maxAttachBytes {
 			return nil, nil, apiErr("BAD_REQUEST", "The attachments are over %d KB together.", maxAttachBytes>>10)
@@ -73,6 +95,24 @@ func (c *Chat) resolveAttachments(list []Attachment) ([]sent, []AttachRef, error
 		out, refs = append(out, s), append(refs, ref)
 	}
 	return out, refs, nil
+}
+
+// imageAttachment reads an uploaded image for the agent. A chat whose agent does not take
+// images refuses it.
+func (c *Chat) imageAttachment(a Attachment) (sent, AttachRef, error) {
+	c.mu.Lock()
+	ok := c.caps.Image
+	c.mu.Unlock()
+	if !ok {
+		return sent{}, AttachRef{}, apiErr("NO_IMAGES", "%s does not take images. Start a chat with an agent that does, such as Claude.", c.m.catalog[c.spec.Agent.ID].Name)
+	}
+	data, mime, err := c.m.readImage(c.id, a.ImageID)
+	if err != nil {
+		return sent{}, AttachRef{}, err
+	}
+	name := cleanImageName(a.Name)
+	return sent{label: name, image: &sentImage{mime: mime, b64: base64.StdEncoding.EncodeToString(data)}},
+		AttachRef{Kind: "image", ImageID: a.ImageID, Name: name, Size: len(data)}, nil
 }
 
 func (c *Chat) selection(a Attachment) (sent, AttachRef, error) {
@@ -156,9 +196,11 @@ func promptBlocks(text string, embedded bool, start Message, atts []sent) []any 
 		}
 		blocks = append(blocks, map[string]string{"type": "text", "text": text})
 		for _, a := range atts {
-			blocks = append(blocks, resource(a.uri, a.text))
+			if a.image == nil {
+				blocks = append(blocks, resource(a.uri, a.text))
+			}
 		}
-		return blocks
+		return appendImages(blocks, atts)
 	}
 	var b strings.Builder
 	if start.Text != "" {
@@ -169,7 +211,19 @@ func promptBlocks(text string, embedded bool, start Message, atts []sent) []any 
 	}
 	b.WriteString(text)
 	for _, a := range atts {
-		b.WriteString("\n\n" + a.label + ":\n" + fence(a.text))
+		if a.image == nil {
+			b.WriteString("\n\n" + a.label + ":\n" + fence(a.text))
+		}
 	}
-	return []any{map[string]string{"type": "text", "text": b.String()}}
+	return appendImages([]any{map[string]string{"type": "text", "text": b.String()}}, atts)
+}
+
+// appendImages adds one image block per image attachment, after the text.
+func appendImages(blocks []any, atts []sent) []any {
+	for _, a := range atts {
+		if a.image != nil {
+			blocks = append(blocks, map[string]string{"type": "image", "mimeType": a.image.mime, "data": a.image.b64})
+		}
+	}
+	return blocks
 }

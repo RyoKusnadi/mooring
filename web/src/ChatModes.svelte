@@ -40,22 +40,22 @@
 
 {#if info.models?.length}
   <label class="pick"><span class="t">Model</span>
-    <select value={info.model} disabled={!live} onchange={(e) => set('chat.setModel', e.currentTarget.value)}>
+    <span class="select"><select class="input" value={info.model} disabled={!live} onchange={(e) => set('chat.setModel', e.currentTarget.value)}>
       {#each info.models as m (m.id)}<option value={m.id}>{m.name}</option>{/each}
-    </select>
+    </select></span>
   </label>
 {/if}
 {#if info.modes?.length}
   <label class="pick"><span class="t">Mode</span>
-    <select bind:this={modeSelect} value={info.mode} disabled={!live} onchange={(e) => pickMode(e.currentTarget)}>
+    <span class="select"><select class="input" bind:this={modeSelect} value={info.mode} disabled={!live} onchange={(e) => pickMode(e.currentTarget)}>
       {#each info.modes as m (m.id)}<option value={m.id}>{m.name}</option>{/each}
-    </select>
+    </select></span>
   </label>
 {/if}
 {#if pendingMode}
   <div class="confirm" role="alertdialog" aria-label="Change mode">
     <p>This mode may let {agent} run commands and edit files without asking you first. Switch anyway?</p>
-    <button type="button" class="btn danger" onclick={() => (set('chat.setMode', pendingMode), closeConfirm())}>Switch mode</button>
+    <button type="button" class="btn danger solid" onclick={() => (set('chat.setMode', pendingMode), closeConfirm())}>Switch mode</button>
     <button type="button" class="btn" bind:this={keep} onclick={closeConfirm}>Keep asking</button>
   </div>
 {/if}
@@ -70,24 +70,16 @@
     min-width: 0;
     color: var(--muted);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
+  }
+  .select {
+    min-width: 0;
+    max-width: 18ch;
   }
   select {
-    min-height: calc(var(--control-h) - 4px);
-    max-width: 16ch;
-    padding: 0 var(--s-2);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--r-s);
-    background: var(--raised);
-    color: var(--fg);
-    font: inherit;
-    font-weight: 400;
-  }
-  select:disabled {
-    background: var(--surface);
-    color: var(--faint);
-    border-color: var(--border);
-    cursor: not-allowed;
+    font-size: var(--fs-m); /* 16px on touch screens, so iOS does not zoom in */
+    font-weight: var(--fw-regular);
+    text-overflow: ellipsis;
   }
   .confirm {
     display: flex;
@@ -109,11 +101,9 @@
     .pick {
       flex: 1 1 0;
     }
-    select {
-      width: 100%;
+    .select {
+      flex: 1;
       max-width: none;
-      min-height: var(--control-h);
-      font-size: 16px; /* 16px stops iOS zooming into the select */
     }
     .t {
       position: absolute;

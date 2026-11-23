@@ -2,14 +2,22 @@ import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { expect, test, type Page } from '@playwright/test'
 import { collectProblems, fixtures, signIn } from './helpers'
+import { stopChats } from './stopchats'
 
 // The server runs with a stand-in agent behind the name "gemini" (see e2e/serve.sh).
 // Its prompts: "hello" streams two chunks, "ask" asks for permission, "long" streams
 // until cancelled, anything else is echoed.
 
+// Stop each test's chats so the shared limit of 20 has room for later specs.
+const used: string[] = []
+test.afterEach(async ({ page }) => {
+  if (used.length) await stopChats(page, used.splice(0))
+})
+
 async function addProject(page: Page, name: string) {
   const folder = join(fixtures, name)
   mkdirSync(folder, { recursive: true })
+  used.push(name)
   await page.getByRole('button', { name: 'Add project' }).first().click()
   const dialog = page.getByRole('dialog')
   await dialog.getByLabel('Folder on this computer').fill(folder)

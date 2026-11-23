@@ -65,7 +65,7 @@
   {#if removing}
     <div class="confirm" role="group" aria-label="Remove {s.name}">
       <span>Remove {s.name}? Its saved values and sign-in are deleted. Chats already running keep it until they stop.</span>
-      <button type="button" class="btn danger" disabled={busy} onclick={remove}>Remove</button>
+      <button type="button" class="btn danger solid" disabled={busy} onclick={remove}>Remove</button>
       <button type="button" class="btn" bind:this={keepBtn} data-keep onclick={() => ask(false)}>Keep</button>
     </div>
   {:else}
@@ -126,7 +126,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--s-1);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .state.att {
     padding: 0 var(--s-1);

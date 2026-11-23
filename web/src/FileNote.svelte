@@ -47,7 +47,7 @@
     gap: var(--s-2);
     margin: var(--s-1) var(--s-2);
     border: 1px solid var(--border);
-    border-radius: var(--r-s);
+    border-radius: var(--r-l);
     background: var(--raised);
   }
   .ask p {

@@ -1,0 +1,45 @@
+/* The look of every floating menu (pane, tab, file, project, branch). Components set position and width. */
+.menu {
+  display: grid;
+  gap: var(--s-0);
+  min-width: 200px;
+  padding: var(--s-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-l);
+  background: var(--raised);
+  box-shadow: var(--shadow-menu);
+  color: var(--fg);
+}
+.menu [role='menuitem'] {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-height: var(--row-h);
+  padding: 0 var(--s-2);
+  border: 0;
+  border-radius: var(--r-s);
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  transition: background-color var(--ease), color var(--ease);
+}
+.menu [role='menuitem']:hover:not(:disabled) {
+  background: var(--hover);
+}
+.menu [role='menuitem']:active:not(:disabled) {
+  background: var(--pressed);
+}
+.menu [role='menuitem']:disabled {
+  color: var(--disabled-fg);
+}
+.menu [role='menuitem'].danger {
+  color: var(--danger);
+}
+.menu hr {
+  height: 1px;
+  margin: var(--s-1) 0;
+  border: 0;
+  background: var(--border);
+}

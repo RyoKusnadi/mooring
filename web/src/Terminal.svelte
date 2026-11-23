@@ -171,22 +171,19 @@
   }
   .strip {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    min-height: var(--s-5);
-    gap: var(--s-3);
-    padding: 0 var(--s-4);
-    overflow: hidden;
+    min-height: var(--status-h);
+    gap: var(--s-1) var(--s-3);
+    padding: var(--s-1) var(--s-4);
     background: var(--surface);
     border-top: 1px solid var(--border);
   }
   .strip p {
-    flex: 1;
+    flex: 1 1 32ch;
     margin: 0;
-    overflow: hidden;
     color: var(--muted);
     font-size: var(--fs-s);
-    text-overflow: ellipsis;
-    white-space: nowrap;
   }
   @media (pointer: coarse) {
     .strip .hint {
@@ -199,7 +196,7 @@
   }
   .strip .small {
     flex: none;
-    min-height: 1.75rem;
+    min-height: var(--control-h-s);
     padding-block: 0;
   }
   @media (pointer: coarse) {

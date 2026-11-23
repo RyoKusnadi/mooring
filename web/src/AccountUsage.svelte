@@ -36,7 +36,7 @@
     font-size: var(--fs-s);
   }
   .login {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .att {
     padding: 0 var(--s-1);
@@ -61,6 +61,6 @@
   }
   .w {
     min-width: 7em;
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
 </style>

@@ -92,7 +92,7 @@
             {#if removing === h.id}
               <div class="confirm" role="group" aria-label="Remove {h.name}">
                 <span>Remove {h.name}? Open connections stay until closed.</span>
-                <button type="button" class="btn danger" onclick={() => remove(h)}>Remove</button>
+                <button type="button" class="btn danger solid" onclick={() => remove(h)}>Remove</button>
                 <button type="button" class="btn" onclick={() => (removing = '')}>Keep</button>
               </div>
             {:else}

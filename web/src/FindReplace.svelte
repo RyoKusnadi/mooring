@@ -186,7 +186,7 @@
     list-style: none;
   }
   .lead {
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .muted {
     color: var(--muted);
@@ -211,7 +211,7 @@
     gap: 0 var(--s-2);
     margin: var(--s-2) 0 var(--s-1);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .path {
     min-width: 0;
@@ -219,7 +219,7 @@
     overflow-wrap: anywhere;
   }
   h3 .muted {
-    font-weight: 400;
+    font-weight: var(--fw-regular);
   }
   .chg {
     display: grid;

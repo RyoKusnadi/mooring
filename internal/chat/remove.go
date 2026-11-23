@@ -15,6 +15,7 @@ func (m *Manager) remove(id string) (any, error) {
 		return nil, apiErr("INTERNAL", "The chat could not be deleted.")
 	}
 	m.forgetSession(c)
+	m.removeImages(id)
 	m.pub.Publish("chat.removed", map[string]string{"id": id, "projectId": c.projectID})
 	c.mu.Lock()
 	g := c.groupID

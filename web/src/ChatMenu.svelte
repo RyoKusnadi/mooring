@@ -139,7 +139,7 @@
     width: min(320px, calc(100vw - var(--s-4) * 2));
     padding: var(--s-3);
     border: 1px solid var(--border);
-    border-radius: var(--r-m);
+    border-radius: var(--r-l);
     background: var(--raised);
     box-shadow: var(--shadow-menu);
   }
@@ -168,7 +168,7 @@
   }
   .meter.near {
     color: var(--attention);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .bar {
     height: 6px;

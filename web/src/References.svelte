@@ -92,7 +92,7 @@
     margin: var(--s-2) 0 0;
     padding: 0 var(--s-2);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .path {
     min-width: 0;
@@ -102,7 +102,7 @@
   .count {
     flex: none;
     color: var(--muted);
-    font-weight: 400;
+    font-weight: var(--fw-regular);
   }
   ul {
     margin: 0;
@@ -143,7 +143,7 @@
   mark {
     background: var(--attention-bg);
     color: var(--attention);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     outline: 1px solid var(--attention);
   }
   @media (pointer: coarse), (max-width: 600px) {

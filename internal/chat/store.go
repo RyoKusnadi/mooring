@@ -85,6 +85,7 @@ func (m *Manager) loadChats() error {
 	for _, c := range withMessages {
 		c.savedLast = m.savedLastLine(c.id)
 	}
+	m.sweepImages()
 	return nil
 }
 

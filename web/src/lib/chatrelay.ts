@@ -13,9 +13,24 @@ export function lastReplyId(get: (i: number) => Row | undefined, from: number): 
   return null
 }
 
-const REASON: Record<string, string> = { running: 'answering now', starting: 'starting', stopped: 'stopped', needs_login: 'not signed in' }
+const REASON: Record<string, string> = { running: 'replying', starting: 'starting', needs_login: 'not signed in' }
 
-/** Why a chat cannot take a reply now; empty when it is idle. */
+/** Whether a reply can go to a chat in this state: an idle chat at once, a stopped chat after Mooring starts it again. */
+export function canTake(state: string): boolean {
+  return state === 'idle' || state === 'stopped'
+}
+
+/** Why a chat cannot take a reply now; empty when it can. */
 export function busyReason(state: string): string {
-  return state === 'idle' ? '' : (REASON[state] ?? state)
+  return canTake(state) ? '' : (REASON[state] ?? state)
+}
+
+type Resumable = { state: string; messages?: number; caps?: Record<string, boolean | string[]> | null }
+
+/** What happens to a stopped chat on Send; empty for any other state. A new session only when the agent is known to lack resume and load. */
+export function startNote(c: Resumable): string {
+  if (c.state !== 'stopped') return ''
+  const known = !!c.caps && 'load' in c.caps && 'resume' in c.caps
+  if (known && !c.caps!.load && !c.caps!.resume && (c.messages ?? 0) > 0) return 'Starts a new session without the earlier messages'
+  return 'Starts again when you send'
 }

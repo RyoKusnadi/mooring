@@ -81,33 +81,6 @@
     z-index: 5;
     top: 100%;
     right: 0;
-    display: grid;
-    min-width: 200px;
-    padding: var(--s-1);
-    border: 1px solid var(--border);
-    border-radius: var(--r-m);
-    background: var(--raised);
-    box-shadow: var(--shadow-menu);
-  }
-  .menu button {
-    display: flex;
-    align-items: center;
-    gap: var(--s-2);
-    min-height: var(--control-h);
-    padding: 0 var(--s-2);
-    border: 0;
-    border-radius: var(--r-s);
-    background: transparent;
-    color: var(--fg);
-    font: inherit;
-    text-align: left;
-    white-space: nowrap;
-  }
-  .menu button:hover:not(:disabled) {
-    background: var(--hover);
-  }
-  .menu button:disabled {
-    color: var(--muted);
   }
   kbd {
     margin-left: auto;

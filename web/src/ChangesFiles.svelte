@@ -204,14 +204,14 @@
   h3 {
     margin: 0 var(--s-1) 0 0;
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .count {
     color: var(--muted);
-    font-weight: 400;
+    font-weight: var(--fw-regular);
   }
   .small {
-    min-height: calc(var(--control-h) - 4px);
+    min-height: var(--control-h-s);
     padding: 0 var(--s-1);
     font-size: var(--fs-s);
   }

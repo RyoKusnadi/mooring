@@ -35,6 +35,9 @@ export interface Chip {
   to?: number
   outputId?: string
   lines?: number
+  imageId?: string
+  name?: string
+  size?: number
 }
 
 const base = (p: string) => p.slice(p.lastIndexOf('/') + 1) || p
@@ -42,6 +45,7 @@ const plural = (n: number, one: string, many: string) => `${n.toLocaleString('en
 
 /** Short chip text: a file name with its lines, or the output's line count. */
 export function chipText(c: Chip): string {
+  if (c.kind === 'image') return c.name ?? 'Image'
   if (c.kind === 'output') return c.lines ? `Command output, ${plural(c.lines, 'line', 'lines')}` : 'Command output'
   const range = c.from === c.to ? `line ${c.from}` : `lines ${c.from} to ${c.to}`
   return `${base(c.path ?? '')}, ${range}`
@@ -49,6 +53,7 @@ export function chipText(c: Chip): string {
 
 /** The full path and lines, for the chip's title. */
 export function chipTitle(c: Chip): string {
+  if (c.kind === 'image') return c.name ?? 'Image'
   if (c.kind === 'output') return 'The saved output of a command the agent ran'
   return `${c.path}, lines ${c.from} to ${c.to}`
 }

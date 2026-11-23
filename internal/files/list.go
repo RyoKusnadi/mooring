@@ -82,9 +82,6 @@ func (s *Service) List(projectID, rel string) (*Listing, error) {
 		if (a.Kind == "dir") != (b.Kind == "dir") {
 			return a.Kind == "dir"
 		}
-		if a.Kind == "dir" && a.Hidden != b.Hidden {
-			return !a.Hidden
-		}
 		if la, lb := strings.ToLower(a.Name), strings.ToLower(b.Name); la != lb {
 			return la < lb
 		}

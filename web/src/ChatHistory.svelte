@@ -140,7 +140,7 @@
   h3 {
     margin: var(--s-3) 0 var(--s-1);
     font-size: var(--fs-s);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
     color: var(--muted);
     overflow-wrap: anywhere;
   }
@@ -151,7 +151,7 @@
   }
   .row {
     display: grid;
-    gap: 2px;
+    gap: var(--s-0);
     width: 100%;
     min-height: var(--control-h);
     padding: var(--s-1) var(--s-2);

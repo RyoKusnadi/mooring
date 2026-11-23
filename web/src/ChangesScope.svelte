@@ -49,7 +49,7 @@
   }
   .btn[aria-pressed='true'] {
     background: var(--selected);
-    font-weight: 600;
+    font-weight: var(--fw-semibold);
   }
   .btn {
     max-width: 36ch;
